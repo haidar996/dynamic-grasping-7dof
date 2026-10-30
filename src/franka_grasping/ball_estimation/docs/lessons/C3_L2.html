@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C3 L2 - التعريفات: زمن الالتقاط والوصول</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C3 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>زمن الالتقاط، وزمن الوصول، وتعويض التأخير</h1>
+
+<div class="box"><p>جواب السؤال السابق: بين صورتين <span class='en'>2 &times; 0.0167 = 33 mm</span>، وخلال 40 ms: <span class='en'>2 &times; 0.04 = 80 mm</span>.</p></div>
+
+<div class="card"><h2>1. الرموز</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr><td style="padding:5px"><b>symbol</b></td><td><b>meaning</b></td></tr>
+<tr><td style="padding:5px">k</td><td>frame index</td></tr>
+<tr><td style="padding:5px">t<sub>k</sub></td><td>capture time of frame k</td></tr>
+<tr><td style="padding:5px">&tau;<sub>d</sub></td><td>delay (here 0.04 s, constant)</td></tr>
+<tr><td style="padding:5px">a<sub>k</sub> = t<sub>k</sub> + &tau;<sub>d</sub></td><td>arrival time</td></tr>
+<tr><td style="padding:5px">z<sub>k</sub> = p(t<sub>k</sub>) + n<sub>k</sub></td><td>measurement (true position AT THE CAPTURE TIME plus noise)</td></tr>
+<tr><td style="padding:5px">&#349;(t<sub>k</sub>)</td><td>filter state at the capture time, after using z<sub>k</sub></td></tr>
+</table>
+<p>المهم: القياس <span class='en'>z<sub>k</sub></span> يخص الزمن <span class='en'>t<sub>k</sub></span> وليس <span class='en'>a<sub>k</sub></span>، لكنه لا يتاح للـ estimator إلا عند <span class='en'>a<sub>k</sub></span>.</p></div>
+
+<div class="card"><h2>2. السببية مع التأخير</h2>
+<p>عند الزمن <span class='en'>t</span> يستطيع الـ estimator أن يستعمل كل القياسات التي <span class='en'>a<sub>j</sub> &le; t</span>، أي <span class='en'>t<sub>j</sub> &le; t &minus; &tau;<sub>d</sub></span>. فآخر ما يعرفه عن العالم قديم بمقدار <span class='en'>&tau;<sub>d</sub></span> على الأقل.</p></div>
+
+<div class="card"><h2>3. تعويض التأخير</h2>
+<p>عند وصول القياس <span class='en'>k</span> نحدّث الـ filter عند زمن الالتقاط <span class='en'>t<sub>k</sub></span>، فنحصل على <span class='en'>&#349;(t<sub>k</sub>)</span>. ثم نتنبأ إلى زمن الوصول:</p>
+<p class="en" style="text-align:center">&#349;(a<sub>k</sub>) = &Phi;<sub>&tau;<sub>d</sub></sub>( &#349;(t<sub>k</sub>) )</p>
+<p>حيث <span class='en'>&Phi;</span> هو الـ forecast (A1 L2): نموذج الحركة مشغَّلاً <span class='en'>&tau;<sub>d</sub></span> ثانية. في الكود (metrics):</p>
+<p class="en" style="direction:ltr;text-align:left;background:var(--box);padding:10px;border-radius:8px">x, y, vx, vy = est.forecast(ta - est.t)</p>
+<p>حيث <span class='en'>ta</span> زمن الوصول و<span class='en'>est.t</span> زمن حالة الـ estimator (زمن التقاط آخر قياس صحيح). إذا ضاع إطار فـ <span class='en'>est.t</span> أقدم، فيكون التنبؤ أطول: <span class='en'>ta &minus; est.t = &tau;<sub>d</sub> + (frames lost) &times; &Delta;t</span>.</p></div>
+
+<div class="card"><h2>4. أرقام وأخطاء</h2>
+<p>خطأ التعويض يأتي من أن النموذج غير دقيق. لو كان خطأ سرعة الـ estimator <span class='en'>&delta;v</span> فخطأ المكان بعد التعويض <span class='en'>&delta;v &middot; &tau;<sub>d</sub></span>: مثلاً <span class='en'>0.13 m/s &times; 0.04 s = 5.2 mm</span>. وللـ fd الذي لا يعوّض التأخير جيداً وسرعته أسوأ، كان الخطأ <span class='en'>17.8 mm</span> في شرط الـ delay (مقابل <span class='en'>3.5</span> للـ EKF).</p></div>
+
+<div class="card"><h2>5. اكتشاف في بياناتنا: الإطارات ليست كل 16.67 ms بالضبط</h2>
+<p>فحصتُ أزمنة الإطارات المخزنة. الفروق بين الإطارات المتتالية ليست ثابتة: <b>400 فرق = 16 ms و199 فرقاً = 18 ms</b> (متوسطها 16.66 ms أي 60.008 إطار/ث). السبب: المحاكي يتقدم بخطوات 2 ms، والكاميرا تلتقط عند أول خطوة بعد الزمن النظري <span class='en'>k/60</span>، فتتأخر عنه 0 إلى 2 ms.</p>
+<ul>
+<li>زمن الالتقاط المخزَّن هو <b>الزمن الفعلي</b> للرسم، فهو دقيق، والـ estimator يستعمل الفروق الفعلية <span class='en'>t &minus; est.t</span> وليس 1/60 المفترضة. إذن لا مشكلة.</li>
+<li>لكن لا تفترض أن الصور تأتي كل 1/60 تماماً (انحراف حتى 2 ms، أي 6 مم لكرة بسرعة 3 م/ث لو أهملناه).</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>إطار التُقط عند <span class='en'>t = 1.000 s</span> وتأخير 0.04 ث. متى يصله الـ estimator؟ ولو ضاع الإطاران التاليان وجاء الذي بعدهما بزمن التقاط <span class='en'>1.050</span>، فكم يصبح <span class='en'>ta &minus; est.t</span> عند وصول ذاك الأخير (تأخير 0.04)؟ (إن كان تقدّم الـ filter إلى 1.050 عند وصول إطار 1.050 فكم؟)</p></div>
+<p class="tag">القادم: C3 الطبقة 3 (الرياضيات: خطأ التأخير وأثره، ولماذا تعويضه يعتمد على النموذج).</p>
+</main></body></html>

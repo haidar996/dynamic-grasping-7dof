@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 L1 - ما هو الـ simulator؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A2 &middot; الطبقة 1: الحدس</p>
+<h1>ما هو الـ simulator؟</h1>
+
+<div class="card"><h2>الفكرة</h2>
+<p>الـ <span class='en'>simulator</span> برنامج حاسوب يحاكي عالماً فيزيائياً. بدل أن نرمي كرة حقيقية على طاولة حقيقية، نكتب في الحاسوب: أين الكرة؟ ما سرعتها؟ ما القوى عليها؟ ثم نترك البرنامج يحسب <b>كيف ستتحرك</b>.</p>
+<p>الحاسوب لا يحسب الحركة كلها دفعة واحدة. يقسم الزمن إلى <b>خطوات صغيرة جداً</b> (<span class='en'>time steps</span>)، وفي كل خطوة يفعل ثلاثة أشياء: (1) يحسب القوى الآن، (2) يحدّث السرعة، (3) يحدّث المكان. ثم يكرر.</p></div>
+
+<div class="card"><h2>مثال بأرقام</h2>
+<p>كرة عند <span class='en'>x = 0</span> بسرعة <span class='en'>1 m/s</span>، والاحتكاك يبطئها <span class='en'>0.85 m/s<sup>2</sup></span>. الخطوة الزمنية في مشروعنا <span class='en'>2 ms = 0.002 s</span>. في كل خطوة: السرعة الجديدة = القديمة &minus; (0.85 &times; 0.002)، والمكان الجديد = القديم + السرعة الجديدة &times; 0.002.</p>
+<table class='en' style='margin:auto;border-collapse:collapse'><tr><td style='padding:3px 12px'><b>step</b></td><td><b>time (s)</b></td><td style='padding:3px 12px'><b>v (m/s)</b></td><td><b>x (m)</b></td></tr><tr><td style='padding:3px 12px'>0</td><td>0.000</td><td style='padding:3px 12px'>1.00000</td><td>0.0000000</td></tr><tr><td style='padding:3px 12px'>1</td><td>0.002</td><td style='padding:3px 12px'>0.9983</td><td>0.0019966</td></tr><tr><td style='padding:3px 12px'>2</td><td>0.004</td><td style='padding:3px 12px'>0.9966</td><td>0.0039898</td></tr><tr><td style='padding:3px 12px'>3</td><td>0.006</td><td style='padding:3px 12px'>0.9949</td><td>0.0059796</td></tr></table>
+<p>(حساب مبسّط لتوضيح الفكرة؛ الـ simulator الحقيقي يفعل الشيء نفسه بتفاصيل أكثر.) تغيّر ضئيل في كل خطوة، لكننا نكرر <b>5000 مرة</b> لنحصل على 10 ثوانٍ كاملة.</p></div>
+
+<div class="card"><h2>ما هو MuJoCo؟</h2>
+<p><span class='en'>MuJoCo</span> هو محرك فيزياء (<span class='en'>physics engine</span>) معروف في أبحاث الروبوتات. يحسب حركة الأجسام والمفاصل والتصادمات. وهو أيضاً يستطيع أن <b>يرسم</b> المشهد من وجهة نظر كاميرا، وهذا ما نستعمله لـ «تصوير» الكرة. نستخدم النسخة 3.6 منه.</p>
+<p>في مشروعنا يتولى MuJoCo: حركة الكرة على الأرض، ورسم الصورة واللون والعمق للكاميرا. أما الاحتكاك والارتداد عن الجدران فكتبناهما نحن في Python فوق MuJoCo (سنعرف لماذا في الدرس A4).</p></div>
+
+<div class="card"><h2>لماذا نستعمل المحاكاة فقط؟</h2>
+<ul>
+<li><b>الحقيقة مجانية:</b> المحاكي يعرف المكان والسرعة الحقيقيين في كل لحظة، فنستطيع قياس خطأ الـ estimator بدقة.</li>
+<li><b>قابلية الإعادة:</b> نعيد نفس التجربة بنفس الأرقام العشوائية تماماً، لنقارن طريقتين بعدالة.</li>
+<li><b>السرعة والعدد:</b> 500 إطلاقاً يحتاجون دقائق أو ساعات، لا أسابيع من العمل اليدوي.</li>
+<li><b>التحكم:</b> نضيف الـ noise والـ delay والـ dropout بالقدر الذي نريد، ونغلقها متى نشاء.</li>
+<li><b>الأمان والتكلفة:</b> لا روبوت يتحطم، ولا كاميرا مكلفة.</li>
+</ul>
+<p>وهذا قرارك أنت لهذا الفصل: المحاكاة فقط، ولن نطبقه على الواقع. تذكّر أن المقابل هو أن النتائج لا تضمن أداءً في الواقع (الافتراض 5 في A1).</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لماذا يعطينا الـ simulator «الحقيقة» (ground truth) بلا مجهود، بينما لا نملكها في تجربة حقيقية بكاميرا؟</p></div>
+<p class="tag">القادم: A2 الطبقة 2 (التعريفات الدقيقة: state، time step، integration، وما يعنيه أن الحل «تقريبي»).</p>
+</main></body></html>

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C5 L2 - التعريفات: الملفات وpaired</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C5 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>محتوى الملفات، والمقارنة المزدوجة (paired)</h1>
+
+<div class="box"><p>جواب السؤال السابق: تغيير قيمة الـ noise <b>لا</b> يحتاج إعادة رسم (نطبّقها على الأرقام المخزنة)، وتغيير ارتفاع الكاميرا <b>يحتاج</b> إعادة رسم (الأرقام المخزنة تعتمد على الكاميرا).</p></div>
+
+<div class="card"><h2>1. ملف الإطلاق (المخزَّن، لا تغيّره الشروط)</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:5px"><b>key</b></td><td><b>shape</b></td><td><b>meaning</b></td></tr>
+<tr><td style="padding:5px">t_phys, pos, vel</td><td>5000, (5000,2), (5000,2)</td><td>exact truth every 2 ms</td></tr>
+<tr><td style="padding:5px">bounces</td><td>(n, 3)</td><td>time, axis, side of each wall hit</td></tr>
+<tr><td style="padding:5px">frame_t</td><td>600</td><td>true capture time of each frame</td></tr>
+<tr><td style="padding:5px">uvz</td><td>(600, 3)</td><td>ideal detection (pixel u, v, depth z); NaN if not seen</td></tr>
+<tr><td style="padding:5px">true_xy, true_v</td><td>(600,2) each</td><td>truth at the frame times</td></tr>
+<tr><td style="padding:5px">p0, v0, mu, e</td><td>-</td><td>launch settings</td></tr>
+<tr><td style="padding:5px">fps, T, cam_height, cam_fovy</td><td>-</td><td>recording settings (checked by an assert)</td></tr>
+</table></div>
+
+<div class="card"><h2>2. ما تعيده apply_condition (ما يراه الـ estimator)</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:5px"><b>key</b></td><td><b>meaning</b></td></tr>
+<tr><td style="padding:5px">t_capture, t_arrival</td><td>capture time and capture + delay</td></tr>
+<tr><td style="padding:5px">xy</td><td>measured (x, y) after noise; NaN if no measurement</td></tr>
+<tr><td style="padding:5px">valid</td><td>True if a measurement is delivered (what the estimator sees)</td></tr>
+<tr><td style="padding:5px">was_lost</td><td>hidden label: True for lost frames (silent hold: valid=True but was_lost=True)</td></tr>
+<tr><td style="padding:5px">true_xy, true_v, pos, vel, t_phys, bounces, mu, e, v0</td><td>the truth, for scoring and for the oracle</td></tr>
+</table>
+<p><b>قاعدة صارمة:</b> الـ estimator يستعمل فقط <span class='en'>t_capture, xy, valid</span> (والـ oracle يضيف <span class='en'>mu, e</span>). أما <span class='en'>was_lost</span> والحقيقة فللتحليل فقط؛ استعمالها غش.</p></div>
+
+<div class="card"><h2>3. المقارنة المزدوجة (<span class="en">paired</span>)</h2>
+<p>نقارن الطريقتين A وB على <b>نفس الإطلاقات ونفس الأرقام العشوائية</b> (نفس الـ noise ونفس الفجوات). فنحسب الفرق لكل إطلاق ثم نجمع. الإطلاقات الصعبة صعبة على الاثنين، فتُلغي الصعوبة المشتركة.</p>
+<p><b>كيف تضمنّا ذلك:</b> البذرة = <span class='en'>base + launch index</span> (والمولّدان المنفصلان للـ noise والانقطاع، C1 L4). والـ estimators حتمية (لا عشوائية فيها).</p></div>
+
+<div class="card"><h2>4. قياس فائدة المقارنة المزدوجة (الذي وعدتُ به في A5)</h2>
+<p>شرط <span class='en'>all</span>، 250 إطلاقاً (كل إطلاق ثانٍ)، مقياس <span class='en'>now_pos</span> (مم). طريقة bootstrap: نعيد سحب الإطلاقات مع الإرجاع (2000 مرة)، ونحسب لكل سحب الفرق بين الـ estimator الأول والثاني <b>على الإطلاقات المسحوبة نفسها</b>:</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>quantity</b></td><td style="padding:4px 12px"><b>value</b></td><td style="padding:4px 12px"><b>95% interval</b></td></tr>
+<tr><td style="padding:4px 12px">ekf19-none alone</td><td>7.09</td><td>[6.38, 7.85] (width 1.47)</td></tr>
+<tr><td style="padding:4px 12px">ekf19b-none alone</td><td>6.95</td><td>[6.26, 7.72]</td></tr>
+<tr><td style="padding:4px 12px"><b>difference ekf19 &minus; ekf19b (paired)</b></td><td><b>0.14</b></td><td><b>[0.065, 0.223] (width 0.16)</b></td></tr>
+<tr><td style="padding:4px 12px">fd alone</td><td>45.9</td><td>[31.4, 61.0]</td></tr>
+<tr><td style="padding:4px 12px">difference fd &minus; ekf19b (paired)</td><td>38.9</td><td>[25.3, 53.5]</td></tr>
+</table>
+<ul>
+<li>الفرق المزدوج بين الـ EKFين له مجال بعرض 0.16 مم، أضيق بحوالي <b>9 مرات</b> من مجال كل منهما منفرداً (1.47 مم).</li>
+<li>لذلك نستطيع أن نقول إن <span class='en'>ekf19b</span> أفضل قليلاً (حوالي 0.14 مم، 2%) <b>بثقة</b>: المجال لا يشمل الصفر. وقد قلتُ سابقاً إنه ضمن عدم اليقين، فهذا يُحسن الصورة: الفرق حقيقي لكنه صغير. (ملاحظة: 250 إطلاقاً وسحب noise واحد.)</li>
+<li>أما الفرق بين fd وEKF فكبير لكن مجاله واسع (fd له ذيل ثقيل: إطلاقات قليلة سيئة جداً).</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لماذا يضيّق «paired» المجال، ولماذا يعطي مجالاً أضيق للـ EKFين (متشابهين جداً) من fd مقابل EKF؟</p></div>
+<p class="tag">القادم: C5 الطبقة 3 (الرياضيات: لماذا الفرق المزدوج أدق، وارتباط الأخطاء).</p>
+</main></body></html>

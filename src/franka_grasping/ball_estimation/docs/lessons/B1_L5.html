@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L5 - افتراضات وحدود نموذج الكاميرا</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>ماذا تفترض الكاميرا الافتراضية؟</h1>
+<div class="box"><p>جواب السؤال السابق: يُرفض التشغيل برسالة خطأ (<span class='en'>assert</span>) لأن الملفات مصوَّرة عند 60&deg; والكاميرا الجديدة 40&deg;. وهذا مفيد لأنه يمنع نتائج خاطئة بصمت.</p></div>
+<div class='card'><h2>1. لا يوجد تشوه عدسة (<span class='en'>lens distortion</span>)</h2><p>الخطوط المستقيمة تبقى مستقيمة، والصيغة <span class='en'>u = cx + fX/Z</span> صحيحة في كل أنحاء الصورة.</p><p><b>إذا لم يتحقق:</b> العدسات الحقيقية العريضة (وزاويتنا الأفقية 75&deg;) تشوّه الحواف. يلزم معايرة (<span class='en'>calibration</span>) وإلا ظهرت أخطاء بالملّيمترات عند الأطراف.</p></div><div class='card'><h2>2. بكسلات مربعة ومركز الصورة في الوسط تماماً</h2><p><span class='en'>f</span> واحد للمحورين، و<span class='en'>(cx, cy)</span> في المنتصف، بلا ميل.</p><p><b>إذا لم يتحقق:</b> في كاميرا حقيقية تُقاس هذه الأرقام (<span class='en'>intrinsics</span>) وتختلف قليلاً. خطؤها يزيح كل القياسات بنفس الاتجاه.</p></div><div class='card'><h2>3. الكاميرا في مكانها بالضبط وتنظر إلى الأسفل مباشرة</h2><p>موقعها <span class='en'>(0, 0, 3)</span> ومعروف تماماً.</p><p><b>إذا لم يتحقق:</b> ميلان بدرجة واحدة يزيح الصورة على الأرض بحوالي <span class='en'>3 &times; tan 1&deg; = 52 mm</span>، وهو أكبر بكثير من خطأ الـ noise (3 مم). وخطأ في الارتفاع 1 سم يعطي <span class='en'>3.4 mm</span> عند <span class='en'>x = 1 m</span>.</p></div><div class='card'><h2>4. الكاميرا تقيس العمق على المحور البصري</h2><p><span class='en'>depth</span> في MuJoCo هو المسافة على <b>المحور</b>، وليس طول الشعاع المائل. فحصتُ هذا: العمق المقيس 2.940 م عند <span class='en'>x = 0.5</span>، وليس 2.98 م.</p><p><b>إذا لم يتحقق:</b> إذا افترضنا نوع العمق خطأً (طول الشعاع بدل المحور) فسيظهر انحياز يكبر نحو الأطراف.</p></div><div class='card'><h2>5. قمة الكرة هي النقطة التي نأخذ عمقها</h2><p>نضيف نصف القطر لننتقل من السطح إلى المركز (<span class='en'>zc = z + r</span>).</p><p><b>إذا لم يتحقق:</b> العمق عند بكسل المركز المقرّب قد يختلف جزءاً من الملّيمتر عن القمة (رأيت فرق <span class='en'>1.1 mm</span> بين موضعين متماثلين بسبب تقريب البكسل). لا يؤثر عملياً.</p></div><div class='card'><h2>6. كشف الكرة بالقناع اللوني يعمل دائماً</h2><p>الكرة خضراء ساطعة على أرض رمادية، بلا ظلال ولا انعكاسات ولا إضاءة متغيرة، وتظهر على الأقل 3 بكسلات.</p><p><b>إذا لم يتحقق:</b> في الواقع يحتاج الكشف خوارزمية أقوى، وقد يفشل أو يخطئ. وعند <b>الحجب الجزئي</b> (الذراع تخفي نصف الكرة) يتحرك مركز الجزء المرئي عن مركز الكرة، فلا يكون الخطأ «فقدان» فقط بل <b>انحياز</b> في القياس. هذا مهم عندما نضيف الذراع.</p></div><div class='card'><h2>7. لا يوجد تمويه حركة (<span class='en'>motion blur</span>)</h2><p>الصورة لحظية، فالكرة تظهر دائرة حادة مهما كانت سرعتها.</p><p><b>إذا لم يتحقق:</b> لو كان زمن التعريض 5 ms مثلاً لتحركت الكرة بسرعة 5 م/ث مسافة <span class='en'>25 mm</span> (حوالي 3.5 بكسل) خلال الصورة، فيتمدد شكلها ويتغير موضع مركزها.</p></div><div class='card'><h2>8. العمق ليس ضرورياً في عالمنا (ملاحظة مني، اختبرتها جزئياً)</h2><p>الكرة دائماً على الأرض، ومركزها عند <span class='en'>z = 0.03</span> دائماً، والكاميرا عند ارتفاع معروف. فالمسافة <span class='en'>Z<sub>c</sub> = 2.97 m</span> <b>معروفة</b> بلا قياس. إذن كاميرا ملونة عادية كانت ستكفي في المحاكاة، والعمق المقيس يضيف noise ولا يضيف معلومة.</p><p><b>إذا لم يتحقق:</b> قِسنا سابقاً أن noise العمق وحده يرفع خطأ المكان من 1.7 إلى 2.2 مم فقط، فالأثر صغير. نحتفظ بكاميرا العمق لأن المشروع يفترضها (وللحالة العامة: كرة تطير، أو ارتفاع غير معروف)، لكن يجب أن نعرف هذه النقطة.</p></div>
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو كانت الكاميرا مائلة بنصف درجة (<span class='en'>0.5&deg;</span>) عن العمودي، كم يكون الإزاحة التقريبية على الأرض؟ ومقارنة بخطأ الـ noise (حوالي 3 مم)؟</p></div>
+<p class="tag">القادم: B1 الطبقة 6 (تمارين)، ثم B2: الإسقاط العكسي وصورة العمق.</p>
+</main></body></html>

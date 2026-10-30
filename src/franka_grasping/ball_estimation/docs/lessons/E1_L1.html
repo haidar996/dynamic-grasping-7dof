@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E1 L1 - القياس والتقييم</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس E1 &middot; الطبقة 1: القياس والتقييم</p>
+<h1>كيف نقيس أداة المرشح؟</h1>
+
+<div class="box"><p><b>جواب سؤال D8 L2:</b> نفرق بين تجمد وارتداد عبر <b>السياق</b>:
+(1) التجمد: القياس متطابق <b>بت بت</b> (كود يكتشفه) + التنبية تكبر عبر الخطوات (الكرة تتحرك، التنبؤ يتقدم)
+(2) الارتداد: قياس <b>جديد</b> لكن بعيد (معاكس الاتجاه) + التنبية كبيرة <b>مرة واحدة</b> فقط (بعدها تصغر)
+
+في الممارسة، stale guard يحل معظم الحالات—إذا كانت متطابقة بت بت، تجمد أكيد.
+</p></div>
+
+<div class="card"><h2>1. السؤال الأساسي</h2>
+<p>نحن بنينا مرشحات (cvkf, ekf19, ekf19b, مع سياسات و stale guard). كيف نعرف: أيها أفضل؟</p>
+<p>نحتاج <b>مقاييس موضوعية</b>:</p>
+<ul>
+<li>خطأ الموقع الآن (now_pos)</li>
+<li>خطأ التوقع بعد 0.2 ثانية (forecast h=0.2)</li>
+<li>خطأ التوقع بعد 0.5 ثانية (forecast h=0.5)</li>
+<li>خطأ التوقع بعد 1.0 ثانية (forecast h=1.0)</li>
+</ul>
+<p>لكل مرشح، نحسب RMS (جذر المتوسط التربيعي) على 500 launch.</p>
+</div>
+
+<div class="card"><h2>2. <span class='en'>now_pos</span>: خطأ الموقع الآن</h2>
+<p>في كل لحظة، المرشح يقدّر الموقع الحالي للكرة:</p>
+<p class="en" style="text-align:center">error = |x̂ − x_true|</p>
+<p>نقيس المسافة الإقليدية (2D):</p>
+<p class="en" style="text-align:center">error = √[(x̂ − x_true)² + (ŷ − y_true)²]</p>
+<p>متوسط على جميع اللحظات في launch واحد، ثم RMS على 500 launch.</p>
+<p><b>المعنى:</b> "كم دقيق المرشح في الموقع الآن؟"</p>
+<p><b>المدى:</b> من 1.7 مم (oracle) إلى 50 مم (بدون مرشح).</p>
+</div>
+
+<div class="card"><h2>3. <span class='en'>forecast h=0.2, 0.5, 1.0</span>: التنبؤ المستقبلي</h2>
+<p>في كل لحظة، المرشح يتنبأ: "أين ستكون الكرة بعد h ثانية؟"</p>
+<p class="en" style="text-align:center">
+forecast(h) = estimate the state after h seconds<br>
+error_h = |forecast(h) − actual_position_at(t+h)|
+</p>
+<p>مثال: في اللحظة t=2 ثانية، المرشح يقول "الكرة ستكون عند (0.8, 0.5) في t=2.2 ثانية".</p>
+<p>حقاً، في t=2.2 ثانية، الكرة عند (0.82, 0.51). الخطأ = 0.03 متر.</p>
+<p><b>المعنى:</b></p>
+<ul>
+<li><span class='en'>h=0.2</span>: توقع قريب جداً—يعتمد على السرعة المحدثة (سهل)</li>
+<li><span class='en'>h=0.5</span>: توقع متوسط—يعتمد على نموذج الاحتكاك (أصعب)</li>
+<li><span class='en'>h=1.0</span>: توقع بعيد—يحتاج فهم كامل الديناميات (صعب جداً)</li>
+</ul>
+<p>في نتائجنا: ekf19 يخطئ 1.9 مم الآن، لكن 209 مم بعد 1 ثانية!</p>
+</div>
+
+<div class="card"><h2>4. <span class='en'>RMS</span>: جذر المتوسط التربيعي</h2>
+<p>لكل launch، نجمع الأخطاء:</p>
+<p class="en" style="text-align:center">
+error_launch = [e₁, e₂, ..., eₙ]  (n لحظة في launch واحد)<br>
+mean_error_launch = (Σ eᵢ) / n<br>
+RMS_launch = √(Σ eᵢ²) / n
+</p>
+<p>الفرق:</p>
+<ul>
+<li><b>Mean:</b> متوسط بسيط (حساس للقيم الصغيرة والكبيرة بالتساوي)</li>
+<li><b>RMS:</b> جذر المتوسط التربيعي (يعطي وزن أكبر للأخطاء الكبيرة)</li>
+</ul>
+<p>في عالم الروبوتات، نستخدم RMS لأننا نريد تجنب أخطاء كبيرة حتى لو نادرة.</p>
+
+<p>ثم نجمع RMS عبر 500 launch:</p>
+<p class="en" style="text-align:center">
+RMS_overall = √(Σ RMS_launch²) / 500
+</p>
+</div>
+
+<div class="card"><h2>5. <span class='en'>moving frames</span>: تحويل الإطارات</h3>
+<p>المرشح يعمل في إطار ثابت (الساحة)—كل الإحداثيات بالنسبة إلى الزاوية.</p>
+<p>لكن للروبوت (الذراع)، قد يكون من المفيد تحويل الإحداثيات:</p>
+<ul>
+<li><b>إطار الكاميرا:</b> الموقع بالنسبة إلى الكاميرا (بدلاً من الساحة)</li>
+<li><b>إطار الذراع:</b> الموقع بالنسبة إلى قاعدة الذراع</li>
+<li><b>إطار الجاذب:</b> الموقع بالنسبة إلى جاذب (end-effector) الذراع</li>
+</ul>
+<p>كل إطار له فائدة:</p>
+<ul>
+<li>إطار الكاميرا: يظهر دقة الكاميرا (حساس للضجيج)</li>
+<li>إطار الذراع: يظهر دقة من وجهة نظر الروبوت (أقرب للتطبيق)</li>
+</ul>
+<p>في مشروعنا: نستخدم إطار الساحة الثابت بشكل أساسي.</p>
+</div>
+
+<div class="card"><h2>6. مثال نتيجة</h2>
+<table style="border-collapse:collapse;width:100%;font-size:85%">
+<tr style="border-bottom:1px solid var(--line)">
+<td style="padding:5px"><b>المرشح</b></td>
+<td style="padding:5px"><b>now_pos (mm)</b></td>
+<td style="padding:5px"><b>forecast h=0.2 (mm)</b></td>
+<td style="padding:5px"><b>forecast h=1.0 (mm)</b></td>
+</tr>
+<tr>
+<td style="padding:5px">oracle</td>
+<td style="padding:5px">1.7</td>
+<td style="padding:5px">5</td>
+<td style="padding:5px">18</td>
+</tr>
+<tr>
+<td style="padding:5px">ekf19b-hybrid+stale</td>
+<td style="padding:5px">7.1</td>
+<td style="padding:5px">30</td>
+<td style="padding:5px">227</td>
+</tr>
+<tr>
+<td style="padding:5px">ekf19-hybrid</td>
+<td style="padding:5px">7.6</td>
+<td style="padding:5px">35</td>
+<td style="padding:5px">245</td>
+</tr>
+<tr>
+<td style="padding:5px">cvkf (خطي)</td>
+<td style="padding:5px">7.6</td>
+<td style="padding:5px">40</td>
+<td style="padding:5px">1519</td>
+</tr>
+<tr>
+<td style="padding:5px">fd (فرق مح دود)</td>
+<td style="padding:5px">47.8</td>
+<td style="padding:5px">800</td>
+<td style="padding:5px">1598</td>
+</tr>
+</table>
+<p>لاحظ: ekf19b أفضل من cvkf في التنبؤ البعيد (227 vs 1519 مم)—الاحتكاك مهم!</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في التوقع h=0.2 ثانية، لماذا الخطأ يزيد فقط من 7 مم (الآن) إلى 30 مم؟ لكن في h=1.0 ثانية، يقفز إلى 227 مم؟ هل النموذج ينهار بعد ثانية واحدة؟</p>
+</div>
+<p class="tag">القادم: E1 الطبقة 2 (الخطأ يكبر مع الوقت—لماذا؟).</p>
+</main></body></html>

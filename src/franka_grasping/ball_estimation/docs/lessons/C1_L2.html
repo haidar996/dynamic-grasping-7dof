@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L2 - التوزيع الطبيعي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>التوزيع الطبيعي والانحراف المعياري</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>&sigma;<sub>x</sub> = 0.6 &times; 2.44 = 1.46 mm</span>، <span class='en'>&sigma;<sub>y</sub> = 0.8 &times; 2.44 = 1.95 mm</span>، والطول الكلي <span class='en'>&radic;(1.46<sup>2</sup> + 1.95<sup>2</sup>) = 2.44 mm</span> (لأن <span class='en'>&radic;(0.6<sup>2</sup> + 0.8<sup>2</sup>) = 1</span> فالطول = 2.44 &times; البعد عن المحور = 2.44 &times; 1.0).</p></div>
+
+<div class="card"><h2>1. المتغير العشوائي، المتوسط، الانحراف</h2>
+<p>خطأ القياس <span class='en'>X</span> رقم يتغير بشكل عشوائي. نصفه بمقدارين:</p>
+<ul>
+<li><b>المتوسط</b> <span class='en'>m = E[X]</span>: القيمة التي يدور حولها. عندنا الـ noise <b>بلا انحياز</b>: <span class='en'>m = 0</span>.</li>
+<li><b>التباين</b> (<span class="en">variance</span>) <span class='en'>&sigma;<sup>2</sup> = E[(X &minus; m)<sup>2</sup>]</span>: متوسط مربع الانحراف عن المتوسط.</li>
+<li><b>الانحراف المعياري</b> <span class='en'>&sigma; = &radic;(&sigma;<sup>2</sup>)</span>: له وحدة الخطأ نفسها (ملّيمتر أو بكسل). هو «حجم الخطأ النموذجي».</li>
+</ul></div>
+
+<div class="card"><h2>2. التوزيع الطبيعي (Gaussian)</h2>
+<p>نكتب <span class='en'>X ~ N(m, &sigma;<sup>2</sup>)</span> ونعني أن كثافة الاحتمال:</p>
+<p class="en" style="text-align:center">p(x) = 1 / (&sigma;&radic;(2&pi;)) &middot; exp( &minus;(x &minus; m)<sup>2</sup> / (2&sigma;<sup>2</sup>) )</p>
+<p>شكله «جرس» متماثل حول <span class='en'>m</span>. القاعدة المفيدة (تحققت منها بمحاكاة مليوني رقم):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>range</b></td><td style="padding:4px 12px"><b>probability</b></td></tr>
+<tr><td style="padding:4px 12px">m &plusmn; 1&sigma;</td><td>68.3%</td></tr>
+<tr><td style="padding:4px 12px">m &plusmn; 2&sigma;</td><td>95.4%</td></tr>
+<tr><td style="padding:4px 12px">m &plusmn; 3&sigma;</td><td>99.7%</td></tr>
+</table>
+<p>مثال: اهتزاز المركز <span class='en'>N(0, 0.3<sup>2</sup>)</span> بكسل: 95% من الإطارات خطؤها أقل من 0.6 بكسل.</p></div>
+
+<div class="card"><h2>3. في الكود</h2>
+<p>في <span class='en'>sensor.py</span>: <span class='en'>rng.normal(0.0, 0.3, 2)</span> يسحب رقمين (لـ <span class='en'>u</span> و<span class='en'>v</span>) من <span class='en'>N(0, 0.3<sup>2</sup>)</span>. وللعمق: <span class='en'>rng.normal(0.0, k * z**2)</span> أي <span class='en'>N(0, (k z<sup>2</sup>)<sup>2</sup>)</span>، فالانحراف نفسه يتغير مع <span class='en'>z</span>.</p></div>
+
+<div class="card"><h2>4. جمع أخطاء مستقلة</h2>
+<p>إذا كان <span class='en'>X<sub>1</sub></span> و<span class='en'>X<sub>2</sub></span> مستقلين، فتبايناهما <b>يُجمعان</b> (لا الانحرافان):</p>
+<p class="en" style="text-align:center">&sigma;<sup>2</sup><sub>total</sub> = &sigma;<sub>1</sub><sup>2</sup> + &sigma;<sub>2</sub><sup>2</sup></p>
+<p><b>فحص بتجربتنا (C1 L1):</b> الكرة عند <span class='en'>(0.9, 0.5)</span>. على <span class='en'>x</span>: اهتزاز <span class='en'>2.09</span> وعمق <span class='en'>2.10</span>: <span class='en'>&radic;(2.09<sup>2</sup> + 2.10<sup>2</sup>) = 2.96</span>، وقسنا للاثنين معاً <span class='en'>3.07</span>. على <span class='en'>y</span>: <span class='en'>&radic;(2.17<sup>2</sup> + 1.17<sup>2</sup>) = 2.47</span> والمقيس <span class='en'>2.44</span>. اتفاق جيد (الفرق من أن كل رقم مقيس من 1000 عينة فقط).</p></div>
+
+<div class="card"><h2>5. لماذا الطبيعي؟ (وحدوده)</h2>
+<ul>
+<li>نظرية الحد المركزي (<span class='en'>central limit theorem</span>): مجموع كثير من اضطرابات صغيرة مستقلة يقترب من التوزيع الطبيعي. فهو افتراض معقول للضجيج الإلكتروني.</li>
+<li>مرشّح Kalman مبني على هذا الافتراض.</li>
+<li>عندنا الـ noise طبيعي <b>بالتعريف</b> لأننا نحن من يسحبه بهذه الدالة. في كاميرا حقيقية قد تظهر قيم شاذة (<span class="en">outliers</span>) بعيدة جداً (أكثر من 3&sigma;) بوتيرة أكبر مما يعطيه الطبيعي. هذه نقطة تخص طبقة الحدود.</li>
+</ul></div>
+
+<div class="card"><h2>6. تقدير &sigma; من بيانات</h2>
+<p>إذا كانت لدينا <span class='en'>n</span> قراءات، نقدّر:</p>
+<p class="en" style="text-align:center">&sigma;&#770; = &radic;( &sum;(x<sub>i</sub> &minus; x&#772;)<sup>2</sup> / (n &minus; 1) )</p>
+<p>(نقسم على <span class='en'>n&minus;1</span> وليس <span class='en'>n</span> لأننا استعملنا نفس البيانات لتقدير المتوسط.) مثال: الأخطاء <span class='en'>1.0, &minus;2.0, 0.5, 3.0, &minus;1.5</span> مم: المتوسط 0.2، الانحرافات <span class='en'>0.8, &minus;2.2, 0.3, 2.8, &minus;1.7</span>، مربعاتها مجموعها 16.3، فـ <span class='en'>&sigma;&#770; = &radic;(16.3/4) = 2.02 mm</span>.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>خطأ الكاميرا المثالية <span class='en'>&sigma; = 1.2 mm</span> ثم أضفنا اهتزاز <span class='en'>2.17 mm</span> و<span class='en'>&sigma; = 1.1 mm</span> من العمق، وكلها مستقلة. كم الانحراف الكلي؟ وهل تذكر ما قسناه فعلاً في شرط الـ noise (2.8 مم لكل محور)؟</p></div>
+<p class="tag">القادم: C1 الطبقة 3 (الرياضيات: لماذا يتضخم الخطأ عند الاشتقاق، وربطه بـ R في Kalman).</p>
+</main></body></html>

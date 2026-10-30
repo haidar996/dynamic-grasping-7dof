@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4 L5 - افتراضات وحدود نموذج الكرة</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A4 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>ماذا يفترض نموذج الكرة؟</h1>
+<div class="box"><p>جواب السؤال السابق: الخطأ المتوقع للـ forecast بعد ثانية حين تكون الحالة معروفة تماماً حوالي <span class='en'>2 mm</span> (الجدول السابق). والباقي من <span class='en'>17.8 mm</span> يأتي من <b>خطأ تقدير الحالة</b> (أخطاء الكاميرا في المكان والسرعة، والتأخر، وتأثير الخطأ الأولي على المستقبل)، لا من النموذج.</p></div>
+<p>نموذج الحركة الذي بنيناه (الاحتكاك والارتداد) يقوم على الافتراضات التالية. بعضها يحدّ من صلاحية النتائج للواقع، وبعضها يبسّط الحساب فقط:</p>
+<div class='card'><h2>1. الاحتكاك قوة ثابتة تعاكس السرعة (Coulomb)</h2><p>في الواقع الكرة المتدحرجة تواجه مقاومة تدحرج، ومقاومة هواء تزداد مع السرعة، والاحتكاك قد يتغير بحسب السرعة.</p><p><b>إذا لم يتحقق:</b> قانون التباطؤ الثابت لن يطابق، وسيخطئ الـ EKF في تقدير زمن التوقف والمسافة (الحساسية <span class='en'>&Delta;&mu; t<sup>2</sup>/2</span> من الطبقة 3).</p></div><div class='card'><h2>2. &mu; ثابت طوال الإطلاق وفي كل مكان من الساحة</h2><p>نسحب قيمة واحدة لكل إطلاق. أرض حقيقية فيها بقع من أسطح مختلفة (سجادة وبلاط).</p><p><b>إذا لم يتحقق:</b> الـ EKF يستعمل رقماً واحداً <span class='en'>c</span>. لو كانت نصف الأرض سجادة (<span class='en'>&mu; = 1.5</span>) والنصف بلاطاً (<span class='en'>&mu; = 0.3</span>) لكان مخطئاً في أحد النصفين دائماً. هذا الافتراض الأخطر على الـ EKF عندنا.</p></div><div class='card'><h2>3. E ثابت لكل الجدران ولكل سرعات الاصطدام</h2><p>نحن نستعمل <span class='en'>E</span> واحداً لكل إطلاق. في الواقع <span class='en'>E</span> يتغير بحسب سرعة الاصطدام وزاويته (الاصطدام البطيء أقل مرونة غالباً).</p><p><b>إذا لم يتحقق:</b> قد تكون أخطاء الـ forecast أكبر من تقديرنا عند الاصطدامات البطيئة جداً أو الشديدة جداً.</p></div><div class='card'><h2>4. السرعة الموازية للجدار لا تتغير</h2><p>لا يوجد احتكاك مع الجدار ولا دوران ينشأ منه.</p><p><b>إذا لم يتحقق:</b> كرة حقيقية تتدحرج أو تدور سترتد بزاوية مختلفة، وهذا يكسر قاعدة الزاوية في الطبقة 3 (افتراض الدوران في A1).</p></div><div class='card'><h2>5. الارتداد لحظي</h2><p>الكرة تنقلب سرعتها في خطوة واحدة. في الواقع الاصطدام يستغرق جزءاً من الملّي ثانية (الكرة تنضغط).</p><p><b>إذا لم يتحقق:</b> لا تأثير يُذكر عند معدل 60 صورة في الثانية، لكن النموذج يهمل ما يحدث داخل الاصطدام.</p></div><div class='card'><h2>6. الزوايا (الركن)</h2><p>إذا ضربت الكرة ركناً فالمحوران ينعكسان في الخطوة نفسها بشكل مستقل.</p><p><b>إذا لم يتحقق:</b> في الواقع الركن معقد (ارتدادان متتاليان بينهما زمن قصير)، وكرة تصطدم بالمحورين في خطوة واحدة نادرة جداً في عالمنا.</p></div><div class='card'><h2>7. جدران مستقيمة بلا عوائق</h2><p>لا شيء في الساحة سوى الكرة والجدران المتعامدة.</p><p><b>إذا لم يتحقق:</b> الذراع الروبوتية ستكون عائقاً عندما نضيفها لاحقاً. والاصطدام بها غير موجود في النموذج الحالي.</p></div><div class='card'><h2>8. الكرة نقطة منزلقة بلا دوران، ومركزها على ارتفاع ثابت</h2><p>قررنا ذلك لتبسيط الـ state إلى أربعة أرقام.</p><p><b>إذا لم يتحقق:</b> لو دخل الدوران لازدادت أرقام الـ state ولتعقد النموذج (الطبقة 2: <span class='en'>augmented state</span>).</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>أرض غرفة نصفها سجادة ونصفها بلاط. أي افتراض من القائمة ينكسر؟ وماذا يحدث لخطأ الـ forecast في الـ EKF؟</p></div>
+<p class="tag">القادم: A4 الطبقة 6 (تمارين)، ثم A5: الإطلاقات (launches).</p>
+</main></body></html>

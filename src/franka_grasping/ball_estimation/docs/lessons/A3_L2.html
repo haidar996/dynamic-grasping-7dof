@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A3 L2 - الإحداثيات والأبعاد وحدّ الحركة</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A3 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>الإحداثيات والأبعاد وحدّ الحركة</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>0.97 &minus; 0.50 = 0.47 m</span>. وعند الوصول يكون مركز الكرة على بعد <span class='en'>0.03 m</span> (نصف القطر) من وجه الجدار.</p></div>
+
+<div class="card"><h2>1. نظام الإحداثيات (<span class="en">world frame</span>)</h2>
+<ul>
+<li>الأصل <span class='en'>(0, 0, 0)</span> في <b>مركز الساحة على الأرض</b>.</li>
+<li>المحور <span class='en'>x</span> يمين، والمحور <span class='en'>y</span> إلى الأعلى في الرسم العلوي، والمحور <span class='en'>z</span> عمودي إلى الأعلى (نحو الكاميرا). النظام يميني (<span class='en'>right-handed</span>).</li>
+<li>الأرض عند <span class='en'>z = 0</span>. مركز الكرة عند <span class='en'>z = 0.03</span> لأنها تستقر على الأرض.</li>
+<li>الوحدات: متر وثانية وكيلوغرام (<span class='en'>SI</span>).</li>
+</ul>
+<p>موقع الكرة الذي نتكلم عنه دائماً هو موقع <b>مركزها</b> <span class='en'>p = (x, y)</span>.</p></div>
+
+<div class="card"><h2>2. الرموز والقيم</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr><td style="padding:5px"><b>symbol</b></td><td><b>meaning</b></td><td><b>value</b></td></tr>
+<tr><td style="padding:5px">L</td><td>half-width: centre of arena to the inner wall face</td><td>1.0 m</td></tr>
+<tr><td style="padding:5px">r</td><td>ball radius</td><td>0.03 m</td></tr>
+<tr><td style="padding:5px">&ell; = L &minus; r</td><td>limit for the ball centre</td><td>0.97 m</td></tr>
+<tr><td style="padding:5px">m</td><td>ball mass</td><td>0.1 kg</td></tr>
+<tr><td style="padding:5px">h</td><td>time step</td><td>0.002 s</td></tr>
+</table>
+<p>في الكود: <span class='en'>Lx = wall pos &minus; wall half-thickness = 1.05 &minus; 0.05 = 1.0</span>، تقرؤه الدالة من ملف XML بدل أن نكتبه مرتين.</p></div>
+
+<div class="card"><h2>3. المجموعة المسموحة لمركز الكرة</h2>
+<p>التعريف الدقيق: مركز الكرة يجب أن يبقى داخل مربع</p>
+<p class="en" style="text-align:center">C = { (x, y) : |x| &le; &ell;, |y| &le; &ell; }, &nbsp; &ell; = 0.97 m</p>
+<p>طول ضلع المربع <span class='en'>2&ell; = 1.94 m</span> ومساحته <span class='en'>3.76 m<sup>2</sup></span>. لو تجاوز المركز الحدّ فالكرة تخترق الجدار.</p>
+<p><b>شرط الارتداد</b> على المحور <span class='en'>x</span>: <span class='en'>x &gt; &ell;</span> <b>و</b> <span class='en'>v<sub>x</sub> &gt; 0</span> (الكرة تخرج)، أو <span class='en'>x &lt; &minus;&ell;</span> <b>و</b> <span class='en'>v<sub>x</sub> &lt; 0</span>. المحور <span class='en'>y</span> مثله.</p></div>
+
+<div class="card"><h2>4. الجدران والأرض كأجسام</h2>
+<ul>
+<li>كل جدار صندوق: سمكه 0.1 م وارتفاعه 0.1 م وطوله 2.2 م. الجدران تقع خارج المربع <span class='en'>|x|, |y| &le; 1</span>.</li>
+<li>الأرضية لوح مربع بنصف ضلع 1.2 م.</li>
+<li>كلها <span class='en'>contype = 0</span>: لا تصطدم بشيء، وهي تظهر في صورة الكاميرا فقط. الاصطدام يعالجه الكود بالشرط أعلاه.</li>
+</ul></div>
+
+<div class="card"><h2>5. منطقة بداية الإطلاق</h2>
+<p>لا نبدأ الكرة قرب الجدار مباشرة. نختار نقطة البداية عشوائياً داخل <span class='en'>|x|, |y| &le; &ell; &minus; 0.1 = 0.87 m</span> (الهامش <span class='en'>margin = 0.1 m</span> في الكود). منطقة البداية مربع ضلعه 1.74 م.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>ما مساحة منطقة البداية؟ وما نسبتها إلى مساحة المجموعة المسموحة <span class='en'>C</span>؟</p></div>
+<p class="tag">القادم: A3 الطبقة 3 (الرياضيات: ماذا يعني الارتداد والمسافة بين الارتدادات في هذه الساحة؟).</p>
+</main></body></html>

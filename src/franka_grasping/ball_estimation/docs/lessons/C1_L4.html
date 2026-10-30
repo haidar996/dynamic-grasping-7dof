@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L4 - الكود: Sensor</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 4: أين هذا في الكود</p>
+<h1>الصنف Sensor: إضافة الـ noise</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>R = [[6.73, 2.85], [2.85, 8.39]] mm<sup>2</sup></span> (أي <span class='en'>4.59 + 2.435<sup>2</sup> &times; 0.36 = 6.73</span>، و<span class='en'>4.59 + 5.93 &times; 0.64 = 8.39</span>، والتغاير <span class='en'>5.93 &times; 0.48 = 2.85</span>) وهي تطابق الجدول.</p></div>
+
+<div class="card"><h2>1. الإعدادات: SensorParams</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>@dataclass
+class SensorParams:
+    fps: float = 60.0         delay: float = 0.0
+    k_depth: float = 0.0      # depth noise sigma_Z = k_depth * Z^2   (0 = off)
+    jitter_px: float = 0.0    # std of the pixel-centroid jitter       (0 = off)
+    quant_step: float = 0.0   loss_rate: float = 0.0   ...
+    seed: int = 0</pre>
+<p>كل عيب <b>مغلق افتراضياً</b> (القيمة 0). والشروط الستة في <span class='en'>dataset.py</span> تفتح بعضها فقط: مثلاً شرط الـ noise: <span class='en'>SensorParams(k_depth=8.2e-4, jitter_px=0.3)</span>.</p></div>
+
+<div class="card"><h2>2. تطبيق الـ noise (داخل Sensor.apply)</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>u, v, z = parts                                   # ideal (u, v, z) from the stored file
+if self.p.jitter_px &gt; 0:
+    u, v = np.array([u, v]) + self.rng_noise.normal(0.0, self.p.jitter_px, 2)
+xy = self.cam.back_project(u, v, self.corrupt_depth(z))
+self.last = xy
+return xy, True, False
+
+def corrupt_depth(self, z):
+    if p.k_depth &gt; 0:
+        z = z + self.rng_noise.normal(0.0, p.k_depth * np.asarray(z) ** 2)
+    ...
+    return z</pre>
+<ul>
+<li><b>الترتيب مهم:</b> نضيف الـ jitter إلى <span class='en'>(u, v)</span> ونضيف خطأ العمق إلى <span class='en'>z</span>، <b>ثم</b> نحوّل بالإسقاط العكسي إلى <span class='en'>(x, y)</span>. ولهذا خطأ العمق يظهر خطاً (الاشتقاق في C1) وهو يتغير مع المكان.</li>
+<li>الـ jitter: رقمان <span class='en'>N(0, 0.3<sup>2</sup>)</span> (واحد لكل من <span class='en'>u</span> و<span class='en'>v</span>).</li>
+<li>العمق: رقم واحد بانحراف <span class='en'>k z<sup>2</sup></span> (يعتمد على <span class='en'>z</span> المقيس نفسه).</li>
+<li><span class='en'>self.last = xy</span>: نحفظ آخر قياس لنستعمله في الانقطاع الصامت (C4).</li>
+<li>الدالة تعيد <span class='en'>(xy, valid, was_lost)</span>: المكان والصلاحية والعلامة الخفية للإطار الضائع.</li>
+</ul></div>
+
+<div class="card"><h2>3. مولّدان عشوائيان منفصلان</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>self.rng_loss  = np.random.default_rng([params.seed, 0])
+self.rng_noise = np.random.default_rng([params.seed, 1])</pre>
+<p>واحد للانقطاعات وواحد للـ noise. فائدته: لو غيّرنا قوة الـ noise فإن <b>أماكن الفجوات لا تتغير</b> (لأنها تأتي من مولّد آخر بنفس البذرة)، فنقارن الشروط المختلفة على نفس الفجوات (paired، A5).</p>
+<p>وفي <span class='en'>apply_condition</span>: البذرة = رقم الإطلاق (أو إزاحة منه)، فكل estimator يرى الأرقام العشوائية نفسها لنفس الإطلاق.</p></div>
+
+<div class="card"><h2>4. ملاحظتان</h2>
+<ul>
+<li>الـ noise يُطبَّق على <b>الأرقام المخزنة</b> (u, v, z) في ملفات الإطلاق، فلا نحتاج إعادة رسم. هذا ما يجعل كل شرط يُحسب في ثوانٍ.</li>
+<li>كل إطار يستهلك أرقاماً من المولّد بالتسلسل. لذلك تغيير <b>ترتيب</b> الاستدعاءات (مثلاً إضافة سحب جديد قبل الـ noise) يغيّر أرقام الإطارات اللاحقة. هذا جيد للإعادة (reproducibility) لكن يجب الانتباه عند تعديل الكود.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لماذا لا يكفي مولّد عشوائي واحد للـ noise والانقطاع معاً، إذا أردنا مقارنة شرط الـ noise بشرط الـ noise مع انقطاع؟</p></div>
+<p class="tag">القادم: C1 الطبقة 5 (الافتراضات والحدود).</p>
+</main></body></html>

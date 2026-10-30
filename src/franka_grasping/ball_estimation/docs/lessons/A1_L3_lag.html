@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L3 lag - أين الـ lag؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 3: توضيح</p>
+<h1>أين الـ lag؟</h1>
+
+<div class="card">
+<h2>الفكرة في جملة</h2>
+<p>الكرة تبطأ باستمرار. عندما نحسب السرعة من نافذة (عدة صور)، نحصل على <b>متوسط</b> السرعة خلال النافذة. هذا المتوسط يساوي سرعة الكرة <b>في منتصف النافذة</b>، أي قبل نصف مدة النافذة. لكننا نريد سرعتها <b>الآن</b>. الكرة تبطأ، فسرعتها الآن أقل من المتوسط. الفرق هو الـ <span class="en">lag</span>.</p>
+<p>مثال من الحياة: أنت تضغط على الفرامل في سيارة. عدّاد يعرض متوسط سرعتك في آخر 5 ثوانٍ سيقول رقماً أكبر من سرعتك الحقيقية الآن. العدّاد "متأخر".</p>
+</div>
+
+<div class="card">
+<h2>الرسم</h2>
+<svg viewBox="0 0 520 230" style="width:100%;height:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="13">
+  <rect x="140" y="20" width="270" height="170" fill="#1f5f8b" opacity="0.12"/>
+  <line x1="40" y1="190" x2="480" y2="190" stroke="currentColor"/>
+  <line x1="40" y1="20" x2="40" y2="190" stroke="currentColor"/>
+  <line x1="60" y1="45" x2="460" y2="165" stroke="#1f5f8b" stroke-width="3"/>
+  <line x1="275" y1="20" x2="275" y2="190" stroke="#c0762b" stroke-dasharray="5 4"/>
+  <line x1="410" y1="20" x2="410" y2="190" stroke="#b03a3a" stroke-dasharray="5 4"/>
+  <circle cx="275" cy="105" r="6" fill="#c0762b"/>
+  <circle cx="410" cy="145" r="6" fill="#b03a3a"/>
+  <text x="46" y="14" fill="currentColor">velocity</text>
+  <text x="440" y="208" fill="currentColor">time</text>
+  <text x="140" y="212" fill="currentColor">window start</text>
+  <text x="228" y="38" fill="#c0762b">middle of window</text>
+  <text x="228" y="54" fill="#c0762b">(what the estimate describes)</text>
+  <text x="368" y="38" fill="#b03a3a">now</text>
+  <text x="326" y="177" fill="#b03a3a">true velocity now</text>
+  <text x="285" y="100" fill="#c0762b">average = value here</text>
+</svg>
+<p>الخط الأزرق هو السرعة الحقيقية وهي تنقص مع الزمن. المنطقة الزرقاء الفاتحة هي النافذة. المتوسط (النقطة البرتقالية) يقع في المنتصف، والسرعة الحقيقية الآن (النقطة الحمراء) أقل منه. المسافة العمودية بين النقطتين هي الـ lag.</p>
+</div>
+
+<div class="card">
+<h2>بأرقام</h2>
+<p>افترض أن التباطؤ <span class="en">a = 0.85 m/s<sup>2</sup></span> وأن سرعة الكرة <b>الآن</b> هي <span class="en">1.000 m/s</span>، وأن النافذة 5 صور، أي <span class="en">5/60 = 0.0833 s</span>.</p>
+<ul>
+<li>قبل بداية النافذة بالضبط، كانت السرعة أكبر: <span class="en">1.000 + 0.85 &times; 0.0833 = 1.0708 m/s</span>.</li>
+<li>السرعة تتغير بانتظام، فمتوسطها خلال النافذة هو متوسط الطرفين: <span class="en">(1.0708 + 1.000) / 2 = 1.0354 m/s</span>.</li>
+<li>المسافة خلال النافذة: <span class="en">1.0354 &times; 0.0833 = 0.0863 m</span>. فإذا قسمنا المسافة على الزمن حصلنا على <b>1.0354</b>، وهذا ما يخرجه الـ estimator.</li>
+<li>الحقيقة الآن: <span class="en">1.000</span>. إذن الـ lag = <span class="en">1.0354 &minus; 1.000 = 0.0354 m/s</span>.</li>
+</ul>
+<p>وهذا يساوي الصيغة <span class="en">a &times; (window) / 2 = 0.85 &times; 0.0833 / 2 = 0.0354</span> التي استعملتها في الجدول.</p>
+</div>
+
+<div class="card">
+<h2>لماذا نافذة صورة واحدة (<span class="en">m = 1</span>) أقل lag؟</h2>
+<p>النافذة أقصر (0.0167 ث)، فمنتصفها أقرب إلى "الآن"، والـ lag = <span class="en">0.85 &times; 0.0167 / 2 = 0.007 m/s</span>. لكن نفس النافذة القصيرة تضخّم الـ noise (لأننا نقسم على زمن صغير). لهذا هناك مقايضة: نافذة قصيرة = noise كبير و lag صغير، نافذة طويلة = noise صغير و lag كبير.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>بنفس التباطؤ <span class="en">0.85 m/s<sup>2</sup></span> وبنافذة من 10 صور (<span class="en">10/60 s</span>)، كم يساوي الـ lag؟ وهل هو أكبر أم أصغر من حالة 5 صور؟</p>
+</div>
+</main></body></html>

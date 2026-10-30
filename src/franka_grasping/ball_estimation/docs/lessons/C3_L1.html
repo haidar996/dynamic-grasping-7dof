@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C3 L1 - معدل الإطارات والتأخير</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C3 &middot; الطبقة 1: الحدس</p>
+<h1>معدل الإطارات والتأخير</h1>
+
+<div class="box"><p>جواب السؤال السابق: نعم، يقترب من العشوائي عند ارتفاع منخفض، تقريباً <span class='en'>0.93 m</span> (حين تصغر الخطوة عن 3.5 مم). والآن الجزء C3: عيبان آخران في المستشعر يخصان الزمن.</p></div>
+
+<div class="card"><h2>1. معدل الإطارات (<span class="en">frame rate</span>)</h2>
+<p>الكاميرا لا ترى العالم باستمرار. تلتقط صورة كل 1/60 ثانية (<span class='en'>16.7 ms</span>). وبين صورتين لا نعرف شيئاً: المعلومات تصلنا على دفعات. كم تتحرك الكرة بين صورتين؟</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>ball speed</b></td><td style="padding:4px 12px"><b>moves per frame (16.7 ms)</b></td><td style="padding:4px 12px"><b>moves in a 40 ms delay</b></td></tr>
+<tr><td style="padding:4px 12px">1 m/s</td><td>1.7 cm</td><td>4 cm</td></tr>
+<tr><td style="padding:4px 12px">3 m/s</td><td>5.0 cm</td><td>12 cm</td></tr>
+<tr><td style="padding:4px 12px">5 m/s</td><td>8.3 cm</td><td>20 cm</td></tr>
+</table></div>
+
+<div class="card"><h2>2. التأخير (<span class="en">delay</span>)</h2>
+<p>الصورة تحتاج وقتاً لتصل إلى الـ estimator: التعريض، ونقل البيانات، ومعالجتها. فحين تصل الصورة تكون «قديمة»: الكرة التي فيها تحركت منذ ذلك الوقت. بتأخير 40 ms وسرعة 3 م/ث تكون الكرة قد تقدمت 12 سم، فلو اعتمدت الذراع على الصورة كما هي لتوجهت إلى مكان قديم.</p></div>
+
+<div class="card"><h2>3. زمنان مختلفان لكل صورة</h2>
+<ul>
+<li><b>زمن الالتقاط</b> (<span class="en">capture time</span>): متى أُخذت الصورة فعلاً. هو الزمن الحقيقي الذي يخص القياس.</li>
+<li><b>زمن الوصول</b> (<span class="en">arrival time</span>): متى استلم الـ estimator القياس: <span class='en'>arrival = capture + delay</span>.</li>
+</ul>
+<svg viewBox="0 0 520 230" style="width:100%;max-width:620px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<line x1="30" y1="150" x2="500" y2="150" stroke="currentColor" stroke-width="1.5"/>
+<text x="470" y="170" fill="currentColor">time</text>
+<g stroke="#2e9b3e" stroke-width="2"><line x1="70" y1="140" x2="70" y2="160"/><line x1="150" y1="140" x2="150" y2="160"/><line x1="230" y1="140" x2="230" y2="160"/><line x1="310" y1="140" x2="310" y2="160"/><line x1="390" y1="140" x2="390" y2="160"/></g>
+<text x="40" y="185" fill="#2e9b3e">camera takes pictures (capture times t_k)</text>
+<text x="70" y="132" fill="#2e9b3e" text-anchor="middle">t1</text><text x="150" y="132" fill="#2e9b3e" text-anchor="middle">t2</text><text x="230" y="132" fill="#2e9b3e" text-anchor="middle">t3</text>
+<text x="110" y="205" fill="currentColor" text-anchor="middle">1/60 s = 16.7 ms</text>
+<line x1="70" y1="198" x2="150" y2="198" stroke="currentColor"/>
+<g fill="#b03a3a"><polygon points="130,60 124,48 136,48"/><polygon points="210,60 204,48 216,48"/><polygon points="290,60 284,48 296,48"/></g>
+<text x="130" y="40" fill="#b03a3a" text-anchor="middle">arrives</text>
+<path d="M70 100 Q100 85 130 75" fill="none" stroke="#1f5f8b" stroke-width="2" marker-end="url(#a)"/>
+<text x="70" y="115" fill="#1f5f8b">picture taken at t1</text>
+<text x="300" y="30" fill="#b03a3a">arrival = capture + delay (here 40 ms)</text>
+<text x="170" y="82" fill="currentColor">during the delay the ball keeps moving:</text>
+<text x="170" y="98" fill="currentColor">at 3 m/s it moves 12 cm</text>
+</svg></div>
+
+<div class="card"><h2>4. ماذا يفعل الـ estimator؟</h2>
+<p>قرارنا (سبق أن وافقتَ عليه): نحتفظ بزمن الالتقاط. أي أن الـ estimator يضع كل قياس في مكانه الصحيح على محور الزمن (زمن الالتقاط) ثم يتنبأ إلى الأمام بمقدار التأخير ليعرف أين الكرة <b>الآن</b> (زمن الوصول). هذا هو <b>تعويض التأخير</b> (<span class='en'>delay compensation</span>).</p>
+<p>وهذه نفسها القيمة <span class='en'>now_pos</span> و<span class='en'>now_vel</span> في جداولنا: نقيس الخطأ في لحظة الوصول بعد التنبؤ من لحظة الالتقاط.</p></div>
+
+<div class="card"><h2>5. صدق عن القيمة 40 ms</h2>
+<p>القيمة <span class='en'>40 ms</span> <b>مؤقتة</b>. جاءت من جملة في ورقة Liu عن زمن الحلقة الكاملة على الروبوت الحقيقي (المراقبة والحساب والتنفيذ)، وليست زمن تأخير الكاميرا وحدها. صححتُ ذلك سابقاً. سنجرّب عدة قيم (sweep) بدل الاعتماد على واحدة.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>كرة بسرعة <span class='en'>2 m/s</span>: كم تتحرك بين صورتين؟ وكم تتحرك خلال تأخير 40 ms؟</p></div>
+<p class="tag">القادم: C3 الطبقة 2 (التعريفات الدقيقة: t_k، التأخير، تعويضه).</p>
+</main></body></html>

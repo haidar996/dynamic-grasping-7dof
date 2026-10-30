@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 L2 - الخطوة الزمنية، والـ integration، والتقريب</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A2 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>الخطوة الزمنية، والـ integration، والتقريب</h1>
+
+<div class="box"><p>الجواب المتوقع للسؤال السابق: المحاكي هو الذي يحسب حركة الكرة، فهو يحتفظ بقيمها الحقيقية في ذاكرته في كل خطوة. أما في تجربة حقيقية فلا أحد يعرف المكان الحقيقي بدقة مطلقة، إلا بجهاز قياس آخر له خطؤه.</p></div>
+
+<div class="card"><h2>1. المعادلة التفاضلية</h2>
+<p>قوانين الحركة تقول كيف يتغير الـ state مع الزمن. لكرة تتباطأ بتباطؤ ثابت <span class='en'>a</span>:</p>
+<p class="en" style="text-align:center">dx/dt = v, &nbsp;&nbsp; dv/dt = &minus;a</p>
+<p>هذه معادلة تفاضلية (<span class='en'>ordinary differential equation, ODE</span>). معناها: معدل تغيّر المكان هو السرعة، ومعدل تغيّر السرعة هو <span class='en'>&minus;a</span>.</p></div>
+
+<div class="card"><h2>2. الحل الدقيق (حالة بسيطة)</h2>
+<p>لهذه الحالة نعرف الحل بالورقة (طالما لم تتوقف الكرة):</p>
+<p class="en" style="text-align:center">v(t) = v<sub>0</sub> &minus; a t, &nbsp;&nbsp; x(t) = v<sub>0</sub> t &minus; a t<sup>2</sup>/2</p>
+<p>مثال: <span class='en'>v<sub>0</sub> = 1, a = 0.85, t = 1</span> يعطي <span class='en'>x = 1 &minus; 0.425 = 0.575 m</span> و<span class='en'>v = 0.15 m/s</span>. نستعمل هذا الحل كـ «الإجابة الصحيحة» لنقيس دقة المحاكي.</p></div>
+
+<div class="card"><h2>3. الـ integration والخطوة h</h2>
+<p>في الحالات الحقيقية (احتكاك مع ارتداد وكاميرا ...) لا يوجد حل بالورقة. فنحسبه بخطوات صغيرة <span class='en'>h</span> (<span class='en'>time step</span>). هذه الطريقة تسمّى <span class='en'>numerical integration</span>. أبسطها:</p>
+<p class="en" style="text-align:center">v<sub>n+1</sub> = v<sub>n</sub> + (&minus;a) h, &nbsp;&nbsp; x<sub>n+1</sub> = x<sub>n</sub> + v<sub>n+1</sub> h</p>
+<p>تسمّى <span class='en'>semi-implicit Euler</span>: نحدّث السرعة أولاً، ثم نستعمل السرعة الجديدة لتحديث المكان. تحققت من النموذج في مشروعنا: المحاكي يستعمل المُكامِل الافتراضي <span class='en'>mjINT_EULER</span> مع <span class='en'>h = 0.002 s</span>.</p></div>
+
+<div class="card"><h2>4. التقريب: الخطأ يتبع حجم الخطوة</h2>
+<p>جرّبنا الحالة نفسها (<span class='en'>t = 1 s</span>) بخطوات مختلفة، وقارنّا مع الحل الدقيق 0.575 م:</p>
+<table class="en" style="margin:auto;border-collapse:collapse"><tr><td style="padding:3px 12px"><b>h (s)</b></td><td><b>steps</b></td><td style="padding:3px 12px"><b>x (m)</b></td><td><b>error (mm)</b></td></tr><tr><td style='padding:3px 12px'>0.1</td><td>10</td><td style='padding:3px 12px'>0.53250</td><td>-42.50</td></tr><tr><td style='padding:3px 12px'>0.01</td><td>100</td><td style='padding:3px 12px'>0.57075</td><td>-4.25</td></tr><tr><td style='padding:3px 12px'>0.002</td><td>500</td><td style='padding:3px 12px'>0.57415</td><td>-0.85</td></tr><tr><td style='padding:3px 12px'>0.0005</td><td>2000</td><td style='padding:3px 12px'>0.57479</td><td>-0.21</td></tr></table>
+<p>كلما صغرت الخطوة عشر مرات صغر الخطأ عشر مرات تقريباً (من &minus;42.5 إلى &minus;4.25 مم). نقول إن الطريقة من الدرجة الأولى (<span class='en'>first-order</span>): الخطأ يتناسب مع <span class='en'>h</span>.</p>
+<p>في مشروعنا <span class='en'>h = 2 ms</span>: الخطأ حوالي 0.85 مم بعد ثانية كاملة. هذا أصغر بكثير من خطأ الكاميرا (حوالي 2 إلى 3 مم)، فلا يؤثر على نتائجنا. ولو اخترنا <span class='en'>h = 0.1 s</span> لصار الخطأ 42 مم، وهذا مرفوض.</p></div>
+
+<div class="card"><h2>ملخص التعريفات</h2>
+<ul>
+<li><span class='en'>ODE</span>: معادلة تصف معدل تغيّر الـ state.</li>
+<li><span class='en'>time step h</span>: الخطوة الزمنية الصغيرة (عندنا 2 ms).</li>
+<li><span class='en'>numerical integration</span>: حساب الحل خطوة بخطوة.</li>
+<li><span class='en'>first-order method</span>: الخطأ يتناسب مع <span class='en'>h</span>.</li>
+<li>المحاكي = ODE + integrator + خطوة، وهو <b>تقريب</b> للواقع، وكذلك للرياضيات الدقيقة.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>الخطأ في المكان بعد ثانية هو <span class='en'>&minus;0.85 mm</span> عند <span class='en'>h = 0.002</span>. لو جعلنا <span class='en'>h = 0.004</span> (ضعف الخطوة)، كم تتوقع أن يصير الخطأ؟</p></div>
+<p class="tag">القادم: A2 الطبقة 3 (الرياضيات: لماذا الخطأ يساوي بالضبط ما رأينا؟)، ثم 4 (الكود)، 5 (الحدود)، 6 (تمارين).</p>
+</main></body></html>

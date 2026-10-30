@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L3 - الرياضيات: تشابه المثلثات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 3: الرياضيات</p>
+<h1>اشتقاق الصيغة بتشابه المثلثات</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>659.4 &times; 0.5 / 2.97 = 111.0 px</span> عند 40&deg;، مقابل 70.0 عند 60&deg;. أي أن التكبير زاد المسافة في الصورة بنسبة <span class='en'>659.4/415.7 = 1.59</span>.</p></div>
+
+<div class="card"><h2>1. المثلثان المتشابهان</h2>
+<svg viewBox="0 0 420 220" style="width:100%;max-width:520px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<line x1="40" y1="150" x2="400" y2="150" stroke="currentColor" stroke-width="1.2"/>
+<line x1="170" y1="40" x2="170" y2="190" stroke="#1f5f8b" stroke-width="2"/>
+<line x1="60" y1="150" x2="330" y2="70" stroke="#c0762b" stroke-width="2"/>
+<line x1="330" y1="70" x2="330" y2="150" stroke="#9a9a94" stroke-dasharray="4 3"/>
+<line x1="170" y1="150" x2="170" y2="116.7" stroke="#b03a3a" stroke-width="4"/>
+<circle cx="60" cy="150" r="5" fill="#c0762b"/><circle cx="330" cy="70" r="5" fill="#2e9b3e"/>
+<text x="40" y="172" fill="#c0762b">O (camera centre)</text>
+<text x="150" y="32" fill="#1f5f8b">image plane (distance f)</text>
+<text x="338" y="66" fill="#2e9b3e">P = (X, Z)</text>
+<text x="338" y="118" fill="currentColor">X</text>
+<text x="230" y="168" fill="currentColor">Z</text>
+<text x="100" y="168" fill="currentColor">f</text>
+<text x="176" y="136" fill="#b03a3a">x_img</text>
+<text x="360" y="144" fill="currentColor">axis</text>
+</svg>
+<p>نأخذ مقطعاً جانبياً. الكاميرا في <span class='en'>O</span>، المحور البصري أفقي. نقطة <span class='en'>P</span> على بعد <span class='en'>Z</span> على المحور وإزاحتها <span class='en'>X</span> عنه. مستوى الصورة عند المسافة <span class='en'>f</span> من <span class='en'>O</span>. الشعاع من <span class='en'>P</span> إلى <span class='en'>O</span> يقطع مستوى الصورة عند ارتفاع <span class='en'>x<sub>img</sub></span>.</p>
+<p>المثلثان: الكبير (<span class='en'>O</span>، قدم <span class='en'>P</span> على المحور، <span class='en'>P</span>) والصغير (<span class='en'>O</span>، قدم نقطة الصورة على المحور، نقطة الصورة) لهما الزاوية نفسها عند <span class='en'>O</span> وزاويتان قائمتان. إذن متشابهان، ونسبة الأضلاع المتناظرة متساوية:</p>
+<p class="en" style="text-align:center">x<sub>img</sub> / f = X / Z &nbsp;&nbsp;&rArr;&nbsp;&nbsp; <b>x<sub>img</sub> = f &middot; X / Z</b></p>
+<p>ثم نضيف مركز الصورة فنحصل على <span class='en'>u = c<sub>x</sub> + f X / Z</span>. وللصفوف نفس الشيء مع إشارة سالبة لأن الصفوف تزداد نحو الأسفل.</p></div>
+
+<div class="card"><h2>2. المعكوس (ما سنحتاجه في B2)</h2>
+<p>إذا عرفنا <span class='en'>u</span> وعرفنا العمق <span class='en'>Z</span> فإن <span class='en'>X = (u &minus; c<sub>x</sub>) Z / f</span>. هذه صيغة <b>الإسقاط العكسي</b> (<span class="en">back-projection</span>). بالصورة وحدها لا يمكن معرفة <span class='en'>X</span>، فنحتاج <span class='en'>Z</span> (ولهذا نستعمل كاميرا عمق).</p></div>
+
+<div class="card"><h2>3. فحص الصيغة على الكاميرا الحقيقية في MuJoCo</h2>
+<p>وضعتُ الكرة في أماكن معروفة وجعلت MuJoCo يصوّرها، وكشفتُ مركزها في الصورة، وقارنت مع الصيغة (60&deg; إلا ما ذُكر):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>ball (x, y)</b></td><td style="padding:4px 12px"><b>measured (px)</b></td><td style="padding:4px 12px"><b>formula (px)</b></td></tr>
+<tr><td style="padding:4px 12px">(0.5, 0)</td><td>u&minus;c<sub>x</sub> = 70.00</td><td>69.98</td></tr>
+<tr><td style="padding:4px 12px">(0, 0.5)</td><td>c<sub>y</sub>&minus;v = 70.00</td><td>69.98</td></tr>
+<tr><td style="padding:4px 12px">(&minus;0.8, 0.6)</td><td>&minus;112.07, 84.05</td><td>&minus;111.97, 83.98</td></tr>
+<tr><td style="padding:4px 12px">(0.5, 0) at 40&deg;</td><td>111.30</td><td>111.01</td></tr>
+</table>
+<p>الاتفاق ممتاز (فروق 0.02 إلى 0.1 بكسل عند 60&deg;). عند 40&deg; الفرق 0.29 بكسل، أكبر قليلاً، ولم أحقق من سببه. احتمالان: إسقاط الكرة على الصورة بيضاوي الشكل فمركزه المرئي يختلف قليلاً عن إسقاط مركز الكرة، أو تقريب البكسل في قناع اللون. والعمق المقيس 2.940 م يساوي بُعد قمة الكرة (<span class='en'>3 &minus; 0.06</span>) وهذا متوقع: الكاميرا تقيس السطح لا المركز، لذلك نضيف نصف القطر لاحقاً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>كرة تظهر على بعد <span class='en'>100 px</span> يمين مركز الصورة، و<span class='en'>f = 415.7</span> و<span class='en'>Z = 2.97 m</span>. ما <span class='en'>X</span> بالمتر؟</p></div>
+<p class="tag">القادم: B1 الطبقة 4 (الكود: الصنف Pinhole في sensing/camera.py).</p>
+</main></body></html>

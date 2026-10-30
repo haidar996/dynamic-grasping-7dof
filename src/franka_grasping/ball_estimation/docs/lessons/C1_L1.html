@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L1 - الـ noise</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 1: الحدس</p>
+<h1>الجزء C: عيوب المستشعر. أولاً: الـ noise</h1>
+
+<div class="box"><p>انتقلنا إلى الجزء C. حتى الآن كانت كاميرتنا <b>مثالية</b> (خطأ 1.2 إلى 1.8 مم فقط). الكاميرا الحقيقية ليست كذلك، فنضيف إليها عيوباً تدريجياً، ونبدأ بالأبسط: الـ <span class='en'>noise</span>، أي الخطأ العشوائي في كل قياس. جواب السؤال السابق: انتقلنا إلى C كما اقترحتُ.</p></div>
+
+<div class="card"><h2>مصدران للخطأ العشوائي</h2>
+<ol>
+<li><b>اهتزاز المركز (<span class="en">centroid jitter</span>):</b> مكان الكرة في الصورة يرتجف جزءاً من البكسل من إطار لآخر (كأن اليد تهتز قليلاً). عندنا <span class='en'>0.3 px</span> على كل محور، أي <span class='en'>0.3 &times; 7.22 = 2.2 mm</span> على الأرض.</li>
+<li><b>خطأ العمق (<span class="en">depth noise</span>):</b> قراءة العمق نفسها ترتجف، والارتجاف يكبر <b>مع مربع المسافة</b>: <span class='en'>&sigma;<sub>Z</sub> = 8.2&times;10<sup>-4</sup> &times; Z<sup>2</sup></span>. عند 3 م يساوي 7.4 مم، وعند 1.5 م يساوي 1.8 مم فقط.</li>
+</ol>
+<p>القيمتان <b>مؤقتتان</b> اخترتُهما (الأولى تخمين، والثانية مشتقة من ورقة Chatterjee عن كاميرات العمق، سنراها لاحقاً).</p></div>
+
+<div class="card"><h2>كيف يبدو الخطأ؟ (تجربة حقيقية)</h2>
+<p>وضعتُ الكرة ساكنة عند <span class='en'>(0.9, 0.5)</span> وأخذتُ 1000 قياس بكل نوع من الـ noise. كل نقطة هي قياس واحد، ومحاور الرسم هي الخطأ عن المكان الحقيقي بالملّيمتر:</p>
+<img src="img/C1_noise.png" alt="noise" style='width:100%;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<ul>
+<li><b>اهتزاز المركز فقط:</b> سحابة دائرية. الانحراف المعياري <span class='en'>2.1 mm</span> على كل محور.</li>
+<li><b>خطأ العمق فقط:</b> <b>خط مستقيم</b>. الانحراف <span class='en'>2.1 mm</span> على <span class='en'>x</span> و<span class='en'>1.2 mm</span> على <span class='en'>y</span>.</li>
+<li><b>الاثنان معاً:</b> سحابة بيضاوية. <span class='en'>3.1 mm</span> على <span class='en'>x</span> و<span class='en'>2.4 mm</span> على <span class='en'>y</span>.</li>
+</ul>
+<p>(الإشارة الحمراء <span class='en'>&times;</span> هي القياس المثالي، أي بلا noise: يبعد 0.86 و0.56 مم عن الحقيقة، وهذا خطأ ثابت وليس عشوائياً.)</p></div>
+
+<div class="card"><h2>لماذا خطأ العمق خط مستقيم؟</h2>
+<p>لأن العمق يدخل في الصيغة <span class='en'>x = (u &minus; c<sub>x</sub>) Z<sub>c</sub> / f</span> و<span class='en'>y = &minus;(v &minus; c<sub>y</sub>) Z<sub>c</sub> / f</span>. خطأ في <span class='en'>Z<sub>c</sub></span> يضرب <b>الاثنين</b> بالنسبة نفسها، فيتحرك المكان على الخط الواصل بين مركز الصورة والكرة. ويكون الخطأ <span class='en'>(x / Z<sub>c</sub>) &times; &delta;Z</span>: عند مركز الصورة (<span class='en'>x = 0</span>) لا أثر له، وعند الأطراف يكبر. هنا <span class='en'>0.9/2.97 &times; 7.4 = 2.2 mm</span> على <span class='en'>x</span>، وهذا ما رأيناه.</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لو وُضعت الكرة تماماً تحت الكاميرا (<span class='en'>x = y = 0</span>) فهل يؤثر خطأ العمق على قياس المكان؟ ولماذا؟</p></div>
+<p class="tag">القادم: C1 الطبقة 2 (التعريفات الدقيقة: التوزيع الطبيعي والانحراف المعياري).</p>
+</main></body></html>

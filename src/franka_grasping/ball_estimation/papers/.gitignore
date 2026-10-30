@@ -1,0 +1,7 @@
+# keep copyrighted PDFs and rendered previews out of git
+*.pdf
+png/
+*.aux
+*.log
+*.out
+*.toc

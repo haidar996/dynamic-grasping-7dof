@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L6 - تمارين</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 6: تمارين</p><h1>تمارين تحلّها بنفسك</h1>
+<div class="box"><p>جواب السؤال السابق: أخطر افتراض في رأيي هو الارتباط الزمني (رقم 2)، ثم الانحياز (رقم 1)، لأن مرشّح Kalman يعتمد على أن الأخطاء مستقلة عن بعضها وعديمة المتوسط. وهذا رأيي وليس شيئاً قسناه.</p></div>
+<p>احسب بالورقة ثم افتح الجواب.</p>
+<div class='card'><h2>تمرين 1</h2><p>اهتزاز مركز <span class='en'>0.3 px</span> عند <span class='en'>Z<sub>c</sub> = 2.97 m</span>. كم ملّيمتراً على الأرض لكاميرا 60&deg; (<span class='en'>f = 415.7</span>) ولكاميرا 40&deg; (<span class='en'>f = 659.4</span>)؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>0.3 &times; 2.97 / 415.7 = 2.14 mm</span> و<span class='en'>0.3 &times; 2.97 / 659.4 = 1.35 mm</span>. الكاميرا الأضيق زاوية أدق بنسبة 1.6.</p></details></div><div class='card'><h2>تمرين 2</h2><p>خطأ العمق: كم <span class='en'>&sigma;<sub>Z</sub></span> عند <span class='en'>z = 2.94 m</span>؟ وعند <span class='en'>z = 2 m</span>؟ (<span class='en'>k = 8.2&times;10<sup>-4</sup></span>).</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>8.2&times;10<sup>-4</sup> &times; 2.94<sup>2</sup> = 7.09 mm</span>. وعند 2 م: <span class='en'>8.2&times;10<sup>-4</sup> &times; 4 = 3.28 mm</span> (المسافة أقل بالثلث فالخطأ أقل بأكثر من النصف).</p></details></div><div class='card'><h2>تمرين 3</h2><p>كرة عند <span class='en'>x = 0.7 m</span>. كم <span class='en'>&sigma;<sub>x</sub></span> الناتج عن خطأ العمق وحده؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>0.7 &times; 2.435 = 1.70 mm</span> (بصيغة <span class='en'>|x| &times; k Z<sub>c</sub></span>).</p></details></div><div class='card'><h2>تمرين 4</h2><p>أضف الخطأ الثابت للكاميرا المثالية (<span class='en'>1.2 mm</span>) إلى اهتزاز 2.14 مم وخطأ العمق من التمرين السابق. كم الانحراف الكلي على <span class='en'>x</span>؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>&radic;(1.2<sup>2</sup> + 2.14<sup>2</sup> + 1.70<sup>2</sup>) = &radic;(1.44 + 4.58 + 2.89) = 2.98 mm</span>.</p></details></div><div class='card'><h2>تمرين 5</h2><p>لو حسبنا السرعة بالفرق البسيط (A1) بهذا الخطأ <span class='en'>2.98 mm</span> على كل محور، كم يصبح الانحراف المعياري لخطأ السرعة على محور واحد؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>&radic;2 &times; 2.98 mm &times; 60 = 0.253 m/s</span>. وهذا كبير: ربع متر في الثانية من خطأ لا يتجاوز 3 مم في المكان.</p></details></div><div class='card'><h2>تمرين 6</h2><p>عند <span class='en'>p = (0.97, 0.97)</span> كان <span class='en'>R = [10.17, 5.58; 5.58, 10.17] mm<sup>2</sup></span>. في أي اتجاه الانحراف أصغر، وفي أي اتجاه أكبر؟ (تلميح: القيمتان الذاتيتان لمصفوفة <span class='en'>[a, b; b, a]</span> هما <span class='en'>a &plusmn; b</span>.)</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>القيمتان <span class='en'>10.17 + 5.58 = 15.75</span> و<span class='en'>10.17 &minus; 5.58 = 4.59</span>، أي انحرافان <span class='en'>3.97</span> و<span class='en'>2.14 mm</span>. الأكبر على الاتجاه <span class='en'>(1, 1)</span>، أي <b>الشعاعي</b> (على الخط من المركز إلى الكرة، حيث يتحرك خطأ العمق). والأصغر عمودياً عليه <span class='en'>(1, &minus;1)</span>، وهو اهتزاز المركز وحده (2.14).</p></details></div><div class='card'><h2>تمرين 7</h2><p>لماذا لا نحفظ الـ noise في ملفات الإطلاقات؟ ولماذا هذا أفضل؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>نحفظ القياسات المثالية فقط، ونضيف الـ noise عند الطلب بمولّد ببذرة معروفة. فنغيّر الـ noise بلا إعادة رسم، وتبقى الملفات صغيرة، ويرى كل estimator الأرقام نفسها (A5 وC1 L4).</p></details></div>
+<div class="card"><h2>انتهى الدرس C1</h2><p>تعلمنا: مصدرا الـ noise (jitter وعمق)، لماذا خطأ العمق خط شعاعي، التوزيع الطبيعي، مصفوفة التباين R، الكود، وحدود النموذج. <b>القادم: C2، التكميم (quantisation): لماذا يعطي حساس العمق قيماً متقطعة، وكيف تؤثر على الخطأ.</b></p></div>
+</main></body></html>

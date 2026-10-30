@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C3 L5 - حدود نموذج الإطارات والتأخير</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C3 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>حدود نموذج الإطارات والتأخير</h1>
+<div class="box"><p>قفزتُ فوق طبقة الكود (C3 L4) كما طلبت. جواب السؤال السابق: <span class='en'>P = 0.656 &times; 1.26 &times; 0.08 = 6.6%</span>، وخطأ fd بلا اصطدام <span class='en'>0.25 &times; 0.08 = 20 mm</span> (ضعف 10 مم).</p></div>
+<div class='card'><h2>1. التأخير ثابت في كل الإطارات</h2><p>كل إطار يصل بعد <span class='en'>40 ms</span> بالضبط، فالقياسات تصل بالترتيب نفسه.</p><p><b>إذا لم يتحقق:</b> في نظام حقيقي يتغير التأخير (ازدحام نقل، زمن معالجة متغير). قد يصل إطار أحدث قبل إطار أقدم (<span class='en'>out-of-order</span>)، وعندها يحتاج المرشّح إلى معالجة خاصة (إعادة الحساب أو رفض القديم).</p></div><div class='card'><h2>2. الـ estimator يعرف التأخير وأزمنة الالتقاط بدقة تامة</h2><p>نمرّر له <span class='en'>t_capture</span> الحقيقي.</p><p><b>إذا لم يتحقق:</b> لو أخطأنا في التأخير المفترض بمقدار <span class='en'>&delta;&tau;</span> فالتعويض يخطئ بمقدار <span class='en'>v &middot; &delta;&tau;</span>: خطأ <span class='en'>10 ms</span> عند <span class='en'>3 m/s</span> يعطي <span class='en'>30 mm</span> (حساب بسيط لم أقِسه). والتزامن الدقيق بين ساعة الكاميرا وساعة الحاسوب مشكلة حقيقية.</p></div><div class='card'><h2>3. الالتقاط لحظي (بلا زمن تعريض)</h2><p>الصورة تمثل لحظة واحدة بالضبط.</p><p><b>إذا لم يتحقق:</b> الكاميرا الحقيقية تدمج الضوء على مدى 1 إلى 10 ms. فالكرة تتحرك وتتمدد صورتها (motion blur) وزمن «الالتقاط» غير حاد (B1 L5).</p></div><div class='card'><h2>4. معدل الإطارات ثابت 60 Hz</h2><p>عملياً الإطارات على شبكة 2 ms (16 أو 18 ms، متوسطها 60.008 Hz)، وأزمنتها المخزنة دقيقة.</p><p><b>إذا لم يتحقق:</b> كاميرات حقيقية قد تُسقط إطارات أو تتأخر. ونحن لم ندرس تغيير المعدل (30 أو 120 أو 240 Hz) أصلاً: هذا اختبار حساسية ناقص.</p></div><div class='card'><h2>5. القيمة 40 ms مؤقتة وليست كل التأخير</h2><p>هي جزء من تأخير الكاميرا فقط (وحتى هذا مؤقت، من جملة Liu عن حلقة الروبوت كلها).</p><p><b>إذا لم يتحقق:</b> التأخير الفعلي من الإدراك إلى حركة الذراع أكبر: الكاميرا + المعالجة + التخطيط + وصول الذراع. فالأفق الذي يجب أن يتنبأ إليه الـ estimator أطول مما نختبره بـ 40 ms.</p></div><div class='card'><h2>6. التأخير مصدر وحيد للخطأ الزمني</h2><p>لا نموذج لعدم انتظام الزمن (jitter) ولا لانجراف الساعة.</p><p><b>إذا لم يتحقق:</b> هذه عيوب حقيقية أخرى: تُضيف خطأً تتناسب قيمته مع السرعة.</p></div>
+<div class="card"><h2>ما قسناه عن أثر التأخير (من جداولنا، 500 إطلاق)</h2>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>now position error (mm)</b></td><td style="padding:4px 12px"><b>ideal</b></td><td style="padding:4px 12px"><b>delay 40 ms</b></td></tr>
+<tr><td style="padding:4px 12px">fd</td><td>1.8</td><td>17.8</td></tr>
+<tr><td style="padding:4px 12px">cvkf</td><td>7.6</td><td>30.6</td></tr>
+<tr><td style="padding:4px 12px">ekf19-none</td><td>1.9</td><td>3.5</td></tr>
+<tr><td style="padding:4px 12px">oracle (no gate)</td><td>1.7</td><td>2.2</td></tr>
+</table>
+<p>أي أن التأخير يضرّ الطرق التي لا نموذج لها ضرراً شديداً، ولا يكاد يضرّ الـ EKF. لكن هذا بتأخير معروف تماماً (الافتراض 2).</p></div>
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو أخطأ الـ estimator في تقدير التأخير بمقدار <span class='en'>10 ms</span> وكانت سرعة الكرة <span class='en'>5 m/s</span>، فكم يكون خطأ التعويض؟ وما الفرق عن 3 م/ث؟</p></div>
+<p class="tag">القادم: C3 الطبقة 6 (تمارين)، ثم C4: الانقطاع (dropout).</p>
+</main></body></html>

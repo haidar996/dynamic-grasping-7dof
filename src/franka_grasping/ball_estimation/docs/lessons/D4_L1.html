@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D4 L1 - Kalman 2D: المتغيرات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D4 &middot; الطبقة 1: من بُعد واحد إلى اثنين</p>
+<h1>متغيرات الحالة: الموقع والسرعة معاً</h1>
+
+<div class="box"><p><b>جواب سؤال D3 L5:</b> <span class='en'>Q/R = 0.16</span> يعني نثق بالنموذج أكثر من الكاميرا بـ <span class='en'>6.25</span> مرات (العكس: <span class='en'>R/Q = 6.25</span>). بعبارة أخرى: نموذج الحركة الثابتة موثوق، والكاميرا أقل موثوقية.</p></div>
+
+<div class="card"><h2>1. مشكلة D3: لا نعرف السرعة</h2>
+<p>في D3 تعاملنا مع موقع واحد فقط. لكن لو الكرة تتحرك، نحتاج <b>السرعة</b> أيضاً للتنبؤ بالموقع المستقبلي.</p>
+<p>مثال: إذا كنا نقول "الكرة الآن عند 0.5 متر"، لكننا لا نعرف السرعة، كيف نتنبأ؟ نفترض سرعة صفر (موقع ثابت)—خطأ!</p>
+<p>في D3 L2 اخترنا <span class='en'>u = 0.0167 m</span> (input معروف)، لكن في الحقيقة السرعة <b>غير معروفة</b> وتتغير.</p>
+</div>
+
+<div class="card"><h2>2. الحل: متغيران في الحالة</h2>
+<p>نضيف <b>السرعة</b> كمتغير ثانٍ في الحالة:</p>
+<p class="en" style="text-align:center;margin:8px 0">x_state = [x, v]ᵀ</p>
+<p>حيث <span class='en'>x</span> = الموقع (متر)، <span class='en'>v</span> = السرعة (متر/ثانية).</p>
+<p>الآن المرشح يقدّر <b>كليهما</b> من القياسات. التنبؤ ببساطة:</p>
+<p class="en" style="text-align:center">x_new = x_old + v_old · Δt</p>
+<p>(الموقع الجديد = الموقع القديم + السرعة × الوقت)</p>
+</div>
+
+<div class="card"><h2>3. الحالة 4D (ثنائي البعد)</h2>
+<p>لكننا في مشروعنا ثنائي الأبعاد (الكرة تتحرك في المستوى <span class='en'>xy</span>). إذاً الحالة الكاملة:</p>
+<p class="en" style="text-align:center">s = [x, y, vx, vy]ᵀ</p>
+<p>أربعة متغيرات:</p>
+<ul>
+<li><span class='en'>x</span> = موقع أفقي (متر)</li>
+<li><span class='en'>y</span> = موقع عمودي (متر)</li>
+<li><span class='en'>vx</span> = السرعة الأفقية (متر/ثانية)</li>
+<li><span class='en'>vy</span> = السرعة العمودية (متر/ثانية)</li>
+</ul>
+<p><span class='en'>P</span> الآن مصفوفة 4×4 (تباين بين 4 متغيرات):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+P = <br>
+[P_xx   P_xy   P_xvx  P_xvy]<br>
+[P_yx   P_yy   P_yvx  P_yvy]<br>
+[P_vxx  P_vxy  P_vx,vx P_vx,vy]<br>
+[P_vyx  P_vyy  P_vy,vx P_vy,vy]
+</p>
+<p>القطر الرئيسي: <span class='en'>P_xx, P_yy, P_vx,vx, P_vy,vy</span> (تباين كل متغير).<br>
+خارج القطر: <span class='en'>P_xy, P_xvx, ...</span> (ارتباط بين المتغيرات).</p>
+</div>
+
+<div class="card"><h2>4. نموذج الحركة (المصفوفات)</h2>
+<p><b>التنبؤ:</b> الموقع يتغير بالسرعة، والسرعة ثابتة (بدون احتكاك حالاً):</p>
+<p class="en" style="text-align:center">s_new = F · s_old + w</p>
+<p>حيث مصفوفة الانتقال <span class='en'>F</span> (4×4):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+F = <br>
+[1  0  Δt  0]<br>
+[0  1  0   Δt]<br>
+[0  0  1   0]<br>
+[0  0  0   1]
+</p>
+<p>القراءة: <span class='en'>x_new = 1·x + 0·y + Δt·vx + 0·vy</span> (الموقع = الموقع + السرعة × وقت).</p>
+<p>التباين:</p>
+<p class="en" style="text-align:center">P_new = F · P · Fᵀ + Q</p>
+<p>يضيف <span class='en'>Q</span> (ضجيج النموذج) إلى عدم اليقين.</p>
+</div>
+
+<div class="card"><h2>5. نموذج القياس</h2>
+<p>الكاميرا تقيس <b>الموقع فقط</b> (لا تقيس السرعة مباشرة):</p>
+<p class="en" style="text-align:center">z = [z_x, z_y]ᵀ  (قياس 2D)</p>
+<p>لكن الحالة 4D، فنستخرج الموقع:</p>
+<p class="en" style="text-align:center">x_measure = H · s</p>
+<p>حيث مصفوفة القياس <span class='en'>H</span> (2×4):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+H = <br>
+[1  0  0  0]<br>
+[0  1  0  0]
+</p>
+<p>القراءة: نأخذ الصفين الأولين من الحالة (الموقع)، نتجاهل السرعة.</p>
+<p>التنبية:</p>
+<p class="en" style="text-align:center">y = z − H · s⁻</p>
+<p>الفرق بين القياس والموقع المتنبأ به.</p>
+</div>
+
+<div class="card"><h2>6. الفرق من D3 إلى D4</h2>
+<table class="en" style="border-collapse:collapse;width:100%;font-size:90%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:5px"><b>D3 (1D، موقع فقط)</b></td><td><b>D4 (2D، موقع + سرعة)</b></td></tr>
+<tr><td style="padding:5px">s = x (عدد)</td><td>s = [x, y, vx, vy]ᵀ (متجه 4D)</td></tr>
+<tr><td style="padding:5px">P = تباين واحد</td><td>P = مصفوفة 4×4</td></tr>
+<tr><td style="padding:5px">F لا يوجد (موقع ثابت)</td><td>F تنقل السرعة إلى الموقع</td></tr>
+<tr><td style="padding:5px">H = 1 (قياس مباشر)</td><td>H = [[1,0,0,0],[0,1,0,0]] (قياس جزئي)</td></tr>
+<tr><td style="padding:5px">u معروف (input)</td><td>v مقدّر (part of state)</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في D4، لماذا <span class='en'>H</span> مصفوفة 2×4 (وليس 4×4)؟ وماذا يحدث لو كانت <span class='en'>H</span> مصفوفة الهويّة (نقيس السرعة أيضاً)؟</p>
+</div>
+<p class="tag">القادم: D4 الطبقة 2 (مثال بأرقام: تنبؤ وتصحيح مع حالة 4D).</p>
+</main></body></html>

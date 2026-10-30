@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 L5 - حدود الـ simulator</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A2 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>حدود الـ simulator</h1>
+<div class="box"><p>جواب السؤال السابق: <span class='en'>x = 0.971</span> أكبر من <span class='en'>limit = 0.97</span> فالشرط الأول صحيح، لكن الشرط الثاني <span class='en'>v &gt; 0</span> خاطئ لأن <span class='en'>v = &minus;1.0</span> (الكرة تبتعد عن الجدار). فلا ارتداد. هذا الشرط يمنع قلب السرعة مرتين، وإلا بقيت الكرة «عالقة» ترتد في مكانها.</p></div>
+<div class='card'><h2>1. الخطوة الزمنية محدودة</h2><p>الحساب كل 2 ms، والخطأ في المكان <span class='en'>&minus;a h t / 2</span> (الطبقة 3). صغير (&lt; 1 مم لكل ثانية)، لكنه موجود، ويكبر مع الزمن.</p><p><b>ماذا يعني؟</b> إذا كبرت الخطوة فسدت النتائج. لذلك لا نغيّرها بدون إعادة فحص.</p></div><div class='card'><h2>2. الاصطدام لحظي ويُكتشف بعد وقوعه</h2><p>الكود يتحرك الخطوة كاملة ثم يكتشف أن الكرة تجاوزت الحد ويصححها. لا يعرف متى بالضبط حدث الاصطدام داخل الخطوة، ويُلغي مسافة الاختراق (الطبقة 4).</p><p><b>ماذا يعني؟</b> يتولد فرق صغير (مم) بين العالم ونموذج الـ estimator عند الاصطدام السريع.</p></div><div class='card'><h2>3. الاصطدام بلا احتكاك مع الجدار</h2><p>نغيّر السرعة العمودية فقط (<span class='en'>&times; &minus;e</span>). السرعة الموازية للجدار لا تتغير، ولا يوجد دوران ينشأ من الجدار. هو نموذج «كرة تنزلق»، وليس كرة تتدحرج.</p><p><b>ماذا يعني؟</b> في واقع الأمر الكرة التي تدور ترتد بزاوية مختلفة. الدوران خارج نموذجنا (افتراض 1 في A1).</p></div><div class='card'><h2>4. الاحتكاك تباطؤ ثابت</h2><p>قوة بمقدار <span class='en'>m &mu;</span> دائماً عكس السرعة، مهما كانت السرعة. هذا يشبه احتكاك الانزلاق (Coulomb). لا توجد مقاومة هواء تتناسب مع السرعة، ولا تغيّر في <span class='en'>&mu;</span> على الأرض.</p><p><b>ماذا يعني؟</b> الأسطح الحقيقية أعقد. لكن هذا النموذج يتفق مع ما نفترضه في الـ estimator، وهذا مفيد للدراسة ومتفائل للواقع (A1، افتراض 2).</p></div><div class='card'><h2>5. الإيقاف عند 1 مم/ث وارتداد صغير جداً</h2><p>عندما تكون السرعة أكبر قليلاً من 1 مم/ث، قد تكون خطوة الاحتكاك (<span class='en'>&mu; h</span> = 1.7 إلى 3 مم/ث) أكبر من السرعة نفسها، فتنعكس السرعة بدل أن تصل إلى الصفر. جرّبتها في الكود: لـ <span class='en'>&mu; = 1.5</span> وسرعة <span class='en'>2.5 mm/s</span> صارت السرعة <span class='en'>&minus;0.5 mm/s</span> ثم 0. وفي حالة خاصة نادرة (<span class='en'>1.5 mm/s</span> بالضبط مع <span class='en'>&mu; = 1.5</span>) تنعكس السرعة في كل خطوة بين +1.5 و&minus;1.5 مم/ث، والمكان لا يتغير فعلياً (ميكرومتر).</p><p><b>ماذا يعني؟</b> لا تأثير على نتائجنا (ميكرومترات وكرة شبه واقفة)، ولا تُحسب هذه الأطر لأن السرعة أقل من 0.05 م/ث. لكنه مثال على أن كل محاكاة فيها حواف غير مثالية.</p></div><div class='card'><h2>6. الأرقام العشوائية والإطلاقات</h2><p>كل إطلاق يأخذ <span class='en'>&mu;</span> بين 0.2 و1.5 م/ث<sup>2</sup>، و<span class='en'>E</span> بين 0.5 و0.95. مجالات اخترناها نحن. مجال <span class='en'>E</span> يتوافق مع مجال البحث في الورقة 19 (0.5 إلى 1). أما <span class='en'>&mu;</span> فالورقة تستعمل احتكاكاً بلا وحدة، فلا يمكن مقارنته.</p><p><b>ماذا يعني؟</b> إذا كانت الأسطح الحقيقية خارج هذه المجالات، فنتائجنا لا تنطبق عليها.</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>أي من هذه الحدود يؤثر على قدرتنا على الاستنتاج من النتائج إلى الواقع، وأيها يؤثر فقط على دقة الأرقام داخل المحاكاة؟ صنّفها في مجموعتين.</p></div>
+<p class="tag">القادم: A2 الطبقة 6 (تمارين)، ثم الدرس A3: الساحة (arena).</p>
+</main></body></html>

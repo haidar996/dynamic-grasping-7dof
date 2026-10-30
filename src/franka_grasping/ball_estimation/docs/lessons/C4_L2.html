@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 L2 - سلسلة ماركوف</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C4 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>سلسلة ماركوف: معدل الضياع ومتوسط الفجوة</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>3 &times; 0.1 = 0.30 m</span>. وفي الوضع الصامت يظن الـ estimator أن الكرة <b>بقيت في مكانها</b> (لأن القياس المتكرر يقول ذلك).</p></div>
+
+<div class="card"><h2>1. التعريف</h2>
+<p>في كل إطار الحالة إما <span class='en'>S</span> (مرئي، <span class='en'>seen</span>) أو <span class='en'>L</span> (ضائع، <span class='en'>lost</span>). الحالة القادمة تعتمد على الحالة الحالية <b>فقط</b> (خاصية ماركوف: لا ذاكرة لأبعد من ذلك). الانتقالات:</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>from \ to</b></td><td style="padding:4px 12px"><b>S</b></td><td style="padding:4px 12px"><b>L</b></td></tr>
+<tr><td style="padding:4px 12px">S</td><td>1 &minus; p</td><td>p</td></tr>
+<tr><td style="padding:4px 12px">L</td><td>q</td><td>1 &minus; q</td></tr>
+</table>
+<p>حيث <span class='en'>p = P(S &rarr; L)</span> احتمال بدء الضياع، و<span class='en'>q = P(L &rarr; S)</span> احتمال انتهائه.</p></div>
+
+<div class="card"><h2>2. متوسط طول الفجوة</h2>
+<p>إذا كنا في <span class='en'>L</span> فالفجوة تستمر كل إطار باحتمال <span class='en'>1 &minus; q</span>. إذن طول الفجوة <span class='en'>n</span> (بالإطارات) له التوزيع الهندسي:</p>
+<p class="en" style="text-align:center">P(n) = (1 &minus; q)<sup>n&minus;1</sup> q, &nbsp;&nbsp; mean = 1 / q</p>
+<p>فمتوسط الفجوة <span class='en'>g = 1/q</span>، أي <span class='en'>q = 1/g</span>. بالمثل متوسط فترة الرؤية المتواصلة <span class='en'>1/p</span>.</p></div>
+
+<div class="card"><h2>3. معدل الضياع على المدى الطويل</h2>
+<p>نسبة الإطارات الضائعة (التوزيع المستقر): نحلّ <span class='en'>&pi;<sub>S</sub> p = &pi;<sub>L</sub> q</span> (التدفق من S إلى L يساوي العكس) مع <span class='en'>&pi;<sub>S</sub> + &pi;<sub>L</sub> = 1</span>:</p>
+<p class="en" style="text-align:center">&pi;<sub>L</sub> = r = p / (p + q) &nbsp;&rArr;&nbsp; <b>p = r q / (1 &minus; r)</b></p>
+<p>وهذه هي المعادلة في الكود:</p>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>q  = 1.0 / g                    # P(lost -> seen)
+pl = r * q / (1.0 - r)          # P(seen -> lost), gives long-run loss rate r
+if self.lost:   self.lost = not (self.rng_loss.random() &lt; q)
+else:           self.lost = self.rng_loss.random() &lt; pl</pre></div>
+
+<div class="card"><h2>4. أرقامنا</h2>
+<p><span class='en'>r = 0.05</span>، <span class='en'>g = 6</span>: <span class='en'>q = 1/6 = 0.1667</span>، <span class='en'>p = 0.05 &times; 0.1667/0.95 = 0.00877</span>. فمتوسط الرؤية المتواصلة <span class='en'>1/p = 114</span> إطاراً (1.9 ث) ومتوسط الفجوة 6 إطارات.</p></div>
+
+<div class="card"><h2>5. فحص على بياناتنا (500 إطلاق، شرط dropout_flagged)</h2>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>quantity</b></td><td style="padding:4px 12px"><b>measured</b></td><td style="padding:4px 12px"><b>theory</b></td></tr>
+<tr><td style="padding:4px 12px">loss rate</td><td>5.02%</td><td>5%</td></tr>
+<tr><td style="padding:4px 12px">mean gap (2478 gaps)</td><td>6.07 frames</td><td>6</td></tr>
+<tr><td style="padding:4px 12px">P(gap &ge; 12 frames)</td><td>14.3%</td><td>13.5%</td></tr>
+<tr><td style="padding:4px 12px">P(gap &ge; 30 frames)</td><td>0.48%</td><td>0.51%</td></tr>
+<tr><td style="padding:4px 12px">longest gap</td><td>39 frames (650 ms)</td><td>-</td></tr>
+<tr><td style="padding:4px 12px">mean seen run</td><td>96.7 frames</td><td>114</td></tr>
+</table>
+<p>الاتفاق جيد، ما عدا فترة الرؤية المتواصلة (97 بدل 114). أظن أن السبب أن كل إطلاق طوله 600 إطار فقط، فتُقطع الفترات الطويلة عند نهايته، لكني لم أختبر ذلك. والفجوة الأطول 39 إطاراً تعني أن الكرة قد لا تُرى 0.65 ث، وهي في 3 م/ث تقطع حوالي 2 متر!</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>إذا أردنا ضياعاً <span class='en'>r = 0.10</span> ومتوسط فجوة <span class='en'>g = 10</span> إطاراً: كم <span class='en'>q</span> و<span class='en'>p</span>؟ وكم متوسط الرؤية المتواصلة؟</p></div>
+<p class="tag">القادم: C4 الطبقة 3 (الرياضيات والقياس: أثر الفجوة على خطأ الـ estimator، ولماذا الوضع الصامت أسوأ).</p>
+</main></body></html>

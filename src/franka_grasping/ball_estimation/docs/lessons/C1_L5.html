@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L5 - افتراضات وحدود نموذج الـ noise</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>ما حدود نموذج الـ noise عندنا؟</h1>
+<div class="box"><p>جواب السؤال السابق: لو استعملنا مولّداً واحداً لسحب الأرقام، فتغيير عدد الأرقام المسحوبة في الإطار (مثلاً بتشغيل الـ noise أو إيقافه) يغيّر <b>أي رقم عشوائي يُستعمل للانقطاع</b> في الإطارات التالية، فتتغير أماكن الفجوات بين الشرطين. مع مولّدين منفصلين تبقى الفجوات نفسها.</p></div>
+<div class='card'><h2>1. الـ noise طبيعي ومتوسطه صفر</h2><p>لا يوجد انحياز، والقيم الشاذة نادرة جداً (التوزيع الطبيعي).</p><p><b>إذا لم يتحقق:</b> الكاميرات الحقيقية فيها انحياز بسبب المعايرة، وقيم شاذة أكثر من المتوقع. مرشّح Kalman حساس للانحياز بالذات (لأنه يفترض عدمه).</p></div><div class='card'><h2>2. مستقل بين الإطارات (white noise)</h2><p>كل إطار يسحب أرقامه من جديد دون علاقة بالإطار السابق.</p><p><b>إذا لم يتحقق:</b> في الواقع الخطأ مرتبط زمنياً (انجراف بطيء، تغيّر إضاءة): فالمتوسط على عدة إطارات لا يُلغي الخطأ كما نحسب. هذا أخطر افتراض على المرشّحات في رأيي.</p></div><div class='card'><h2>3. حجم الاهتزاز ثابت 0.3 بكسل</h2><p>نفس الاهتزاز في كل مكان وبكل سرعة.</p><p><b>إذا لم يتحقق:</b> كرة سريعة تتمدد صورتها (motion blur) فيزيد اهتزاز المركز على طول اتجاه الحركة، وعند الحواف تتغير الأمور أيضاً.</p></div><div class='card'><h2>4. الرقمان 0.3 بكسل و k = 8.2e-4 رقمان مؤقتان</h2><p>الأول تخمين مني. والثاني مشتق من ورقة Chatterjee (كاميرا Kinect بقاعدة 75 مم وبعد بؤري 587 بكسل) بافتراض أن كل الضجيج هو تقريب القيمة إلى 1/8 بكسل. كاميرتنا ليست Kinect.</p><p><b>إذا لم يتحقق:</b> قيم أي كاميرا أخرى مختلفة. سنختبر حساسية النتائج لهذه القيم (شبكة: k &times;1/&times;5/&times;20 والـ jitter من 0 إلى 1 بكسل).</p></div><div class='card'><h2>5. عمق الـ noise يتناسب مع Z<sup>2</sup></h2><p>هذا قانون كاميرات ستيريو والضوء المنظّم (يأتي من قسمة f B / d).</p><p><b>إذا لم يتحقق:</b> في كاميرات الزمن-الطائر (time-of-flight) خطأ العمق شبه ثابت، فيختفي خط الخطأ المميز ويتغير شكل R.</p></div><div class='card'><h2>6. خطأ العمق والـ jitter مستقلان</h2><p>نجمع تباينهما (C1 L2 و L3).</p><p><b>إذا لم يتحقق:</b> في كاميرا حقيقية قد يرتبطان (نفس الضجيج يؤثر على الاثنين).</p></div><div class='card'><h2>7. الخطأ الأساسي للكاميرا المثالية «عشوائي»</h2><p>حتى بلا noise يوجد خطأ ثابت: حوالي 1.2 إلى 1.8 مم RMS (البكسل والشكل). عند الكرة في <span class='en'>(0.9, 0.5)</span>: (0.86، 0.56) مم دائماً.</p><p><b>إذا لم يتحقق:</b> هذا الخطأ <b>حتمي وليس عشوائياً</b>: يتكرر بنفس القيمة كل إطار لنفس المكان، فلا يمكن أن يُلغيه المتوسط، لكن المرشّح يعامله كـ noise عادي.</p></div>
+<div class="card"><h2>ماذا قسنا عن حساسية النتائج لقوة الـ noise؟</h2>
+<p>في اختبار سابق على الكاميرا نفسها (متوسط خطأ المكان ثنائي البعد بالمليمتر):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>setting</b></td><td style="padding:4px 12px"><b>mean 2D position error</b></td></tr>
+<tr><td style="padding:4px 12px">no noise (ideal)</td><td>1.7 mm</td></tr>
+<tr><td style="padding:4px 12px">depth noise, k = 8.2e-4</td><td>2.2 mm</td></tr>
+<tr><td style="padding:4px 12px">depth noise &times; 5</td><td>7.8 mm</td></tr>
+<tr><td style="padding:4px 12px">depth noise &times; 20</td><td>31 mm</td></tr>
+<tr><td style="padding:4px 12px">centroid jitter 0.3 px alone</td><td>3.2 mm</td></tr>
+</table>
+<p>أي أن خطأ العمق بقيمته الحالية صغير الأثر، وعلى المدى الأقوى (&times;20) يسيطر. هذه قياسات قديمة (على عينة صغيرة)، وسنعيدها بشكل منظّم عندما نختبر الحساسية.</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>أي افتراض من القائمة تتوقع أن يضر الـ Kalman filter أكثر إذا انكسر؟ ولماذا؟</p></div>
+<p class="tag">القادم: C1 الطبقة 6 (تمارين)، ثم C2: التكميم (quantisation).</p>
+</main></body></html>

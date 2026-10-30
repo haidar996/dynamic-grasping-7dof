@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 - اشتقاق أثر خطأ العمق</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; اشتقاق</p>
+<h1>لماذا لا يؤثر خطأ العمق عند x = 0؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: لا أثر له عند <span class='en'>x = y = 0</span>. والآن الاشتقاق الكامل.</p></div>
+
+<div class="card"><h2>الخطوة 1: الصيغة التي نبدأ منها</h2>
+<p>من الإسقاط العكسي (B1 L4):</p>
+<p class="en" style="text-align:center">x = (u &minus; c<sub>x</sub>) Z<sub>c</sub> / f, &nbsp;&nbsp; y = &minus;(v &minus; c<sub>y</sub>) Z<sub>c</sub> / f</p>
+<p>حيث <span class='en'>Z<sub>c</sub> = z + r</span> (العمق المقيس + نصف القطر). نركّز على خطأ العمق وحده: البكسل <span class='en'>(u, v)</span> لا يتغير (لأن خطأ العمق لا يحرّك الكرة في الصورة).</p></div>
+
+<div class="card"><h2>الخطوة 2: نضيف خطأ العمق</h2>
+<p>ليكن الخطأ <span class='en'>&delta;</span> (عدد عشوائي بمتوسط صفر). فالعمق الذي نستعمله <span class='en'>Z<sub>c</sub> + &delta;</span>، والمكان المحسوب:</p>
+<p class="en" style="text-align:center">x&prime; = (u &minus; c<sub>x</sub>)(Z<sub>c</sub> + &delta;)/f = x + (u &minus; c<sub>x</sub>) &delta; / f</p>
+<p>إذن خطأ المكان على المحور <span class='en'>x</span>: <span class='en'>&delta;x = (u &minus; c<sub>x</sub>) &delta; / f</span>.</p></div>
+
+<div class="card"><h2>الخطوة 3: نكتبه بدلالة المكان الحقيقي</h2>
+<p>من صيغة الإسقاط (B1 L3): <span class='en'>u &minus; c<sub>x</sub> = f x / Z<sub>c</sub></span>. نعوّض:</p>
+<p class="en" style="text-align:center">&delta;x = (f x / Z<sub>c</sub>) &delta; / f = <b>x &delta; / Z<sub>c</sub></b>, &nbsp;&nbsp; &delta;y = <b>y &delta; / Z<sub>c</sub></b></p>
+<p>(نفس الشيء للمحور <span class='en'>y</span>.) إذن متجه الخطأ:</p>
+<p class="en" style="text-align:center">(&delta;x, &delta;y) = (&delta; / Z<sub>c</sub>) &middot; (x, y)</p>
+<p>وهو <b>موازٍ لمتجه المكان</b> <span class='en'>(x, y)</span>. لذلك يتحرك القياس على الخط المستقيم الواصل بين مركز الساحة (تحت الكاميرا) والكرة. هذا هو الخط الذي رأيته في الرسم (C1 L1). ومعامل <span class='en'>&delta;/Z<sub>c</sub></span> نسبة صغيرة، مثلاً <span class='en'>7.4 mm / 2.97 m = 0.0025</span>.</p></div>
+
+<div class="card"><h2>الخطوة 4: ماذا يحدث عند x = y = 0؟</h2>
+<p>الصيغة تعطي <span class='en'>(&delta;x, &delta;y) = (&delta;/Z<sub>c</sub>)(0, 0) = (0, 0)</span>: <b>صفر مهما كان <span class='en'>&delta;</span></b>.</p>
+<p><b>الحدس:</b> كل النقاط على الشعاع الواحد المار بمركز الكاميرا تظهر في <b>نفس البكسل</b> (هذا معنى الإسقاط). تحت الكاميرا الشعاع عمودي، فتحريك النقطة عليه (تغيير العمق) لا يحرّكها يميناً أو يساراً. أما عند الأطراف فالشعاع مائل، فتحريك النقطة على الشعاع يحرّكها جانبياً أيضاً.</p>
+<svg viewBox="0 0 420 250" style="width:100%;max-width:520px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<line x1="30" y1="215" x2="400" y2="215" stroke="currentColor" stroke-width="1.5"/>
+<circle cx="200" cy="25" r="5" fill="#c0762b"/><text x="208" y="29" fill="#c0762b">camera</text>
+<line x1="200" y1="25" x2="200" y2="215" stroke="#2e9b3e" stroke-width="1.5"/>
+<line x1="200" y1="25" x2="330" y2="215" stroke="#1f5f8b" stroke-width="1.5"/>
+<g fill="#2e9b3e"><circle cx="200" cy="190" r="4"/><circle cx="200" cy="205" r="4"/><circle cx="200" cy="215" r="4"/></g>
+<g fill="#1f5f8b">
+<circle cx="315.7" cy="194.1" r="4"/><circle cx="322.9" cy="204.5" r="4"/><circle cx="330" cy="215" r="4"/></g>
+<line x1="315.7" y1="194.1" x2="315.7" y2="229" stroke="#9a9a94" stroke-dasharray="3 3"/>
+<line x1="330" y1="215" x2="330" y2="229" stroke="#9a9a94" stroke-dasharray="3 3"/>
+<text x="286" y="243" fill="#b03a3a">lateral shift = X*delta/Zc</text>
+<text x="105" y="243" fill="#2e9b3e">X = 0: no shift</text>
+<text x="40" y="60" fill="currentColor">Every dot on one ray gives the SAME pixel;</text>
+<text x="40" y="76" fill="currentColor">a depth error slides the point ALONG the ray.</text>
+</svg></div>
+
+<div class="card"><h2>الخطوة 5: حجم الخطأ</h2>
+<p>الخطأ العشوائي للعمق انحرافه المعياري <span class='en'>&sigma;<sub>Z</sub> = k Z<sub>c</sub><sup>2</sup></span> (k = 8.2&times;10<sup>-4</sup>). نعوّض في <span class='en'>&delta;x = x &delta;/Z<sub>c</sub></span>:</p>
+<p class="en" style="text-align:center">&sigma;<sub>x</sub> = |x| &middot; &sigma;<sub>Z</sub> / Z<sub>c</sub> = |x| &middot; k Z<sub>c</sub> = |x| &times; 2.44 mm per metre</p>
+<p>(لأن <span class='en'>k Z<sub>c</sub> = 8.2&times;10<sup>-4</sup> &times; 2.97 = 2.44&times;10<sup>-3</sup></span>). أي أن الانحراف المعياري يتناسب مع بُعد الكرة عن المحور:</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>|x| (m)</b></td><td><b>&sigma;<sub>x</sub> from depth noise</b></td></tr>
+<tr><td style='padding:4px 12px'>0</td><td>0.00 mm</td></tr><tr><td style='padding:4px 12px'>0.25</td><td>0.61 mm</td></tr><tr><td style='padding:4px 12px'>0.5</td><td>1.22 mm</td></tr><tr><td style='padding:4px 12px'>0.9</td><td>2.19 mm</td></tr><tr><td style='padding:4px 12px'>0.97</td><td>2.36 mm</td></tr>
+</table>
+<p><b>تحقق من تجربتنا:</b> الكرة عند <span class='en'>(0.9, 0.5)</span>: <span class='en'>0.9 &times; 2.44 = 2.19 mm</span> على <span class='en'>x</span> (قسنا 2.10) و<span class='en'>0.5 &times; 2.44 = 1.22 mm</span> على <span class='en'>y</span> (قسنا 1.17). والنسبة بين المحورين <span class='en'>0.5/0.9 = 0.56</span> هي ميل الخط في الرسم.</p>
+<p>وأكبر قيمة داخل الساحة: عند الزاوية <span class='en'>r = 1.37 m</span> (قطرياً): <span class='en'>1.37 &times; 2.44 = 3.3 mm</span> على طول الخط.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>الكرة عند <span class='en'>(x, y) = (0.6, 0.8)</span>. احسب <span class='en'>&sigma;<sub>x</sub></span> و<span class='en'>&sigma;<sub>y</sub></span> بسبب خطأ العمق وحده، واحسب طول الخطأ على الخط الكامل (<span class='en'>&radic;(&sigma;<sub>x</sub><sup>2</sup> + &sigma;<sub>y</sub><sup>2</sup>)</span>). (استعمل <span class='en'>2.44 mm</span> لكل متر.)</p></div>
+<p class="tag">بعد هذا نعود إلى C1 الطبقة 2: التوزيع الطبيعي والانحراف المعياري.</p>
+</main></body></html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A5 L3 - الرياضيات: كم إطلاقاً نحتاج؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A5 &middot; الطبقة 3: الرياضيات</p>
+<h1>كم إطلاقاً نحتاج لنثق بالنتيجة؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: الإطلاقات ذات السرعة 3.0 هي الأرقام <b>290 إلى 299</b> (<span class='en'>&lfloor;i/10&rfloor; + 1 = 30</span>). و<span class='en'>E</span>: المتوسط 0.725 والانحراف المعياري 0.130.</p></div>
+
+<div class="card"><h2>1. المشكلة</h2>
+<p>نحسب خطأً (مثلاً RMS لخطأ المكان) على <span class='en'>n</span> إطلاقاً، فنحصل على رقم واحد. لو أعدنا التجربة بإطلاقات أخرى لحصلنا على رقم آخر. كم يمكن أن يختلف الرقمان؟ هذا هو السؤال عن <b>عدم اليقين الإحصائي</b> (<span class='en'>statistical uncertainty</span>).</p></div>
+
+<div class="card"><h2>2. القاعدة النظرية</h2>
+<p>إذا كانت قيم <span class='en'>n</span> إطلاقاً مستقلة، كل منها انحرافه المعياري <span class='en'>&sigma;</span>، فمتوسطها له <b>خطأ معياري</b> (<span class='en'>standard error</span>):</p>
+<p class="en" style="text-align:center">SE = &sigma; / &radic;n, &nbsp;&nbsp; 95% interval &asymp; mean &plusmn; 1.96 &middot; SE</p>
+<p>النتيجة الأهم: لتقليل عدم اليقين إلى النصف نحتاج <b>أربعة أضعاف</b> العدد (لأن الجذر التربيعي). 10 أضعاف العدد تعطي فقط 3.2 مرة دقة أفضل.</p></div>
+
+<div class="card"><h2>3. القياس الفعلي على بياناتنا (طريقة bootstrap)</h2>
+<p>الـ RMS الذي نستعمله ليس متوسطاً بسيطاً، لذلك لا نطبق القاعدة مباشرة، بل نستعمل طريقة <span class='en'>bootstrap</span>: نعيد سحب <span class='en'>m</span> إطلاقاً من إطلاقاتنا الـ 500 <b>مع الإرجاع</b> (2000 مرة) ونحسب الـ RMS في كل مرة، ثم نأخذ المدى الذي يضم 95% من النتائج.</p>
+<p>جرّبتها على <span class='en'>ekf19b-none</span> في شرط الـ <span class='en'>all</span>:</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>launches used</b></td><td style="padding:4px 12px"><b>now_pos (mm)</b></td><td style="padding:4px 12px"><b>forecast 1.0 s (mm)</b></td></tr>
+<tr><td style="padding:4px 12px">50</td><td>5.52 &ndash; 9.18</td><td>174 &ndash; 275</td></tr>
+<tr><td style="padding:4px 12px">100</td><td>5.80 &ndash; 8.53</td><td>190 &ndash; 259</td></tr>
+<tr><td style="padding:4px 12px">500</td><td>6.37 &ndash; 7.67</td><td>209 &ndash; 242</td></tr>
+</table>
+<p>الرقم الكلي على 500 إطلاق: <span class='en'>6.99 mm</span> و<span class='en'>225.8 mm</span>. أي عدم اليقين حوالي &plusmn;9% للمكان و&plusmn;7% للـ forecast عند 500 إطلاق، وحوالي &plusmn;26% و&plusmn;22% عند 50 إطلاقاً. وعرض المدى ينقص تقريباً كقاعدة الجذر (من 50 إلى 500: النسبة 2.8 بدل 3.2).</p>
+<p>مجموعتان منفصلتان من 50 إطلاقاً أعطتا <span class='en'>6.85</span> و<span class='en'>6.00 mm</span>، وهذا يتفق مع المدى أعلاه. وهذا يفسّر ما رأيناه في شبكة sigma و q: الفروق التي حجمها 5% لا يمكن الوثوق بها.</p></div>
+
+<div class="card"><h2>4. توزيع الخطأ بين الإطلاقات غير متساوٍ</h2>
+<p>RMS خطأ المكان لكل إطلاق: وسيطه <span class='en'>5.2 mm</span>، و10% الأفضل تحت <span class='en'>4.0</span>، و10% الأسوأ فوق <span class='en'>7.7</span>، والأسوأ على الإطلاق <span class='en'>27.8 mm</span>. لهذا قلنا إن إطلاقات قليلة (مثل الـ 7 في تشخيص الـ gate) تتحكم بالـ RMS الكلي.</p></div>
+
+<div class="card"><h2>5. ما معنى هذا لنا؟</h2>
+<ul>
+<li>عند مقارنة طريقتين على نفس الإطلاقات (paired) يكون عدم اليقين في <b>الفرق</b> أصغر من المدى أعلاه، لأن الصعوبة المشتركة تُلغى. لم أقس هذا هنا، وسأقيسه في الأجزاء المتقدمة.</li>
+<li>الفروق الصغيرة بين صفوف الجداول (مثل 3.0 مقابل 3.5 مم) لا نعتبرها حقيقية قبل أن نقيس مداها.</li>
+<li>إن أردنا نتيجة أدق فعلينا زيادة عدد الإطلاقات، أو تقليل التشتت بين الإطلاقات.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو أردنا نصف عرض المدى الحالي (عند 500 إطلاق)، كم إطلاقاً نحتاج تقريباً؟ ولماذا؟</p></div>
+<p class="tag">القادم: A5 الطبقة 4 (الكود: sample_launch وrun_launch).</p>
+</main></body></html>

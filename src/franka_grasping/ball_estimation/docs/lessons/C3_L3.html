@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C3 L3 - الرياضيات: خطأ التأخير</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C3 &middot; الطبقة 3: الرياضيات والقياس</p>
+<h1>خطأ التأخير، ولماذا تعويضه يعتمد على النموذج</h1>
+
+<div class="box"><p>جواب السؤال السابق: يصله عند <span class='en'>1.000 + 0.04 = 1.040 s</span>. وعند وصول الإطار الذي التُقط عند 1.050 (يصله 1.090): الحالة القديمة <span class='en'>est.t</span> هي آخر قياس صالح، أي <span class='en'>1.000</span> (لو كان الإطاران بعده ضاعا ولم يصل غيرهما بعد)، فـ <span class='en'>ta &minus; est.t = 1.090 &minus; 1.000 = 0.090 s</span>. وبعد وصول الإطار 1.050 يتقدم الـ filter إلى 1.050 فيصبح <span class='en'>ta &minus; est.t = 0.04</span>.</p></div>
+
+<div class="card"><h2>1. بلا تعويض</h2>
+<p>لو أخذنا آخر قياس كأنه المكان «الآن» لكان الخطأ هو ما تحركته الكرة: <span class='en'>e = v &middot; &tau;<sub>d</sub></span> (مثلاً <span class='en'>3 &times; 0.04 = 120 mm</span>).</p></div>
+
+<div class="card"><h2>2. بتعويض بخط مستقيم (مثل fd)</h2>
+<p>نتنبأ <span class='en'>p&#770;(a) = p&#770;(t) + v&#770; &tau;<sub>d</sub></span>. الحقيقة بدون اصطدام: <span class='en'>p(a) = p(t) + v &tau;<sub>d</sub> &minus; &frac12; &mu; &tau;<sub>d</sub><sup>2</sup></span>. إذن الخطأ:</p>
+<p class="en" style="text-align:center">e = &delta;v &middot; &tau;<sub>d</sub> + &frac12; &mu; &tau;<sub>d</sub><sup>2</sup></p>
+<ul>
+<li>خطأ السرعة: <span class='en'>&delta;v = 0.25 m/s</span> (قيمة fd في شرط ideal) يعطي <span class='en'>0.25 &times; 0.04 = 10 mm</span>.</li>
+<li>الاحتكاك: <span class='en'>&frac12; &times; 0.85 &times; 0.04<sup>2</sup> = 0.68 mm</span>: <b>صغير جداً</b>. فالاحتكاك لا يهم في 40 ms.</li>
+</ul></div>
+
+<div class="card"><h2>3. إذا حدث اصطدام داخل نافذة التأخير</h2>
+<p>لو ارتدت الكرة بعد <span class='en'>s</span> ثانية من الالتقاط (و<span class='en'>E = 1</span> للتبسيط)، فالتنبؤ بخط مستقيم يخرجها من الجدار، والحقيقة أنها ارتدت: الفرق تقريباً</p>
+<p class="en" style="text-align:center">e &asymp; 2 v<sub>n</sub> ( &tau;<sub>d</sub> &minus; s ), &nbsp;&nbsp; up to 2 v<sub>n</sub> &tau;<sub>d</sub></p>
+<p>وهذا كبير: عند 3 م/ث يصل إلى 24 سم. واحتمال حدوثه في نافذة واحدة (من A3 L3: معدل الارتداد <span class='en'>0.656 v</span> في الثانية):</p>
+<p class="en" style="text-align:center">P &asymp; 0.656 &middot; v &middot; &tau;<sub>d</sub></p>
+<p>عند <span class='en'>v = 1.26 m/s</span> (متوسط سرعة الإطارات التي تتحرك فيها الكرة، تقدير مني) يساوي <span class='en'>0.656 &times; 1.26 &times; 0.04 = 3.3%</span>.</p></div>
+
+<div class="card"><h2>4. القياس على بياناتنا (100 إطلاق، شرط delay، 2345 إطاراً)</h2>
+<p>قسّمتُ الإطارات بحسب هل حدث اصطدام حقيقي بين زمن الالتقاط وزمن الوصول (استعملت أزمنة الاصطدام المخزنة):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>estimator</b></td><td style="padding:4px 12px"><b>frames with a bounce in the window</b></td><td style="padding:4px 12px"><b>RMS (no bounce)</b></td><td style="padding:4px 12px"><b>RMS (with bounce)</b></td><td style="padding:4px 12px"><b>RMS all</b></td></tr>
+<tr><td style="padding:4px 12px">fd</td><td>3.3%</td><td>12.1 mm</td><td>75.7 mm</td><td>18.1 mm</td></tr>
+<tr><td style="padding:4px 12px">ekf19b-none</td><td>3.3%</td><td>3.1 mm</td><td>5.9 mm</td><td>3.2 mm</td></tr>
+</table>
+<ul>
+<li>نسبة الإطارات ذات الاصطدام 3.3%: تطابق تقديرنا النظري.</li>
+<li>الـ fd بلا اصطدام: <span class='en'>12.1 mm</span>: قريب من <span class='en'>10 mm</span> (خطأ السرعة &times; التأخير) كما في البند 2.</li>
+<li>الـ fd مع اصطدام: <span class='en'>75.7 mm</span>. وهذه الإطارات القليلة (3.3%) تفسّر <b>57%</b> من مجموع مربعات الخطأ (<span class='en'>0.033 &times; 75.7<sup>2</sup></span> مقابل المجموع)، وهو ما يعطي 18.1 الكلي.</li>
+<li>الـ EKF يعرف الجدران في نموذجه، فنتبّؤه يرتد: خطؤه <span class='en'>5.9 mm</span> فقط في هذه الإطارات.</li>
+</ul></div>
+
+<div class="card"><h2>5. الخلاصة</h2>
+<p>تعويض التأخير هو في الحقيقة تنبؤ قصير. إذا كان النموذج صحيحاً (يعرف الاحتكاك والجدران) فالخطأ صغير حتى مع التأخير. وإذا كان النموذج خطاً مستقيماً فالاصطدامات النادرة تتحكم بالخطأ.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>إذا ضاعفنا التأخير إلى <span class='en'>80 ms</span>، كم تصبح نسبة نوافذ الاصطدام (بنفس <span class='en'>v = 1.26</span>)؟ وكم يصبح خطأ fd بلا اصطدام تقريباً (خطأ السرعة 0.25 م/ث)؟</p></div>
+<p class="tag">القادم: C3 الطبقة 4 (الكود: كيف يُطبَّق التأخير في Sensor وapply_condition).</p>
+</main></body></html>

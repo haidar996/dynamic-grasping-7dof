@@ -1,0 +1,8 @@
+# Locked 2026-10-30 (plan step 0.2). Evidence: outputs/fov_grid/ (experiments/step_0e_fov_grid.py)
+height: 3.0        # m above the floor
+fovy: 49           # deg; smallest passing FOV is 46 (analytic 46.1), 49 = arena + 5 cm margin
+width: 480         # px (square image: arena fills 83%)
+rows: 480
+fps: 60
+# grid result at 49 deg: 0 points cut, min edge margin 18 px, ball ~87 px,
+# ideal error median 1.23 mm, 'noise' condition median 2.79 mm / p95 7.19 mm / corners p95 11.3 mm

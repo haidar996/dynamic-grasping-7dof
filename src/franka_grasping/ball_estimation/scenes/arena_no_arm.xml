@@ -1,0 +1,38 @@
+<mujoco model="arena_2p5x2p5">
+  <option timestep="0.002" gravity="0 0 0"/>
+
+  <default>
+    <geom contype="1" conaffinity="1"/>
+  </default>
+
+  <worldbody>
+    <!-- Camera overhead, positioned at center (at center) -->
+    <camera name="overhead" pos="0 0 3" fovy="60"/>
+
+    <!-- Floor: visual only; ball does not collide (contype 0) -->
+    <!-- Arena: 2.5 m x 2.5 m symmetric around origin -->
+    <!-- Boundaries: x ∈ [-1.25, 1.25], y ∈ [-1.25, 1.25] -->
+    <geom name="floor" type="plane" size="1.25 1.25 0.05" rgba="0.8 0.8 0.8 1"
+          contype="0" conaffinity="0"/>
+
+    <!-- Four walls: arena boundaries at x=±1.25, y=±1.25 -->
+    <geom name="wall_px" type="box" pos="1.3 0 0.05" size="0.05 1.25 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_nx" type="box" pos="-1.3 0 0.05" size="0.05 1.25 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_py" type="box" pos="0 1.3 0.05" size="1.25 0.05 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_ny" type="box" pos="0 -1.3 0.05" size="1.25 0.05 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+
+    <!-- BALL: two slide joints => planar 2D motion, no spin, no flying -->
+    <!-- Positioned in arena at (0, 0, 0.03) relative to origin -->
+    <!-- When launched, starts with random speed in [0.1, 5.0] m/s -->
+    <body name="ball" pos="0 0 0.03">
+      <joint name="bx" type="slide" axis="1 0 0" damping="0"/>
+      <joint name="by" type="slide" axis="0 1 0" damping="0"/>
+      <geom name="ball_geom" type="sphere" size="0.03" mass="0.1"
+            rgba="0 1 0 1"/>
+    </body>
+  </worldbody>
+</mujoco>

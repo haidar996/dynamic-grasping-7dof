@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 L3 - Kalman 1D: الكسب الأمثل</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D3 &middot; الطبقة 3: الاشتقاق</p>
+<h1>لماذا الكسب الأمثل هو <span class='en'>K = P⁻/(P⁻ + R)</span>؟</h1>
+
+<div class="box"><p><b>جواب سؤال D3 L2:</b> الخطوة 3 من الجدول:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+Predict: x̂⁻ = 0.5346 + 0.0167 = 0.5513, P⁻ = 1.03×10⁻⁵ + 4×10⁻⁶ = 1.43×10⁻⁵<br>
+z = 0.5560, y = 0.5560 − 0.5513 = 0.0047, S = 1.43×10⁻⁵ + 2.5×10⁻⁵ = 3.93×10⁻⁵<br>
+K = 1.43×10⁻⁵ / 3.93×10⁻⁵ = 0.363<br>
+x̂ = 0.5513 + 0.363 × 0.0047 = 0.5530, P = (1 − 0.363) × 1.43×10⁻⁵ = 9.08×10⁻⁶
+</p>
+</div>
+
+<div class="card"><h2>1. صياغة المسألة</h2>
+<p>لدينا بعد خطوة التنبؤ:
+<ul>
+<li><span class='en'>x̂⁻</span>: تنبؤ الموقع (معروف)</li>
+<li><span class='en'>z</span>: قياس الكاميرا (معروف)</li>
+<li>نريد دمج التنبؤ والقياس بصيغة: <span class='en'>x̂ = x̂⁻ + K(z − x̂⁻)</span></li>
+<li>السؤال: أي قيمة <span class='en'>K</span> تعطي أفضل تقدير؟</li>
+</ul>
+<p><b>معيار "الأفضل":</b> نريد تقليل <b>التباين</b> (عدم اليقين) للخطأ بعد التصحيح. أي نقلل <span class='en'>P = Var(x − x̂)</span>.</p>
+</div>
+
+<div class="card"><h2>2. صيغة الخطأ</h2>
+<p>بعد التصحيح:</p>
+<p class="en" style="text-align:center">x̂ = x̂⁻ + K(z − x̂⁻) = (1 − K)x̂⁻ + Kz</p>
+<p>الخطأ الحقيقي (الفرق بين الموقع الحقيقي والتقدير):</p>
+<p class="en" style="text-align:center">e = x − x̂ = x − [(1 − K)x̂⁻ + Kz]<br>= x − (1 − K)x̂⁻ − Kz<br>= (1 − K)(x − x̂⁻) − K(z − x)</p>
+<p>لكن <span class='en'>z = x + n</span> حيث <span class='en'>n ~ N(0, R)</span> (خطأ القياس):</p>
+<p class="en" style="text-align:center">e = (1 − K)(x − x̂⁻) − Kn</p>
+</div>
+
+<div class="card"><h2>3. تباين الخطأ</h2>
+<p>نفترض أن <span class='en'>(x − x̂⁻)</span> و<span class='en'>n</span> مستقلان:</p>
+<p class="en" style="text-align:center">Var(e) = Var[(1 − K)(x − x̂⁻)] + Var(Kn)<br>= (1 − K)² P⁻ + K² R</p>
+<p>وهذه هي دالة <span class='en'>K</span> التي نريد تقليلها.</p>
+</div>
+
+<div class="card"><h2>4. التقليل (Optimization)</h2>
+<p>نشتق بالنسبة إلى <span class='en'>K</span> ونساوي بالصفر:</p>
+<p class="en" style="text-align:center">d/dK [Var(e)] = 0<br>d/dK [(1 − K)² P⁻ + K² R] = 0<br>−2(1 − K)P⁻ + 2KR = 0<br>(1 − K)P⁻ = KR</p>
+<p>نفك الأقواس:</p>
+<p class="en" style="text-align:center">P⁻ − KP⁻ = KR<br>P⁻ = K(P⁻ + R)<br><b>K = P⁻ / (P⁻ + R)</b></p>
+<p>هذا هو الكسب الأمثل! لاحظ أنه بالفعل <span class='en'>S = P⁻ + R</span> من الدرس السابق، فالصيغة تصير <span class='en'>K = P⁻ / S</span>.</p>
+</div>
+
+<div class="card"><h2>5. الحدس الهندسي</h2>
+<p>الكسب الأمثل هو نسبة (وزن) تعتمد على <b>موثوقية كل مصدر</b>:</p>
+<ul>
+<li><span class='en'>P⁻</span> = عدم اليقين في التنبؤ (كبير ⟹ تنبؤ سيء)</li>
+<li><span class='en'>R</span> = عدم اليقين في القياس (كبير ⟹ قياس سيء)</li>
+<li><span class='en'>K = P⁻ / (P⁻ + R)</span> = نسبة عدم يقين التنبؤ من إجمالي عدم اليقين</li>
+</ul>
+<p>فإذا كان التنبؤ سيء جداً (<span class='en'>P⁻ ≫ R</span>)، فـ <span class='en'>K → 1</span> (نتبع القياس بقوة).<br>وإذا كان القياس سيء جداً (<span class='en'>R ≫ P⁻</span>)، فـ <span class='en'>K → 0</span> (نبقى مع التنبؤ).</p>
+<p>في مثالنا: <span class='en'>K = 1.43×10⁻⁵ / (1.43×10⁻⁵ + 2.5×10⁻⁵) = 0.363</span> يعني التنبؤ أفضل من القياس قليلاً، فنعتمد عليه 63% وعلى القياس 37%.</p>
+</div>
+
+<div class="card"><h2>6. التباين النهائي</h2>
+<p>بعد التصحيح بالـ <span class='en'>K</span> الأمثل:</p>
+<p class="en" style="text-align:center">P = (1 − K)² P⁻ + K² R</p>
+<p>يمكن تبسيطها باستخدام <span class='en'>K = P⁻ / (P⁻ + R)</span>:</p>
+<p class="en" style="text-align:center">P = (1 − K)P⁻ = [1 − P⁻/(P⁻ + R)]P⁻ = [R/(P⁻ + R)]P⁻<br>= P⁻R / (P⁻ + R)</p>
+<p>هذا في الواقع ما نحسبه في الخطوة (كما رأيت في الدرس السابق: <span class='en'>P = (1 − K)P⁻</span>).</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>باستخدام الصيغة <span class='en'>K = P⁻/(P⁻ + R)</span> والتباين الحقيقي <span class='en'>P = P⁻R/(P⁻ + R)</span>:
+<ol>
+<li>عندما <span class='en'>R → 0</span> (قياس مثالي)، ما هما <span class='en'>K</span> و<span class='en'>P</span>؟</li>
+<li>عندما <span class='en'>P⁻ → 0</span> (تنبؤ مثالي)، ما هما؟</li>
+<li>عندما <span class='en'>P⁻ = R</span> (متساويان)، كم تكون نسبة <span class='en'>K</span>؟</li>
+</ol>
+</p>
+</div>
+<p class="tag">القادم: D3 الطبقة 4 (ديناميات: إضافة السرعة متغيراً ثانياً).</p>
+</main></body></html>

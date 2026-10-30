@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L2 - التعريفات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>مصفوفة العمق، وقناع اللون، والمركز</h1>
+
+<div class="box"><p>جواب السؤال السابق: صورة اللون تقول <b>أين</b> الكرة في الصورة (أي البكسلات خضراء)، وصورة العمق تقول <b>كم تبعد</b>. في عالمنا يمكن لأيٍّ منهما أن يجد الكرة، فقمة الكرة (2.94) تختلف عن الأرض (3.0) بـ 6 سم، لكن اللون أبسط وأوضح، ولا يشتبه بين الكرة والجدران (2.90). وبالعموم اللون يخبر «أي جسم»، والعمق يخبر «أين في الفراغ».</p></div>
+
+<div class="card"><h2>1. الصور كمصفوفات</h2>
+<p>الصورة مصفوفة. نرمز لبكسل بالعمود <span class='en'>u</span> (من 0 إلى 639) والصف <span class='en'>v</span> (من 0 إلى 479)، وفي الكود نكتب <span class='en'>array[v, u]</span> (الصف أولاً):</p>
+<ul>
+<li><b>صورة اللون</b> <span class='en'>I[v, u, c]</span>: ثلاثة أعداد صحيحة بين 0 و255 لكل بكسل: <span class='en'>c = R, G, B</span>.</li>
+<li><b>صورة العمق</b> <span class='en'>D[v, u]</span>: عدد حقيقي واحد (float32) بالمتر.</li>
+</ul>
+<p>مركز البكسل <span class='en'>(u, v)</span> هو النقطة <span class='en'>(u, v)</span> نفسها (أي البكسل يغطي <span class='en'>u &plusmn; 0.5</span>). ولذلك مركز الصورة <span class='en'>(319.5, 239.5)</span> (بين البكسلات الوسطى).</p></div>
+
+<div class="card"><h2>2. قناع اللون (<span class="en">color mask</span>)</h2>
+<p>القناع مصفوفة <span class='en'>M[v, u]</span> قيمتها صح أو خطأ: هل هذا البكسل «أخضر»؟ تعريفنا:</p>
+<p class="en" style="text-align:center">M = ( G &gt; R + 40 ) AND ( G &gt; B + 40 )</p>
+<p>أي: الأخضر أكبر من الأحمر بأكثر من 40 <b>و</b> أكبر من الأزرق بأكثر من 40. أمثلة:</p>
+<ul class="en" style="direction:ltr;text-align:left">
+<li>ball (0, 200, 0): G&minus;R = 200, G&minus;B = 200 &rarr; mask = True</li>
+<li>floor (150, 150, 150): G&minus;R = 0 &rarr; False</li>
+<li>edge pixel mixed with floor (60, 100, 60): G&minus;R = 40, not &gt; 40 &rarr; False</li>
+</ul>
+<p>إذن بكسلات الحافة الممزوجة تُرفض، ويبقى القلب الأخضر الواضح. هذا اختيار تصميمي (العتبة 40 اخترتها أنا)، وهو يعمل جيداً هنا: وجدنا الكرة في كل الإطارات (صفر إطار ضائع).</p></div>
+
+<div class="card"><h2>3. المركز (<span class="en">centroid</span>)</h2>
+<p>مركز البكسلات التي قيمتها True هو متوسط إحداثياتها:</p>
+<p class="en" style="text-align:center">u<sub>c</sub> = (1/N) &sum; u<sub>i</sub>, &nbsp;&nbsp; v<sub>c</sub> = (1/N) &sum; v<sub>i</sub></p>
+<p>مثال صغير: بكسلات القناع <span class='en'>(10,5), (11,5), (10,6), (11,6), (12,6)</span>: <span class='en'>u<sub>c</sub> = (10+11+10+11+12)/5 = 10.8</span> و<span class='en'>v<sub>c</sub> = (5+5+6+6+6)/5 = 5.6</span>. لاحظ أن المركز <b>عدد كسري</b>، أي نحصل على دقة أدق من البكسل (<span class="en">sub-pixel</span>) لأن المتوسط يجمع عدة بكسلات. وهذا ما يفسّر خطأ الكاميرا المثالية 1.7 مم رغم أن البكسل 7.2 مم.</p>
+<p>في الكود نشترط <span class='en'>N &ge; 3</span> بكسلات على الأقل (<span class="en">min_pixels</span>) وإلا نعتبر أن الكرة غير مرئية.</p></div>
+
+<div class="card"><h2>4. قراءة العمق</h2>
+<p>نقرأ العمق عند أقرب بكسل للمركز: <span class='en'>z = D[ round(v<sub>c</sub>), round(u<sub>c</sub>) ]</span>. في مثالنا: <span class='en'>D[198, 390]</span> (تقريب 197.5 و389.5) فخرج <span class='en'>2.9408 m</span>.</p>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>def detect(self, rgb, min_pixels=3):
+    g = (rgb[..., 1] &gt; rgb[..., 0] + 40) &amp; (rgb[..., 1] &gt; rgb[..., 2] + 40)   # the mask M
+    if g.sum() &lt; min_pixels:
+        return None
+    v, u = np.nonzero(g)                  # rows and columns of the True pixels
+    return u.mean(), v.mean()             # the centroid (u_c, v_c)</pre></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>بكسلات القناع <span class='en'>(3,2), (4,2), (5,2), (4,3)</span>. ما المركز <span class='en'>(u<sub>c</sub>, v<sub>c</sub>)</span>؟ وإلى أي بكسل نقرأ العمق؟</p></div>
+<p class="tag">القادم: B2 الطبقة 3 (الرياضيات: لماذا المتوسط يعطي دقة أقل من بكسل؟).</p>
+</main></body></html>

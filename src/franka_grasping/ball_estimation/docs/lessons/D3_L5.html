@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 L5 - Kalman: الافتراضات والحدود</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .warning { border-right:4px solid #d97706; padding-right:12px; color:#92400e; background:#fef3c7; padding:8px 12px; border-radius:4px; margin:12px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D3 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>متى ينجح مرشّح Kalman؟ ومتى يفشل؟</h1>
+
+<div class="box"><p><b>جواب سؤال D3 L4:</b> <span class='en'>self.P[:2, :2]</span> هي الزاوية العلوية اليسرى من <span class='en'>P</span> (4×4)—تباين الموقع <span class='en'>x</span> و<span class='en'>y</span> فقط (الصفوف 0-1، الأعمدة 0-1). <span class='en'>self.R</span> هو تباين خطأ <span class='en'>واحد</span> (قياس عددي واحد لكل محور من <span class='en'>xy</span>)، فنضربه في <span class='en'>np.eye(2)</span> لنحصل على مصفوفة 2×2. إذاً <span class='en'>S</span> هي تباين التنبية (موقع فقط).</p></div>
+
+<div class="card"><h2>1. الافتراضات الثلاثة الأساسية</h2>
+<p>مرشّح Kalman <b>الكلاسيكي</b> يفترض:</p>
+<ul>
+<li><b>خطية (Linearity):</b> نموذج الحركة ونموذج القياس خطيان. مثلاً: <span class='en'>x<sub>k</sub> = a·x<sub>k-1</sub> + b·u</span> و<span class='en'>z = c·x</span> (لا توجد تربيع، أو <span class='en'>sin</span>، أو ضرب بين المتغيرات).</li>
+<li><b>ضجيج غاوسي (Gaussian Noise):</b> كل من <span class='en'>w<sub>k</sub> ~ N(0, Q)</span> و<span class='en'>n<sub>k</sub> ~ N(0, R)</span> عشوائي طبيعي (جرسي الشكل)، <b>مستقل</b> عن الباقي.</li>
+<li><b>معاملات معروفة (Known Tuning):</b> نعرف <span class='en'>Q</span> (ضجيج النموذج) و<span class='en'>R</span> (خطأ القياس) بدقة.</li>
+</ul>
+<p>إذا توفرت هذه الثلاثة، Kalman <b>أمثل</b>: لا توجد طريقة أفضل لدمج التنبؤ والقياس.</p>
+</div>
+
+<div class="card"><h2>2. نحن نكسر كل الافتراضات!</h2>
+<p class="warning"><b>⚠️ في مشروعنا:</b> كل هذه الافتراضات مكسورة جزئياً أو كلياً:</p>
+<ul>
+<li><b>ليست خطية:</b> النموذج يتضمن احتكاك <span class='en'>f(v) = c·v</span>، ينقص السرعة بناءً على مقدارها (nonlinear). الجدران أيضاً غير خطية (عاكسة).</li>
+<li><b>الضجيج ليس غاوسياً كلياً:</b> الكاميرا قد تتجمد (dropout) = خطأ كبير جداً (outlier)، وليس جرسياً عادياً.</li>
+<li><b>Q و R معروفان تقريباً فقط:</b> اخترنا <span class='en'>q = 0.5, sigma = 5 mm</span> بناءً على تجربة، لا من أول مبادئ.</li>
+</ul>
+<p>لذلك نستخدم <b>Extended Kalman Filter (EKF)</b>: يتعامل مع اللاخطية باستخدام <span class='en'>Jacobian</span> (المشتقة) بدلاً من المصفوفة <span class='en'>F</span>.</p>
+</div>
+
+<div class="card"><h2>3. ماذا يحدث عند كسر الافتراضات؟</h2>
+<ul>
+<li><b>Q صغير جداً:</b> نثق بالنموذج كثيراً، لكنه خاطئ (مثل الاحتكاك الذي لم نحسبه). النتيجة: <span class='en'>P</span> تنخفض (يقين كاذب)، والمرشح يتجاهل القياسات الجديدة. التنبؤ ينجرف بعيداً عن الحقيقة.</li>
+<li><b>R صغير جداً:</b> نثق بالقياسات كثيراً، حتى لو كانت خاطئة (مثل نتيجة تجمد الكاميرا). النتيجة: <span class='en'>K</span> كبير (قريب من 1)، والمرشح يتابع كل قياس سيء فيصبح مزعزعاً.</li>
+<li><b>Outliers (خطأ كبير واحد):</b> إذا حصل قياس سيء جداً (مثل الكاميرا التقطت خطأ)، Kalman يؤمن أنه جرسي التوزيع فينجذب إليه. النتيجة: قفزة في التقدير.</li>
+</ul>
+</div>
+
+<div class="card"><h2>4. الحلول في الكود</h2>
+<p>عشنا هذه المشاكل، فأضفنا حلولاً:</p>
+<ul>
+<li><b>الـ Gate:</b> قياس يبدو مريباً جداً (بعيد جداً عن التنبؤ) يُرفض. يقيس <span class='en'>chi-square = y ᵀ S⁻¹ y</span>—كم "مفاجئة" هو هذا القياس؟ إذا زاد على عتبة، ندع القياس جانباً.</li>
+<li><b>Policy:</b> عند رفع قياسات متتالية (كاميرا متجمدة؟)، نقرر: هل ننتظر (policy="skip")، أم نعيد تعيين الحالة (policy="reset")؟</li>
+<li><b>Stale guard:</b> إذا كان القياس الجديد <b>بالضبط</b> مثل السابق (متطابق بتاماً)، ربما الكاميرا متجمدة، فنرفضه.</li>
+<li><b>sigma_E:</b> إضافة تأكد أكبر في السرعة عند الجدار (bounce)، لأن الارتداد غير محدد تماماً.</li>
+</ul>
+</div>
+
+<div class="card"><h2>5. متى ينجح؟</h2>
+<p>Kalman ينجح حين:</p>
+<ul>
+<li>النموذج قريب من الحقيقة (احتكاك معروف تقريباً).</li>
+<li>الضجيج محدود (الكاميرا لا تتجمد طويلاً).</li>
+<li>النسبة <span class='en'>Q/R</span> معقولة (لا نثق بأحدهما كثيراً بلا سبب).</li>
+<li>القياسات تأتي بانتظام (لا تتأخر بشكل متغير).</li>
+</ul>
+<p>في محاكاتنا: <b>ناجح</b> لأن كل شيء معروف (نعرف الاحتكاك الحقيقي وخطأ الكاميرا). في الروبوت الحقيقي: أصعب بكثير!</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في مثالنا من D3 L2: <span class='en'>Q = 4×10⁻⁶, R = 2.5×10⁻⁵</span>، إذاً <span class='en'>Q/R ≈ 0.16</span>. هذا معناه <b>ماذا</b> عن ثقتنا بالنموذج مقابل الكاميرا؟ (أيهما أفضل، وبكم مرة؟)</p>
+</div>
+<p class="tag">القادم: D3 الطبقة 6 (تمرين: حاول توليفة مختلفة من Q و R وشوف ماذا يحدث).</p>
+</main></body></html>

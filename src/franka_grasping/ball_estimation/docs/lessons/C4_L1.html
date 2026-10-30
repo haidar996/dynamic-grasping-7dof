@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 L1 - الانقطاع (dropout)</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C4 &middot; الطبقة 1: الحدس</p>
+<h1>الانقطاع (dropout)</h1>
+
+<div class="box"><p>انتقلنا إلى C4 كما طلبت. جواب السؤال السابق: خطأ تقدير التأخير 10 ms عند 5 م/ث يعطي <span class='en'>50 mm</span>، مقابل <span class='en'>30 mm</span> عند 3 م/ث.</p></div>
+
+<div class="card"><h2>1. ما هو الانقطاع؟</h2>
+<p>أحياناً لا نحصل على مكان الكرة في إطار ما. الأسباب: الذراع تحجب الكرة عن الكاميرا، أو فشل الكشف، أو ضياع الإطار في النقل. في هذه الإطارات لا يصل قياس جديد.</p></div>
+
+<div class="card"><h2>2. طريقتان لحدوثه (كلتاهما نختبرها)</h2>
+<ul>
+<li><b>الانقطاع المُعلَن</b> (<span class="en">flagged</span>): النظام يقول بصراحة «لا كرة في هذا الإطار» (<span class='en'>valid = False</span>). الـ estimator يعرف أنه لا قياس، فيكتفي بالتنبؤ.</li>
+<li><b>الاحتفاظ الصامت</b> (<span class="en">silent hold</span>): النظام يعيد <b>آخر مكان صحيح</b> كأنه قياس جديد صحيح (<span class='en'>valid = True</span>). الـ estimator يظن أن الكرة وقفت في مكانها!</li>
+</ul>
+<p>الثاني أخطر: لا إشارة تحذير. هذا قرارك (اخترتَ اختبار الاثنين، الأول رئيسي والثاني للمتانة).</p></div>
+
+<div class="card"><h2>3. الصورة (من الـ Sensor الحقيقي عندنا)</h2>
+<img src="img/C4_dropout.png" alt="dropout" style='width:100%;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<ul>
+<li><b>الأعلى:</b> الإطارات الأخضر = رأينا الكرة، الأحمر = ضاعت. نلاحظ أن الضياع يأتي <b>في كتل</b> (إطار واحد عند 0.2 ث، وكتلة من حوالي 11 إطاراً عند 3.3 ث) وليس موزعاً منفرداً.</li>
+<li><b>الأسفل:</b> الخط الرمادي هو مكان الكرة الحقيقي <span class='en'>x(t)</span> (ترتد عن الجدار عند 0.6 ث وعند 2.1 ث). النقاط الزرقاء هي القياسات في الوضع المُعلَن (لا نقاط في الفجوة). المربعات الحمراء هي الوضع الصامت: <b>تكرار القيمة القديمة</b> في خط أفقي، بينما الكرة الحقيقية تواصل الحركة.</li>
+</ul></div>
+
+<div class="card"><h2>4. لماذا في كتل؟ (سلسلة ماركوف)</h2>
+<p>نمذجنا الانقطاع كسلسلة بحالتين: «مرئي» و«ضائع». احتمال الانتقال من ضائع إلى مرئي <span class='en'>q = 1/6</span> في كل إطار، فمتوسط طول الفجوة 6 إطارات (<span class='en'>6 &times; 16.7 = 100 ms</span>). واحتمال البدء محسوب ليكون الضياع الكلي 5%.</p>
+<p>الفرق عن السحب المستقل لكل إطار: في اختبار سابق (1D)، 5% بسحب مستقل أعطت فجوات متوسطها 18 ms وأطولها 67 ms، أما بسلسلة ماركوف فمتوسطها 103 ms وأطولها 650 ms. الواقع (الحجب بالذراع مثلاً) أقرب إلى الكتل الطويلة.</p></div>
+
+<div class="card"><h2>5. ماذا وجدنا في الجداول؟ (500 إطلاق)</h2>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>now position error (mm)</b></td><td style="padding:4px 12px"><b>ideal</b></td><td style="padding:4px 12px"><b>flagged</b></td><td style="padding:4px 12px"><b>silent</b></td></tr>
+<tr><td style="padding:4px 12px">fd</td><td>1.8</td><td>30.7</td><td>38.6</td></tr>
+<tr><td style="padding:4px 12px">ekf19-none</td><td>1.9</td><td>3.5</td><td>39.3</td></tr>
+<tr><td style="padding:4px 12px">oracle (no gate)</td><td>1.7</td><td>1.8</td><td>39.3</td></tr>
+</table>
+<p>الانقطاع المُعلَن سهل على الـ EKF (3.5 مم) لأنه يتنبأ بنموذجه. والصامت يضرّ الكل (حوالي 40 مم)، إلى أن أضفنا حارس التكرار (<span class='en'>+stale</span>) فعاد إلى 3.5.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>فجوة بطول متوسط (6 إطارات = 100 ms) وكرة بسرعة <span class='en'>3 m/s</span>: كم متراً تقطعها الكرة خلال الفجوة؟ وماذا يظن الـ estimator في الوضع الصامت عن مكانها؟</p></div>
+<p class="tag">القادم: C4 الطبقة 2 (التعريفات: سلسلة ماركوف، متوسط الفجوة ومعدل الضياع).</p>
+</main></body></html>

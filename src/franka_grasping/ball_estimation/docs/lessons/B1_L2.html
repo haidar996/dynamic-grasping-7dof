@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L2 - التعريفات: البعد البؤري</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>نموذج الكاميرا (pinhole) والبعد البؤري f</h1>
+
+<div class="box"><p>جواب سؤال B1 السابق (ورد في ردي): عند 40&deg; ترى الكاميرا 2.18 م رأسياً، والبكسل 4.55 مم، والساحة تدخل كلها.</p></div>
+
+<div class="card"><h2>1. نموذج الثقب (<span class="en">pinhole camera</span>)</h2>
+<p>النموذج الرياضي الأبسط للكاميرا: كل نقطة في العالم ترسل خطاً مستقيماً عبر ثقب صغير هو مركز الكاميرا، فتسقط على الصورة. لنفرض أن النقطة في إحداثيات الكاميرا (الأصل في مركز الكاميرا): <span class='en'>X</span> يمين، <span class='en'>Y</span> إلى الأعلى، و<span class='en'>Z</span> المسافة أمام الكاميرا (عندنا: المسافة إلى الأسفل). فإن موقعها في الصورة:</p>
+<p class="en" style="text-align:center">u = c<sub>x</sub> + f &middot; X / Z, &nbsp;&nbsp; v = c<sub>y</sub> &minus; f &middot; Y / Z</p>
+<ul>
+<li><span class='en'>u</span>: رقم العمود (يزداد نحو اليمين)، و<span class='en'>v</span>: رقم الصف (يزداد نحو الأسفل، ولذلك الإشارة السالبة مع <span class='en'>Y</span>).</li>
+<li><span class='en'>(c<sub>x</sub>, c<sub>y</sub>)</span>: مركز الصورة (<span class="en">principal point</span>)، عندنا <span class='en'>c<sub>x</sub> = (640&minus;1)/2 = 319.5</span> و<span class='en'>c<sub>y</sub> = (480&minus;1)/2 = 239.5</span>.</li>
+<li><span class='en'>f</span>: <b>البعد البؤري مقاساً بالبكسل</b> (<span class="en">focal length in pixels</span>). هو الرقم الذي يحوّل النسبة <span class='en'>X/Z</span> (بلا وحدة) إلى بكسلات.</li>
+</ul></div>
+
+<div class="card"><h2>2. العلاقة بزاوية الرؤية</h2>
+<p>الحافة العليا للصورة تبعد <span class='en'>R/2 = 240</span> بكسلاً عن المركز، وتقابل الزاوية <span class='en'>&theta;<sub>v</sub>/2</span>. من الصيغة أعلاه (نقطة على حافة المخروط: <span class='en'>Y/Z = tan(&theta;<sub>v</sub>/2)</span>):</p>
+<p class="en" style="text-align:center">tan(&theta;<sub>v</sub>/2) = (R/2) / f &nbsp;&nbArr;&nbsp; f = (R/2) / tan(&theta;<sub>v</sub>/2)</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>vertical FOV</b></td><td style="padding:4px 12px"><b>f (px)</b></td><td style="padding:4px 12px"><b>horizontal FOV</b></td><td style="padding:4px 12px"><b>mm per px at 3 m</b></td></tr>
+<tr><td style="padding:4px 12px">60&deg;</td><td>415.7</td><td style="padding:4px 12px">75.2&deg;</td><td>7.22</td></tr>
+<tr><td style="padding:4px 12px">40&deg;</td><td>659.4</td><td style="padding:4px 12px">51.8&deg;</td><td>4.55</td></tr>
+</table>
+<p>الزاوية الأفقية من العلاقة نفسها بالعرض: <span class='en'>tan(&theta;<sub>h</sub>/2) = (W/2)/f</span>. وزاوية أصغر تعني <span class='en'>f</span> أكبر (تكبير)، وهذا يفسّر لماذا يصغر الملّيمتر لكل بكسل.</p></div>
+
+<div class="card"><h2>3. ما يغطيه البكسل</h2>
+<p>من الصيغة: تغيّر <span class='en'>X</span> بمقدار <span class='en'>Z/f</span> يحرّك الصورة بكسلاً واحداً. إذن:</p>
+<p class="en" style="text-align:center">size of one pixel on the object = Z / f</p>
+<p>عند <span class='en'>Z = 3 m</span>: <span class='en'>3/415.7 = 7.22 mm</span> (60&deg;) و<span class='en'>3/659.4 = 4.55 mm</span> (40&deg;). هذه هي الأرقام التي استعملناها في الدرس السابق.</p></div>
+
+<div class="card"><h2>4. مثال: أين تظهر الكرة؟</h2>
+<p>كرة مركزها <span class='en'>x = 0.5 m</span> (و<span class='en'>y = 0</span>) والمسافة من الكاميرا إلى مركزها <span class='en'>Z<sub>c</sub> = 3 &minus; 0.03 = 2.97 m</span>. عند 60&deg;:</p>
+<p class="en" style="text-align:center">u &minus; c<sub>x</sub> = f X / Z = 415.7 &times; 0.5 / 2.97 = 70.0 px</p>
+<p>أي تظهر على بعد 70 بكسلاً يمين مركز الصورة. وهذه الصيغة نفسها، معكوسة، هي التي سنستعملها في الدرس B2 لنحوّل البكسل إلى متر.</p>
+<p>في الكود (<span class="en">sensing/camera.py</span>): <span class='en'>self.f = (self.R / 2) / np.tan(np.radians(fovy) / 2)</span>.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>بزاوية رؤية <span class='en'>40&deg;</span> (<span class='en'>f = 659.4</span>) والكرة في المكان نفسه (<span class='en'>x = 0.5, Z = 2.97</span>): كم بكسلاً تبعد عن مركز الصورة؟ وبماذا يختلف ذلك عن حالة 60&deg;؟</p></div>
+<p class="tag">القادم: B1 الطبقة 3 (الرياضيات: اشتقاق الصيغة من تشابه المثلثات).</p>
+</main></body></html>

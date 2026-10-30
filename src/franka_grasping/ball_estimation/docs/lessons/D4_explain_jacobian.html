@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D4 شرح إضافي - اشتقاق الـ Jacobian</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">شرح إضافي &middot; اشتقاق الـ Jacobian من دالة الاحتكاك</p>
+<h1>كيف نحسب <span class='en'>F = ∂f/∂s</span> من <span class='en'>f(s)</span>؟</h1>
+
+<div class="card"><h2>1. الدالة غير الخطية <span class='en'>f(s)</span></h2>
+<p>الحالة الكاملة:</p>
+<p class="en" style="text-align:center">s = [x, y, vx, vy]ᵀ</p>
+<p>الدالة التي تنبئ بالحالة الجديدة (مع احتكاك <span class='en'>c = 0.85</span>):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+f(s) = [<br>
+&nbsp;&nbsp;x + vx·Δt,<br>
+&nbsp;&nbsp;y + vy·Δt,<br>
+&nbsp;&nbsp;vx·(1 − c·Δt),<br>
+&nbsp;&nbsp;vy·(1 − c·Δt)<br>
+]
+</p>
+<p>أو مكتوبة بشكل واضح:</p>
+<p class="en" style="text-align:center">
+f₁(s) = x + vx·Δt<br>
+f₂(s) = y + vy·Δt<br>
+f₃(s) = vx·(1 − c·Δt)<br>
+f₄(s) = vy·(1 − c·Δt)
+</p>
+</div>
+
+<div class="card"><h2>2. تعريف الـ Jacobian</h2>
+<p>الـ Jacobian هي مصفوفة المشتقات الجزئية. لدالة <span class='en'>f: R⁴ → R⁴</span>، الـ Jacobian (4×4) هي:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+F = ∂f/∂s = <br><br>
+[∂f₁/∂x   ∂f₁/∂y   ∂f₁/∂vx   ∂f₁/∂vy]<br>
+[∂f₂/∂x   ∂f₂/∂y   ∂f₂/∂vx   ∂f₂/∂vy]<br>
+[∂f₃/∂x   ∂f₃/∂y   ∂f₃/∂vx   ∂f₃/∂vy]<br>
+[∂f₄/∂x   ∂f₄/∂y   ∂f₄/∂vx   ∂f₄/∂vy]
+</p>
+<p>كل عنصر <span class='en'>F[i,j] = ∂fᵢ/∂sⱼ</span> = كم تتغير الدالة <span class='en'>i</span> عندما نغيّر المتغير <span class='en'>j</span> بمقدار صغير.</p>
+</div>
+
+<div class="card"><h2>3. حساب كل عنصر</h2>
+<p><b>الصف الأول: المشتقات من f₁ = x + vx·Δt</b></p>
+<p class="en" style="text-align:center;margin:8px 0">
+∂f₁/∂x = ∂(x + vx·Δt)/∂x = <b>1</b><br>
+∂f₁/∂y = ∂(x + vx·Δt)/∂y = <b>0</b> (لا يوجد y في f₁)<br>
+∂f₁/∂vx = ∂(x + vx·Δt)/∂vx = <b>Δt</b><br>
+∂f₁/∂vy = ∂(x + vx·Δt)/∂vy = <b>0</b> (لا يوجد vy في f₁)
+</p>
+
+<p><b>الصف الثاني: المشتقات من f₂ = y + vy·Δt</b></p>
+<p class="en" style="text-align:center;margin:8px 0">
+∂f₂/∂x = ∂(y + vy·Δt)/∂x = <b>0</b><br>
+∂f₂/∂y = ∂(y + vy·Δt)/∂y = <b>1</b><br>
+∂f₂/∂vx = ∂(y + vy·Δt)/∂vx = <b>0</b><br>
+∂f₂/∂vy = ∂(y + vy·Δt)/∂vy = <b>Δt</b>
+</p>
+
+<p><b>الصف الثالث: المشتقات من f₃ = vx·(1 − c·Δt)</b></p>
+<p class="en" style="text-align:center;margin:8px 0">
+∂f₃/∂x = ∂[vx·(1 − c·Δt)]/∂x = <b>0</b> (لا يوجد x)<br>
+∂f₃/∂y = ∂[vx·(1 − c·Δt)]/∂y = <b>0</b> (لا يوجد y)<br>
+∂f₃/∂vx = ∂[vx·(1 − c·Δt)]/∂vx = <b>1 − c·Δt</b> (المشتقة من vx بالنسبة لـ vx)<br>
+∂f₃/∂vy = ∂[vx·(1 − c·Δt)]/∂vy = <b>0</b> (لا يوجد vy)
+</p>
+
+<p><b>الصف الرابع: المشتقات من f₄ = vy·(1 − c·Δt)</b></p>
+<p class="en" style="text-align:center;margin:8px 0">
+∂f₄/∂x = <b>0</b><br>
+∂f₄/∂y = <b>0</b><br>
+∂f₄/∂vx = <b>0</b><br>
+∂f₄/∂vy = <b>1 − c·Δt</b>
+</p>
+</div>
+
+<div class="card"><h2>4. مصفوفة الـ Jacobian الكاملة</h2>
+<p>بجمع كل العناصر:</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%">
+F = <br>
+[1,  0,  Δt,             0]<br>
+[0,  1,  0,              Δt]<br>
+[0,  0,  1 − c·Δt,      0]<br>
+[0,  0,  0,              1 − c·Δt]
+</p>
+<p>هذا هو الـ Jacobian!</p>
+</div>
+
+<div class="card"><h2>5. المقارنة مع النموذج الخطي</h2>
+<p><b>النموذج الخطي (D4 L2: بدون احتكاك):</b></p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%">
+F_linear = <br>
+[1,  0,  Δt,  0]<br>
+[0,  1,  0,   Δt]<br>
+[0,  0,  1,   0]<br>
+[0,  0,  0,   1]
+</p>
+<p><b>النموذج غير الخطي (مع احتكاك):</b></p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%">
+F_ekf = <br>
+[1,  0,  Δt,             0]<br>
+[0,  1,  0,              Δt]<br>
+[0,  0,  1 − c·Δt,      0]<br>
+[0,  0,  0,              1 − c·Δt]
+</p>
+<p>الفرق الوحيد: الصفان الثالث والرابع من القطر الرئيسي:</p>
+<ul>
+<li><span class='en'>F_linear</span>: قيمة 1 (السرعة ثابتة)</li>
+<li><span class='en'>F_ekf</span>: قيمة <span class='en'>1 − c·Δt ≈ 0.915</span> (السرعة تنقص)</li>
+</ul>
+</div>
+
+<div class="card"><h2>6. الحدس</h2>
+<p>الـ Jacobian <span class='en'>F[i,j]</span> يخبرك: <b>كم يتغير الخرج i عندما نزيد الدخل j قليلاً؟</b></p>
+<ul>
+<li><span class='en'>∂f₁/∂vx = Δt</span>: إذا زدنا <span class='en'>vx</span> بـ 0.01 m/s، الموقع <span class='en'>x</span> يزيد بـ <span class='en'>0.01 × Δt</span>—يعني الموقع يعتمد على السرعة بمعامل <span class='en'>Δt</span>.</li>
+<li><span class='en'>∂f₃/∂vx = 1 − c·Δt</span>: إذا زدنا <span class='en'>vx</span> بـ 1 m/s، السرعة الجديدة <span class='en'>vx_new</span> تزيد بـ <span class='en'>1 − c·Δt</span>—يعني السرعة الجديدة أصغر من القديمة (بسبب الاحتكاك).</li>
+</ul>
+</div>
+
+<div class="card"><h2>7. مثال بأرقام</h2>
+<p><span class='en'>c = 0.85, Δt = 0.1</span>:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+1 − c·Δt = 1 − 0.85 × 0.1 = 1 − 0.085 = 0.915
+</p>
+<p>إذاً إذا كانت <span class='en'>vx = 1 m/s</span>:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+vx_new = 1 × 0.915 = 0.915 m/s
+</p>
+<p>السرعة انخفضت من 1 إلى 0.915 (نسبة 91.5%).</p>
+</div>
+
+<div class="card"><h2>8. الخطوة التالية في EKF</h2>
+<p>بعد حساب الـ Jacobian <span class='en'>F</span>، نستخدمه في خطوة التنبؤ <b>للتباين فقط</b>:</p>
+<p class="en" style="text-align:center">
+P⁻ = F·P·Fᵀ + Q
+</p>
+<p>لكن <b>الموقع</b> نحسبه من الدالة الأصلية <span class='en'>f(s)</span> (غير الخطية):</p>
+<p class="en" style="text-align:center">
+s⁻ = f(s)
+</p>
+<p>هذا هو الفرق الرئيسي بين Kalman والـ EKF!</p>
+</div>
+</main></body></html>

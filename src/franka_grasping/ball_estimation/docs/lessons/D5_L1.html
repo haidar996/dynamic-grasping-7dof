@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D5 L1 - الاحتكاك: النموذج الفيزيائي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D5 &middot; الطبقة 1: الاحتكاك والمقاومة</p>
+<h1>نموذج الاحتكاك: لماذا تتباطأ الكرة؟</h1>
+
+<div class="box"><p><b>جواب سؤال D4 L3:</b> العنصر 0.915 يعني أن السرعة تبقى 91.5% من قيمتها السابقة كل خطوة (تفقد 8.5%). إذا زاد <span class='en'>c</span> (احتكاك أقوى)، المعامل ينخفض أكثر—مثلاً إذا <span class='en'>c = 1.0</span> بدلاً من 0.85، المعامل يصير <span class='en'>1 − 1.0 × 0.1 = 0.9</span> (تفقد 10% بدلاً من 8.5%).</p></div>
+
+<div class="card"><h2>1. المشكلة: الكرة لا تتحرك إلى الأبد</h2>
+<p>في الواقع، عندما تُرمي كرة على أرض، تتباطأ وتتوقف. السبب: <b>احتكاك</b>—مقاومة من الهواء والأرض.</p>
+<p>في محاكاتنا (MuJoCo)، نحتاج نموذج يمثل هذا:</p>
+<ul>
+<li>الكرة تبدأ بسرعة عالية</li>
+<li>تتباطأ تدريجياً</li>
+<li>في النهاية تتوقف (أو تتحرك ببطء جداً)</li>
+</ul>
+<p>بدون احتكاك في النموذج، المرشح يتوقع الكرة تبقى سريعة للأبد—خطأ!</p>
+</div>
+
+<div class="card"><h2>2. نموذج الاحتكاك البسيط (Drag Model)</h2>
+<p>أبسط نموذج: السرعة تنقص بنسبة ثابتة كل خطوة:</p>
+<p class="en" style="text-align:center">v_new = v_old × (1 − c)</p>
+<p>حيث <span class='en'>c</span> = معامل الاحتكاك (بين 0 و 1).</p>
+<p>لكننا نعمل بفترات زمنية صغيرة <span class='en'>Δt</span> (0.01 أو 0.1 ثانية)، فنستخدم:</p>
+<p class="en" style="text-align:center">v_new = v_old × (1 − c·Δt)</p>
+<p>هذا يعني: السرعة تنقص بنسبة <span class='en'>c·Δt</span> في كل خطوة. كلما كانت <span class='en'>Δt</span> أصغر، كل خطوة تنقص أقل، والنتيجة النهائية متطابقة.</p>
+</div>
+
+<div class="card"><h2>3. مثال: الكرة تتباطأ</h2>
+<p>الكرة تبدأ بـ <span class='en'>vx = 1 m/s, vy = 0 m/s</span>. معامل الاحتكاك <span class='en'>c = 0.85</span>، الفترة الزمنية <span class='en'>Δt = 0.1 s</span>:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+الخطوة 1: vx = 1.0 × (1 − 0.85×0.1) = 1.0 × 0.915 = <b>0.915 m/s</b><br>
+الخطوة 2: vx = 0.915 × 0.915 = <b>0.837 m/s</b><br>
+الخطوة 3: vx = 0.837 × 0.915 = <b>0.766 m/s</b><br>
+الخطوة 4: vx = 0.766 × 0.915 = <b>0.701 m/s</b><br>
+...<br>
+الخطوة 20: vx ≈ <b>0.19 m/s</b><br>
+الخطوة 50: vx ≈ <b>0.008 m/s</b> (تقريباً متوقفة)
+</p>
+<p>الكرة تفقد ~8.5% من السرعة كل 0.1 ثانية. بعد 5 ثوان (50 خطوة)، السرعة تقريباً صفر.</p>
+</div>
+
+<div class="card"><h2>4. لماذا <span class='en'>c = 0.85</span> بالذات؟</h2>
+<p>معامل الاحتكاك <span class='en'>c</span> يعتمد على:</p>
+<ul>
+<li><b>نوع الكرة والأرض:</b> كرة على خشب تنزلق بحرية أكثر من كرة على رمل.</li>
+<li><b>الهواء:</b> مقاومة الهواء تزيد مع السرعة (أقل أهمية للكرات البطيئة).</li>
+<li><b>الدوران:</b> إذا كانت الكرة تدور، الاحتكاك يختلف.</li>
+</ul>
+<p>في مشروعنا: <span class='en'>c = 0.85</span> تم قياسه من المحاكاة (MuJoCo). هذا العدد يعني "الكرة تفقد ~15% من السرعة لكل ثانية واحدة" (بالتقريب).</p>
+</div>
+
+<div class="card"><h2>5. الاحتكاك في البعد 2D</h2>
+<p>للكرة التي تتحرك في مستوى (<span class='en'>x</span> و<span class='en'>y</span>)، نطبق الاحتكاك على كل محور:</p>
+<p class="en" style="text-align:center">
+vx_new = vx_old × (1 − c·Δt)<br>
+vy_new = vy_old × (1 − c·Δt)
+</p>
+<p>أو بصيغة متجه:</p>
+<p class="en" style="text-align:center">
+v_new = v_old × (1 − c·Δt)
+</p>
+<p>(نضرب المتجه بأكمله بنفس المعامل)</p>
+<p>هذا يعني الاحتكاك <b>متساوي</b> في جميع الاتجاهات (isotropic).</p>
+</div>
+
+<div class="card"><h2>6. الفرق من الواقع</h2>
+<p>هذا النموذج <b>مبسط جداً</b>. في الحقيقة:</p>
+<ul>
+<li>الاحتكاك يعتمد على <b>مقدار</b> السرعة (كرة سريعة جداً تعاني مقاومة هواء أكبر)</li>
+<li>الاحتكاك يعتمد على <b>اتجاه</b> الحركة (احتكاك انزلاق يختلف عن دوران)</li>
+<li>الاحتكاك يعتمد على <b>السطح</b> (خشب vs. معادن vs. بلاستيك)</li>
+</ul>
+<p>لكن نموذجنا <span class='en'>v_new = v × (1 − c·Δt)</span> يعمل بشكل <b>كافٍ</b> للتنبيؤ المعقول في محاكاة MuJoCo.</p>
+</div>
+
+<div class="card"><h2>7. الاحتكاك مقابل <span class='en'>Q</span> (ضجيج النموذج)</h2>
+<p>لا تخلط بين الاثنين:</p>
+<ul>
+<li><b>الاحتكاك <span class='en'>c</span>:</b> قوة معروفة تنقص السرعة <b>بشكل حتمي</b>. كل خطوة، <span class='en'>v</span> تنقص بنفس النسبة.</li>
+<li><b>ضجيج النموذج <span class='en'>Q</span>:</b> قوى <b>غير معروفة</b> و<b>عشوائية</b> (رياح، عدم كمالية الأرض، إلخ). نضيفها إلى التباين لنقول "ربما حدث شيء ما بيننا لم نحسبه".</li>
+</ul>
+<p>الاحتكاك يجب أن يكون في النموذج <span class='en'>f(s)</span> نفسه (حتمي). <span class='en'>Q</span> يمثل كل القوى الأخرى التي لم نحسبها.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>إذا ألقينا الكرة بسرعة أفقية <span class='en'>vx = 2 m/s</span> و<span class='en'>vy = 0</span>، ومعامل الاحتكاك <span class='en'>c = 0.85</span>، كم خطوة (مع <span class='en'>Δt = 0.1 s</span>) تحتاج حتى تصير السرعة أقل من 0.01 m/s (تقريباً متوقفة)؟</p>
+</div>
+<p class="tag">القادم: D5 الطبقة 2 (مثال كامل: تنبؤ مع احتكاك).</p>
+</main></body></html>

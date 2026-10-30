@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L2 part2 - الـ estimator والـ forecast والخطأ</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 2: التعريف والرموز &middot; الجزء 2</p>
+<h1>الـ estimator والـ forecast والخطأ</h1>
+
+<div class="box"><p>إجابتك صحيحة: السرعتان <span class="en">v<sub>x</sub>, v<sub>y</sub></span> غير موجودتين في القياس، فعلى الـ estimator أن يستنتجهما من تغيّر المكان عبر الزمن.</p></div>
+
+<div class="card">
+<h2>1. الـ estimator كدالة</h2>
+<p>الـ <span class="en">estimator</span> هو دالة (<span class="en">function</span>): تأخذ كل القياسات التي وصلت حتى الآن وتعطي تخميناً للـ state الحالي:</p>
+<p class="en" style="text-align:center">&#349;<sub>k</sub> = Estimator( z<sub>1</sub>, z<sub>2</sub>, ..., z<sub>k</sub> )</p>
+<ul>
+<li>الرمز <span class="en">&#770;</span> فوق الحرف (نقرؤها <span class="en">hat</span>) يعني: هذا تخمين. فـ <span class="en">s</span> هو الحقيقة، و<span class="en">ŝ</span> هو التخمين.</li>
+<li>الدالة <b>سببية</b> (<span class="en">causal</span>): تستعمل القياسات الماضية والحالية فقط. لا تستطيع أن ترى المستقبل.</li>
+<li>أحياناً لا يصل z<sub>k</sub> (ضاعت الكرة). عندها تعمل الدالة بما لديها.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>2. الـ forecast</h2>
+<p>الـ <span class="en">forecast</span> هو تخمين الـ state بعد <span class="en">&tau;</span> ثانية من الآن. نحصل عليه بتشغيل نموذج الحركة (<span class="en">motion model</span>) على التخمين الحالي:</p>
+<p class="en" style="text-align:center">&#349;(t + &tau;) = &Phi;<sub>&tau;</sub>( &#349;<sub>k</sub> )</p>
+<p>الدالة <span class="en">&Phi;<sub>&tau;</sub></span> تقول: "إذا كانت الكرة الآن بهذه الحالة، فماذا ستكون حالتها بعد &tau; ثانية؟". الاختلاف الأساسي بين الـ estimators في مشروعنا أن بعضها يستعمل خطاً مستقيماً، وبعضها يستعمل الاحتكاك والاصطدام بالجدار. والـ <span class="en">&tau;</span> التي نختبرها هي <span class="en">0.2, 0.5, 1.0</span> ثانية، وتسمّى <span class="en">horizons</span>.</p>
+</div>
+
+<div class="card">
+<h2>3. الخطأ (<span class="en">error</span>)</h2>
+<p>نقيس جودة التخمين بمقارنته بالحقيقة التي يعرفها المحاكي فقط. الخطأ هو <b>طول</b> المتجه الفرق، ويُكتب <span class="en">&#8214;&middot;&#8214;</span>:</p>
+<p class="en" style="text-align:center">e<sub>pos</sub> = &#8214; p&#770; &minus; p &#8214; = &radic;( (x&#770;&minus;x)<sup>2</sup> + (y&#770;&minus;y)<sup>2</sup> )</p>
+<p>مثال من الدرس السابق: التخمين <span class="en">(0.512, 0.300)</span> والحقيقة <span class="en">(0.500, 0.305)</span>. الفرق <span class="en">(0.012, &minus;0.005)</span>:</p>
+<p class="en" style="text-align:center">e<sub>pos</sub> = &radic;(0.012<sup>2</sup> + 0.005<sup>2</sup>) = &radic;0.000169 = 0.013 m = 13 mm</p>
+<p>بنفس الطريقة نحسب خطأ السرعة <span class="en">e<sub>vel</sub></span> بوحدة م/ث، وخطأ الـ forecast عند <span class="en">&tau;</span>.</p>
+<p><b>ملاحظة مهمة:</b> التخمين <span class="en">ŝ<sub>k</sub></span> متغير عشوائي، لأن القياسات التي بُني منها فيها noise عشوائي. تشغيلان بـ noise مختلف يعطيان تخمينين مختلفين. لهذا لا نحكم على الـ estimator من تجربة واحدة، بل من المتوسط (<span class="en">RMS</span>) على مئات التجارب. سنتعلم هذا في الجزء E.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>التخمين <span class="en">(0.30, 0.10)</span> والحقيقة <span class="en">(0.28, 0.07)</span>. كم يساوي <span class="en">e<sub>pos</sub></span> بالملليمتر؟</p>
+</div>
+
+<p class="tag">القادم: A1 الطبقة 3 (الرياضيات): بناء أبسط estimator للسرعة من قياسين، ولماذا خطؤه كبير.</p>
+</main></body></html>

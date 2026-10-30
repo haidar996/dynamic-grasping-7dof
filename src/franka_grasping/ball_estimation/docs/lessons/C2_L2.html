@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C2 L2 - التعريفات والاشتقاق</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C2 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>الـ quantiser، وخطأ التكميم، واشتقاقه</h1>
+
+<div class="box"><p><b>جواب سؤال التوضيح السابق:</b> عند <span class='en'>Z = 1 m</span>: خطوة العمق <span class='en'>1<sup>2</sup> &times; 0.125 / 31.18 = 4.0 mm</span>. وإذا اقترب الجسم 1 سم (من 1.00 إلى 0.99 م) فالإزاحة <span class='en'>d = fB/Z</span> تتغير من <span class='en'>31.18</span> إلى <span class='en'>31.49</span>، أي <span class='en'>0.315 px</span>، وهذا نحو 2.5 خطوة (الخطوة 0.125). إذن يحس الحساس بحركة 1 سم عند 1 م بسهولة، ويحس حتى بحركة 4 مم (خطوة واحدة).</p></div>
+
+<div class="card"><h2>1. التعريفات</h2>
+<ul>
+<li>الإزاحة الحقيقية <span class='en'>d = fB / Z</span> (بكسل).</li>
+<li><b>المُكمِّم</b> (<span class='en'>quantiser</span>) بخطوة <span class='en'>&Delta;</span>: <span class='en'>Q(d) = &Delta; &middot; round(d / &Delta;)</span>. يقرّب إلى أقرب مضاعف للخطوة.</li>
+<li>العمق المقيس <span class='en'>Z&#770; = fB / Q(d)</span>.</li>
+<li>خطأ الإزاحة <span class='en'>&epsilon; = Q(d) &minus; d</span>، وهو بين <span class='en'>&minus;&Delta;/2</span> و<span class='en'>+&Delta;/2</span>.</li>
+</ul>
+<p>في الكود (<span class='en'>Sensor.corrupt_depth</span>):</p>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>fB = self.cam.f * p.baseline
+z = fB / (np.round(fB / z / p.quant_step) * p.quant_step)</pre>
+<p>السطر الثاني هو بالضبط <span class='en'>Z&#770; = fB / ( round(d/&Delta;) &middot; &Delta; )</span> مع <span class='en'>d = fB/z</span>.</p></div>
+
+<div class="card"><h2>2. الاشتقاق: خطأ العمق بدلالة خطأ الإزاحة</h2>
+<p>نحسب الخطأ بدقة: <span class='en'>Z&#770; &minus; Z = fB/(d + &epsilon;) &minus; fB/d = &minus; fB &epsilon; / ( d (d + &epsilon;) )</span>.</p>
+<p>الخطأ <span class='en'>&epsilon;</span> (أقل من 0.0625 بكسل) صغير جداً مقابل <span class='en'>d</span> (حوالي 10)، فنهمله في المقام: <span class='en'>d + &epsilon; &asymp; d</span>. ثم <span class='en'>d = fB/Z</span> فإن <span class='en'>fB / d<sup>2</sup> = Z<sup>2</sup>/(fB)</span>:</p>
+<p class="en" style="text-align:center">Z&#770; &minus; Z &asymp; &minus; ( Z<sup>2</sup> / f B ) &middot; &epsilon;</p>
+<p>الخطأ في العمق هو الخطأ في الإزاحة مضروباً في <span class='en'>Z<sup>2</sup>/(fB)</span> (وهذا ما قلناه عن شكل المنحنى).</p></div>
+
+<div class="card"><h2>3. توزيع الخطأ</h2>
+<p>إذا كانت الإزاحة الحقيقية «عشوائية بما يكفي» فإن <span class='en'>&epsilon;</span> منتظم على <span class='en'>[&minus;&Delta;/2, &Delta;/2]</span> بانحراف معياري <span class='en'>&Delta;/&radic;12</span> (من A5). إذن:</p>
+<p class="en" style="text-align:center">&sigma;<sub>quant</sub> = ( Z<sup>2</sup> / f B ) &middot; &Delta; / &radic;12</p>
+<p>عند 3 م: <span class='en'>9 &times; 0.125 / 31.18 / 3.46 = 10.4 mm</span>.</p></div>
+
+<div class="card"><h2>4. فحص بأرقام ومحاكاة</h2>
+<ul>
+<li><b>حالة واحدة:</b> <span class='en'>Z = 3.000</span> يعطي <span class='en'>d = 10.3923</span>. أقرب علامة <span class='en'>10.375</span> (أي <span class='en'>&epsilon; = &minus;0.0173</span>). فالعمق المقيس <span class='en'>31.1769/10.375 = 3.00500</span>، أي خطأ <span class='en'>+5.00 mm</span>. والاشتقاق يعطي <span class='en'>&minus;(9/31.18) &times; (&minus;0.0173) = +4.99 mm</span>: مطابق.</li>
+<li><b>محاكاة:</b> 40000 عمقاً عشوائياً بين 2.95 و3.05 م وُضعت في <span class='en'>corrupt_depth</span> الحقيقية: الانحراف المعياري <span class='en'>10.18 mm</span> مقابل 10.42 المتوقع. اتفاق جيد (الفرق من أن النطاق صغير فلا يغطي كل المراحل بالتساوي).</li>
+<li><b>مع noise العمق قبله:</b> الدالة تضيف الـ noise أولاً ثم تكمّم. الانحراف الكلي <span class='en'>12.5 mm</span>، وجمع التباينين <span class='en'>&radic;(7.38<sup>2</sup> + 10.4<sup>2</sup>) = 12.8</span>: قريب.</li>
+</ul></div>
+
+<div class="card"><h2>5. حدود الاشتقاق</h2>
+<ul>
+<li>افترضنا <span class='en'>&epsilon;</span> منتظماً: صحيح إذا تغيّر العمق عبر عدة خطوات. لكرة ساكنة العمق ثابت، فالخطأ <b>ثابت</b> (ليس عشوائياً).</li>
+<li>أهملنا <span class='en'>&epsilon;</span> في المقام: خطأ نسبي 0.5% فقط.</li>
+<li>الخطوة <span class='en'>&Delta; = 0.125</span> (1/8 بكسل) من Kinect. حساسات أخرى لها خطوات مختلفة.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p><span class='en'>Z = 2 m</span>: احسب <span class='en'>d = fB/Z</span> وأقرب علامة (خطوة 0.125) والعمق المقيس والخطأ بالمليمتر. ثم قارنه بالصيغة <span class='en'>(Z<sup>2</sup>/fB) &times; (&minus;&epsilon;)</span>.</p></div>
+<p class="tag">القادم: C2 الطبقة 3 (أثر الخطأ على (x, y) وتحليل الحساسية).</p>
+</main></body></html>

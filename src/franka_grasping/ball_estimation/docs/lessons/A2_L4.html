@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 L4 - الـ simulator في مشروعنا</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A2 &middot; الطبقة 4: أين هذا في الكود</p>
+<h1>الـ simulator في مشروعنا</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>1.2 &times; 0.002 &times; 0.5 / 2 = 0.0006 m</span>، أي <b>&minus;0.6 مم</b>.</p></div>
+
+<div class="card"><h2>1. ملف المشهد <span class='en'>scenes/arena.xml</span></h2>
+<p>الملف يصف الأشكال فقط (لا فيزياء الاحتكاك):</p>
+<ul>
+<li><span class='en'>timestep="0.002"</span>: الخطوة الزمنية 2 ms (فحصناها في الطبقة 2).</li>
+<li>الأرض والجدران الأربعة: <span class='en'>contype="0"</span>، أي <b>لا تصطدم</b> بشيء في MuJoCo. هي للرسم فقط. الجدران عند <span class='en'>x = &plusmn;1.0</span> و<span class='en'>y = &plusmn;1.0</span> (الوجه الداخلي)، فالساحة 2 م &times; 2 م.</li>
+<li>الكرة: نصف قطرها <span class='en'>0.03 m</span> وكتلتها <span class='en'>0.1 kg</span>، وموصولة بمفصلين منزلقين (<span class='en'>slide joints</span>) <span class='en'>bx</span> و<span class='en'>by</span>. لذلك لا تستطيع أن تتحرك إلا في <span class='en'>x</span> و<span class='en'>y</span>: لا طيران، لا دوران. وهذا هو افتراض «المستوي» الذي ذكرناه في A1.</li>
+<li>الكاميرا <span class='en'>overhead</span>: عند <span class='en'>(0, 0, 3)</span> بزاوية رؤية <span class='en'>60&deg;</span>.</li>
+</ul>
+<p>الجاذبية موجودة (<span class='en'>&minus;9.81</span> في <span class='en'>z</span>) لكنها لا تفعل شيئاً، لأن المفصلين يمنعان الحركة الرأسية.</p></div>
+
+<div class="card"><h2>2. الدالة <span class='en'>Arena.step</span></h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>v = data.qvel[:2]                 # current velocity (vx, vy)
+s = np.linalg.norm(v)             # speed
+if s &gt; v_stop:                    # v_stop = 1 mm/s
+    data.qfrc_applied[:2] = -self.mass * mu * v / s   # friction force, opposite to v
+else:
+    data.qfrc_applied[:2] = 0.0
+    data.qvel[:2] = 0.0           # exact stop
+mujoco.mj_step(self.model, data)  # one 2 ms step (semi-implicit Euler)
+return self._bounce(data, e)      # then handle wall hits in Python</pre>
+<p><b>شرح السطور:</b></p>
+<ul>
+<li>القوة <span class='en'>F = &minus;m &middot; &mu; &middot; v / |v|</span>: طولها <span class='en'>m&mu;</span> واتجاهها عكس السرعة. فالتسارع <span class='en'>F/m = &minus;&mu; &middot; v&#770;</span>، أي تباطؤ ثابت قدره <span class='en'>&mu;</span> (م/ث<sup>2</sup>). لهذا نسمّي <span class='en'>&mu;</span> «تباطؤاً» وليس معامل احتكاك بلا وحدة.</li>
+<li><span class='en'>qfrc_applied</span> هو مكان وضع القوى الخارجية على المفصلين.</li>
+<li><span class='en'>mj_step</span> يقوم بالتكامل (semi-implicit Euler) كما درسنا. القوة تُحسب من السرعة <b>في بداية</b> الخطوة، وهذا يطابق افتراضات اشتقاق الطبقة 3.</li>
+<li>الشرط <span class='en'>s &gt; v_stop</span>: إذا نزلت السرعة تحت 1 مم/ث نوقف الكرة تماماً، وإلا بقي «انجراف» صغير جداً لا ينتهي.</li>
+</ul></div>
+
+<div class="card"><h2>3. الدالة <span class='en'>_bounce</span> (الجدران)</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>limit = L - self.radius            # ball CENTRE may not pass this (1.0 - 0.03 = 0.97)
+p, v = data.qpos[axis], data.qvel[axis]
+if p &gt; limit and v &gt; 0:
+    data.qpos[axis] = limit        # put the ball back at the wall
+    data.qvel[axis] = -e * v       # reverse and shrink the speed
+    hits.append((axis, +1))</pre>
+<ul>
+<li>الجدار لا يعالجه MuJoCo (لأن contype=0)، بل Python بعد كل خطوة. هذا قرارك بعد أن وجدنا أن تصادم MuJoCo غير مستقر مع خطوة 2 ms.</li>
+<li>مركز الكرة لا يتجاوز <span class='en'>0.97 m</span> لأن نصف القطر 0.03.</li>
+<li>السرعة العمودية على الجدار تنعكس وتُضرب في <span class='en'>e</span> (الـ restitution). السرعة الموازية للجدار لا تتغير.</li>
+</ul>
+<p><b>ملاحظة دقيقة (مستخرجة من المعادلة، لم أقسها):</b> العالم يضع الكرة عند الحدّ <span class='en'>limit</span> تماماً، ويُلغي المسافة التي اخترقت بها الجدار في تلك الخطوة (حتى <span class='en'>|v| h</span>، أي 10 مم عند 5 م/ث). أما نموذج الـ estimator فيضع الكرة داخل الساحة بمقدار <span class='en'>E &times; overshoot</span>. الفرق بين الطريقتين يصل نظرياً إلى بضعة ملّيمترات عند أعلى سرعة. هذا فرق صغير بين «العالم» و«نموذج الـ estimator»، ويعني أن الـ oracle ليس مثالياً تماماً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>بحسب الكود، إذا كانت الكرة عند <span class='en'>x = 0.971</span> وسرعتها <span class='en'>v<sub>x</sub> = &minus;1.0</span> (تبتعد عن الجدار)، فهل تحدث ارتدادة؟ ولماذا يتحقق الشرط <span class='en'>v &gt; 0</span>؟</p></div>
+<p class="tag">القادم: A2 الطبقة 5 (الافتراضات والحدود) ثم 6 (تمارين).</p>
+</main></body></html>

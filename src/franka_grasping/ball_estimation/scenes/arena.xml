@@ -1,0 +1,47 @@
+<mujoco model="arena_with_panda">
+  <option timestep="0.002" gravity="0 0 0"/>
+
+  <include file="panda_static.xml"/>
+
+  <default>
+    <geom contype="1" conaffinity="1"/>
+  </default>
+
+  <worldbody>
+    <!-- Camera overhead, positioned above arm (at center) -->
+    <camera name="overhead" pos="0 0 3" fovy="60"/>
+
+    <!-- Floor: visual only; ball does not collide (contype 0) -->
+    <!-- Arena: 2.5 m x 2.5 m symmetric around arm at (0,0) -->
+    <!-- Boundaries: x ∈ [-1.25, 1.25], y ∈ [-1.25, 1.25] -->
+    <geom name="floor" type="plane" size="1.25 1.25 0.05" rgba="0.8 0.8 0.8 1"
+          contype="0" conaffinity="0"/>
+
+    <!-- Four walls: arena boundaries at x=±1.25, y=±1.25 -->
+    <geom name="wall_px" type="box" pos="1.3 0 0.05" size="0.05 1.25 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_nx" type="box" pos="-1.3 0 0.05" size="0.05 1.25 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_py" type="box" pos="0 1.3 0.05" size="1.25 0.05 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+    <geom name="wall_ny" type="box" pos="0 -1.3 0.05" size="1.25 0.05 0.05"
+          rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+
+    <!-- FRANKA PANDA ARM: panda_static.xml = rigid copy frozen at Q_HOME (no joints, cannot move).
+         Built by make_static_panda.py. Only link0 reaches ball height (z < 0.06 m). -->
+    <!-- arm_base: invisible box = link0 footprint at ball height (measured from the collision mesh).
+         arena_sim.py bounces the ball off it with restitution E, like the walls. -->
+    <geom name="arm_base" type="box" pos="-0.041 0 0.03" size="0.113 0.095 0.03"
+          rgba="1 0 0 0" group="4" contype="0" conaffinity="0"/>
+
+    <!-- BALL: two slide joints => planar 2D motion, no spin, no flying -->
+    <!-- Positioned in arena at (0, 0, 0.03) relative to origin -->
+    <!-- When launched, starts with random speed in [0.1, 5.0] m/s -->
+    <body name="ball" pos="0 0 0.03">
+      <joint name="bx" type="slide" axis="1 0 0" damping="0" range="-2 2"/>
+      <joint name="by" type="slide" axis="0 1 0" damping="0" range="-2 2"/>
+      <geom name="ball_geom" type="sphere" size="0.03" mass="0.1"
+            rgba="0 1 0 1"/>
+    </body>
+  </worldbody>
+</mujoco>

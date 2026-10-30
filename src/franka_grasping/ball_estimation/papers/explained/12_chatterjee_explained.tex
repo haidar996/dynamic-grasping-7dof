@@ -1,0 +1,480 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+
+\setlist[itemize]{nosep,leftmargin=*,topsep=2pt,partopsep=0pt}
+\setlist[enumerate]{nosep,leftmargin=*,topsep=2pt,partopsep=0pt}
+\widowpenalty=10000
+\clubpenalty=10000
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+\definecolor{cblue}{HTML}{2B6CB0}
+\definecolor{cgreen}{HTML}{2F855A}
+\definecolor{cred}{HTML}{C53030}
+\definecolor{corange}{HTML}{DD6B20}
+\definecolor{cgray}{HTML}{718096}
+\definecolor{cpurple}{HTML}{6B46C1}
+
+\titleformat{\section}{\Large\bfseries\color{cblue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{cblue!80!black}}{\thesubsection}{0.6em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Paper 12 explained simply}
+\rhead{\small Chatterjee \& Govindu, arXiv 1505.01936}
+\cfoot{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\newtcolorbox{idea}[1][]{colback=cblue!6,colframe=cblue!70,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+\newtcolorbox{toy}[1][]{colback=corange!7,colframe=corange!80,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+\newtcolorbox{warn}[1][]{colback=cred!6,colframe=cred!75,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+\newtcolorbox{eqbox}[1][]{colback=cgray!8,colframe=cgray!70,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+\newtcolorbox{ours}[1][]{colback=cgreen!7,colframe=cgreen!75,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt}
+
+\begin{document}
+\setcounter{tocdepth}{1}
+
+% ------------------------------------------------------------ TITLE
+\begin{center}
+{\LARGE\bfseries\color{cblue} Paper 12, explained from zero}\\[0.6em]
+{\large \textit{Noise in Structured-Light Stereo Depth Cameras: Modeling and its Applications}}\\[0.5em]
+Avishek Chatterjee and Venu Madhav Govindu\\
+Department of Electrical Engineering, Indian Institute of Science, Bengaluru\\
+arXiv 1505.01936 (8 May 2015), 31 pages\\[0.4em]
+\textbf{Reading order \#3 of the ball-estimation chapter}
+\end{center}
+
+\begin{idea}[What this guide is]
+This is a slow, step-by-step explanation of one paper, written for someone who is \emph{not}
+used to academic papers, but it keeps the academic vocabulary so you can later read the
+original. Statements that come from the paper are marked \textbf{(paper)}. Blue boxes are the
+main ideas. Orange boxes (\textbf{Toy example}) use numbers that I computed myself (checked by
+computer) or invented; they are \emph{not} from the paper unless marked. Red boxes are my own
+critical comments. Green boxes say what this means for \emph{our} MuJoCo ball chapter.
+
+I read the full text of the paper (31 pages) with \texttt{pdftotext}. The paper has three
+``applications'' in Section~3 (denoising, scan merging, plane extraction) that are about 3D
+reconstruction; I explain them briefly, because only their \emph{idea} (weight by uncertainty)
+matters for us.
+\end{idea}
+
+\subsection*{The whole paper in six sentences}
+A structured-light depth camera such as the Microsoft Kinect measures depth by triangulation: an
+infrared projector shines a known dot pattern, an infrared camera sees where each dot lands, and
+the shift of a dot (the \emph{disparity}) tells how far the surface is. The disparity can only be
+measured with a fixed precision, which the authors argue is the main noise source and does
+\emph{not} depend on distance. Because depth is the \emph{inverse} of disparity, a fixed error in
+disparity becomes a depth error that grows with the \textbf{square of the distance}:
+$\sigma_Z\propto Z^2$. They check this on a real Kinect by showing that the \emph{spacing} between
+the distinct depth values the camera can output grows with a slope of $1.967$ on a log-log plot
+(theory says $2$). They then use the model to build a depth-aware smoothing filter, a better way
+of merging scans, and a plane detector. The paper does \textbf{not} say anything about moving
+objects, dropouts, delays or small balls, and it gives no final numeric noise level.
+
+\tableofcontents
+\newpage
+
+% ============================================================ 1
+\section{Why we read this paper, and what to take from it}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}c p{4.6cm} X@{}}
+\toprule
+ & Question for our chapter & What this paper gives us \\
+\midrule
+1 & How does depth noise depend on distance? & The law $\sigma_Z = k\,Z^2$, with a physical derivation (Sec.~\ref{sec:derivation}). \\
+2 & What is the constant $k$? & Not given directly. We can \emph{derive} a baseline from the Kinect numbers in the paper (Sec.~\ref{sec:k}); I label it as my derivation. \\
+3 & Does depth also have a coarse ``step'' size? & Yes: depth comes in discrete steps that grow like $Z^2$ (Sec.~\ref{sec:quant}). \\
+4 & How should a filter weight measurements at different distances? & Inverse variance, so weight $\propto 1/Z^4$ (Sec.~\ref{sec:apps}). \\
+5 & Is this noise important for \emph{our} camera? & Surprisingly little, for a downward-looking camera and a planar ball (Sec.~\ref{sec:ours}). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warn}[Four cautions before we start]
+(1)~The camera is the \textbf{Kinect (version 1)}, a structured-light device from about 2010--2012.
+Our simulated camera is a generic overhead depth camera. (2)~The paper studies \textbf{static
+scenes} (floor, statues, rooms); nothing moves. (3)~It never states the size of the disparity noise
+in pixels, only that disparity is estimated with $1/8$-pixel steps. (4)~Its numbers are about a
+sensor used \emph{indoors at 0.5--3~m}; the paper itself says such cameras ``do not work in the
+presence of moderate to strong sunlight''.
+\end{warn}
+
+% ============================================================ 2
+\section{The story in one page}
+
+Close one eye and hold a finger in front of your face. Open that eye and close the other: the
+finger seems to jump sideways relative to the background. The \emph{closer} the finger, the
+\emph{bigger} the jump. Your brain uses this jump to feel depth. A structured-light camera does
+the same with a projector as one ``eye'' and an infrared camera as the other, 75~mm apart.
+
+For each little patch of the image it measures the jump (the \textbf{disparity} $D$, in pixels).
+A big jump means near, a small jump means far. The depth is
+\[
+Z=\frac{fB}{D},
+\]
+where $f$ is the focal length in pixels and $B$ is the distance between the two ``eyes'' (the
+\textbf{baseline}). Now the trap: measuring the jump has a small, fixed error, say a fraction of
+a pixel. For a nearby surface the jump is large (e.g.\ 70 pixels), so a fraction of a pixel is
+nothing. For a far surface the jump is tiny (e.g.\ 10 pixels), and the same fraction of a pixel is
+a large share of it. Because $Z$ comes from \emph{dividing} by $D$, small errors on a small $D$
+turn into large errors in $Z$. This is the entire idea of the paper.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.0, every node/.style={font=\small}]
+\draw[->] (0,0) -- (8,0) node[right]{depth $Z$};
+\draw[->] (0,0) -- (0,4.2) node[above]{depth error $\sigma_Z$};
+\draw[very thick, cblue, domain=0.3:7.5, samples=60] plot (\x, {0.065*\x*\x});
+\node[cblue] at (5.6,3.9) {$\sigma_Z = k\,Z^2$};
+\draw[dashed, cgray] (2,0) -- (2,0.26); \draw[dashed, cgray] (6,0) -- (6,2.34);
+\node[below] at (2,0) {near}; \node[below] at (6,0) {far};
+\node[right, text width=3cm, align=left, font=\footnotesize] at (6.3,1.2) {$3\times$ farther\\ $=9\times$ noisier};
+\end{tikzpicture}
+\caption{The main result: depth error grows with the square of the distance.}
+\end{figure}
+
+\begin{idea}[One sentence to remember]
+\emph{A depth camera that triangulates has a constant error in disparity but an error in depth
+that grows as the square of the distance, so the same camera is precise up close and coarse far
+away.}
+\end{idea}
+
+% ============================================================ 3
+\section{Glossary}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+Term & Meaning \\
+\midrule
+Structured light & Projecting a known pattern (here infrared dots) and looking at how it deforms on the scene. \\
+Stereo / triangulation & Finding depth from two viewpoints separated by a known distance. \\
+Disparity $D$ & The shift, in pixels, of a feature between the two viewpoints. Large when near, small when far. \\
+Baseline $B$ & The distance between the two viewpoints (projector and camera). Kinect: $75$~mm \textbf{(paper)}. \\
+Focal length $f$ & The camera's zoom, expressed in pixels. Kinect IR camera: $587$ px \textbf{(paper)}. \\
+Depth map & An image in which every pixel holds a distance instead of a colour. \\
+Quantisation & Rounding a continuous value to a grid of allowed values. Like measuring with a ruler that only shows whole millimetres. \\
+Sub-pixel resolution & Measuring disparity in fractions of a pixel. Kinect: $1/8$ pixel \textbf{(paper)}. \\
+Standard deviation $\sigma$ & The typical size of a random error. \\
+Additive noise & Noise that is just added to the true value: $D = D_0 + n$. \\
+Bilateral filter & A smoothing filter that averages neighbouring pixels but gives less weight to neighbours with very different values, so it keeps edges. \\
+TSDF, volumetric merging & A way to fuse several depth scans into one 3D model. Not needed for us. \\
+MLE & Maximum likelihood estimate: the value that makes the observed data most probable. For Gaussian noise with different variances it is the \emph{inverse-variance weighted average}. \\
+Principal point $(c_x,c_y)$ & The pixel where the optical axis hits the image; the image centre. The paper writes $(u,v)$. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================ 4
+\section{The paper, section by section}
+
+\subsection{Introduction (paper, Sec.~1)}
+The authors survey earlier work on Kinect depth noise. Two earlier studies had already noticed
+\emph{empirically} that the noise grows quadratically with depth; two others derived a noise model
+from the working principle but did not use it. The authors say their contribution is to derive the
+model, validate it, \textbf{and use it} in three applications.
+
+\subsection{The noise model: derivation, in tiny steps (paper, Sec.~2.1)}
+\label{sec:derivation}
+\textbf{Step 1: the camera equation.} Treat the projector as a second camera. The depth is
+\[
+Z=\frac{fB}{D}. \tag{paper: $D=fB/Z$}
+\]
+\textbf{Step 2: the noise assumption.} The estimated disparity is the true disparity plus an
+additive error: $D = D_0 + n$, where $n$ has a \textbf{fixed} standard deviation $\sigma_D$, the
+same for all distances. The authors say the dominant part of $n$ is \emph{quantisation noise}
+(rounding of the disparity to $1/8$ pixel).
+
+\textbf{Step 3: put it into the depth formula.}
+\[
+Z=\frac{fB}{D_0+n}=\frac{fB}{D_0\,(1+n/D_0)}\ \approx\ \frac{fB}{D_0}\Bigl(1-\frac{n}{D_0}\Bigr)
+= Z_0-\frac{fB}{D_0^{2}}\,n .
+\]
+The approximation is the rule $1/(1+\varepsilon)\approx 1-\varepsilon$ for small $\varepsilon$, which
+holds because the noise $n$ is small compared with the disparity $D_0$.
+
+\textbf{Step 4: replace $D_0$.} From $D_0=fB/Z_0$ we get $fB/D_0^{2}=Z_0^{2}/(fB)$. So
+\[
+Z\approx Z_0-\frac{Z_0^{2}}{fB}\,n
+\qquad\Longrightarrow\qquad
+\boxed{\ \sigma_Z=\frac{Z_0^{2}}{fB}\,\sigma_D\ } \tag{paper Eq.~1}
+\]
+The depth error is the disparity error multiplied by $Z_0^2/(fB)$. The authors derive the same
+thing by differentiating $D=fB/Z$: $\partial Z/\partial D=-Z^{2}/(fB)$ (paper Eq.~2).
+
+\begin{eqbox}[In plain words]
+A one-pixel mistake in disparity costs \emph{more and more depth} the farther the surface is. The
+conversion factor is $Z^2/(fB)$ millimetres per pixel of disparity.
+\end{eqbox}
+
+\textbf{The paper's example (paper).} With $B=75$~mm and $f=587$~px:
+\[
+\frac{\partial Z}{\partial D}\Big|_{Z=600\,\mathrm{mm}}=-\frac{600^2}{75\cdot587}=-8.2\ \text{mm/px},\qquad
+\frac{\partial Z}{\partial D}\Big|_{Z=1500\,\mathrm{mm}}=-\frac{1500^2}{75\cdot587}=-51.1\ \text{mm/px}.
+\]
+So one pixel of disparity error is $8.2$~mm at $2$ feet and $51.1$~mm at $5$ feet. I recomputed
+both numbers and they are right.
+
+\subsection{Empirical validation (paper, Sec.~2.2)}
+\label{sec:quant}
+How do you check that the noise grows like $Z^2$ on a real Kinect? The authors scan a flat floor,
+which contains a continuous range of depths, and list all the \emph{distinct} depth values the
+camera outputs, in increasing order. If depth resolution were uniform, the gaps between neighbouring
+distinct values would be constant. Instead the gaps grow with distance. They plot
+$\log(\Delta Z)$ against $\log(Z)$ (where $\Delta Z$ is the gap between consecutive distinct values)
+and fit a line: the slope is \textbf{1.967} (paper), nearly $2$, as the theory predicts.
+
+They also find out how finely the Kinect measures disparity: sorting the disparities, there are at
+most \textbf{8} distinct values between two integers, so the \textbf{sub-pixel resolution is
+$1/8$ pixel} (paper). Near the camera some values coincide because the output depth is also rounded
+to $1$~mm. They then \emph{simulate} the pipeline in a few lines of Matlab (paper, Algorithm~1)
+and reproduce the log-log plot. In Python the same four lines read:
+\begin{center}\small\texttt{z = b*f / (np.round(b*f/np.arange(500,3001)*8)/8);\ \ z = np.unique(np.round(z));}\\
+\texttt{plot(np.log(z[:-1]), np.log(np.diff(z)))}\quad with $b=75$, $f=587$.\end{center}
+
+\begin{toy}[Toy example: the depth ``staircase'' of such a camera]
+Disparity is rounded to steps of $\delta=1/8$ pixel. A step of $\delta$ in disparity is a depth step
+of $\Delta Z = Z^2\,\delta/(fB)$. With $fB=587\cdot0.075=44.0$~px$\cdot$m:
+\begin{center}\small
+\begin{tabular}{@{}rrr@{}}
+\toprule
+distance $Z$ & depth step $\Delta Z$ (1/8 px) & noise if only rounding: $\sigma_Z=\Delta Z/\sqrt{12}$ \\
+\midrule
+1.5 m & 6.4 mm & 1.8 mm \\
+3.0 m & 25.6 mm & 7.4 mm \\
+4.0 m & 45.4 mm & 13.1 mm \\
+\bottomrule
+\end{tabular}
+\end{center}
+(The rule $\sigma=\text{step}/\sqrt{12}$ is the standard deviation of a uniformly distributed
+rounding error.) \textbf{This is my derivation, not a number in the paper.} It says that at $3$~m
+this camera can only report depth in steps of about $2.6$~cm, close to the diameter of our ball
+($6$~cm), while the random error from rounding alone is about $7$~mm.
+\end{toy}
+
+\subsection{Three applications (paper, Sec.~3)}
+\label{sec:apps}
+All three use the same idea: \emph{do not treat all depth values as equally trustworthy}.
+\begin{enumerate}
+\item \textbf{Adaptive bilateral filter (Sec.~3.2).} A bilateral filter smooths a depth image but
+keeps edges; it has a threshold $\sigma_d$ that decides when two neighbouring depths ``belong
+together''. With a fixed threshold, near regions are smoothed correctly but far regions are not
+smoothed enough (or near regions are over-smoothed). Setting $\sigma_d(p)=k\,Z(p)^2$ with a
+constant $k$ makes it work at all distances (paper Eq.~6). The paper shows this on pictures; it
+gives no numeric error table.
+\item \textbf{Weighted volumetric scan merging (Sec.~3.3).} When several scans of the same
+surface are fused, a scan taken from far away should count less. For independent Gaussian errors
+with different standard deviations $\sigma_i$, the best average weights each measurement by
+$1/\sigma_i^2$. Since $\sigma_i\propto Z_i^2$, the weight is
+\[
+w_i=\frac{1}{Z_i^{4}} \tag{paper Eq.~13}
+\]
+(a constant factor cancels). A statue scanned from $75$~cm and $1.5$~m shows the benefit: equal
+weights wash out the details of the close scan.
+\item \textbf{Plane extraction (Sec.~3.4--3.5).} A test ``is this point within $T$ of the plane?''
+needs a different $T$ for near and far points. The trick: \emph{disparity} has constant noise, and
+for a plane the disparity is an affine function of the pixel coordinates (paper Eq.~15), so
+working in disparity space allows one fixed threshold.
+\end{enumerate}
+
+\begin{eqbox}[The one formula we take from these applications]
+For independent measurements with standard deviations $\sigma_i$, the best combination is
+\[
+\hat\mu=\frac{\sum_i x_i/\sigma_i^{2}}{\sum_i 1/\sigma_i^{2}},\qquad \sigma_i\propto Z_i^2
+\ \Rightarrow\ \text{weights}\ \propto Z_i^{-4}.
+\]
+A Kalman filter does exactly this when its measurement-noise covariance $R$ grows with the
+variance of the measurement. So a filter fed depth from different distances should use
+$R\propto Z^{4}$.
+\end{eqbox}
+
+\subsection{Conclusion (paper, Sec.~4)}
+The authors restate the model, its validation, and its three uses. There is no discussion of
+limitations or of other camera types.
+
+% ============================================================ 5
+\section{Numbers worth remembering}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}X l@{}}
+\toprule
+Item & Value \\
+\midrule
+Baseline $B$ (Kinect) & $75$~mm \textbf{(paper)} \\
+IR focal length $f$ & $587$ px, field of view about $57^\circ$ \textbf{(paper)} \\
+Depth sensitivity at $600$~mm / $1500$~mm & $8.2$ / $51.1$ mm per pixel of disparity \textbf{(paper)} \\
+Sub-pixel resolution of disparity & $1/8$ px \textbf{(paper)} \\
+Depth output precision & $1$~mm \textbf{(paper)} \\
+Slope of $\log\Delta Z$ against $\log Z$ & $1.967$, theory $2$ \textbf{(paper)} \\
+Weight for scan merging & $w=1/Z^4$ \textbf{(paper)} \\
+Noise constant $k$ (or $\sigma_D$ in pixels) & \textbf{not given} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================ 6
+\section{Critical reading (my comments)}
+
+\begin{warn}[1. What the experiment really validates]
+The figure with slope $1.967$ validates that the \emph{spacing between output depth values} grows
+as $Z^2$. That is the quantisation step, not the random error. The statement that the standard
+deviation $\sigma_Z$ grows as $Z^2$ then follows from the model (a constant disparity noise),
+and the authors never measure $\sigma_Z$ against distance directly (for instance by scanning a
+plane many times and computing the spread). It is a reasonable argument, but it is a model
+inference.
+\end{warn}
+
+\begin{warn}[2. ``Quantisation dominates'' is asserted, not shown]
+The paper says the ``most significant source of disparity error is quantization noise'' and lists
+others (sensor noise, ambient infrared, surface reflectance). No experiment separates them. If
+other noise sources were larger, $k$ would be larger, although the $Z^2$ shape would stay.
+\end{warn}
+
+\begin{warn}[3. One sensor, one era, static scenes]
+The law comes from triangulation, so it holds for other structured-light or active-stereo cameras.
+It does \emph{not} apply to time-of-flight cameras, whose noise behaves differently, and the paper
+tests only the Kinect. It also says nothing about moving objects, frame-to-frame behaviour,
+\emph{holes} (pixels with no depth) except for small ones near occlusions, or reflective and
+dark surfaces.
+\end{warn}
+
+\begin{warn}[4. Noise is assumed independent per pixel]
+The model treats every depth value as having its own independent error. The paper does not say
+whether neighbouring pixels share errors. For a ball covering about fifty pixels, independent
+errors could be averaged down by $\sqrt{50}$, while shared errors could not.
+\end{warn}
+
+% ============================================================ 7
+\section{What this means for our chapter}
+\label{sec:ours}
+
+\begin{ours}[1. The model we use]
+Depth noise in the sensor stage: $Z_{\text{measured}} = Z + \mathcal N(0,\sigma_Z^2)$ with
+$\sigma_Z=k\,Z^2$. This is exactly the structured-light law of this paper.
+\end{ours}
+
+\begin{ours}[2. A baseline value for $k$ (my derivation, to be confirmed)]
+\label{sec:k}
+From the Kinect numbers ($B=75$~mm, $f=587$~px) and rounding noise only ($\sigma_D=0.125/\sqrt{12}=
+0.036$~px): $k=\sigma_D/(fB)=8.2\times10^{-4}$~m$^{-1}$, which gives $\sigma_Z=1.8$~mm at $1.5$~m
+and $7.4$~mm at $3$~m. If we use our own focal length ($416$~px) with the Kinect baseline, $k$
+becomes $1.2\times10^{-3}$ and $\sigma_Z=10.4$~mm at $3$~m. Because the true $k$ of a real camera is
+larger than the rounding-only value, I propose to \textbf{sweep $k$} over $\times1$, $\times5$,
+$\times20$ of the baseline instead of trusting one number.
+\end{ours}
+
+\begin{toy}[Toy example, measured on our own camera: how much does depth noise move the ball?]
+In our overhead camera the ball position is $x=(u-c_x)\,Z/f$. A depth error $\delta Z$ therefore
+moves the planar position by $\delta x=\delta Z\cdot (u-c_x)/f = \delta Z\cdot x/Z$: \emph{zero at
+the image centre and about $\delta Z/3$ at the arena edge} ($x=1$~m, $Z=3$~m). I tested this with
+our \texttt{DepthCamera} (3~m, $60^{\circ}$, 150 ball positions inside the arena, noise added to
+the depth read at the ball's centroid; scratch test, not in the project):
+\begin{center}\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+condition & mean $xy$ error & max $xy$ error \\
+\midrule
+ideal depth (no noise) & 1.7 mm & 4.0 mm \\
+depth noise at the baseline ($\sigma_Z=7.4$~mm, $\times1$) & 2.2 mm & 8.9 mm \\
+depth noise $\times5$ ($\sigma_Z=37$~mm) & 7.8 mm & 35 mm \\
+depth noise $\times20$ ($\sigma_Z=148$~mm) & 31 mm & 134 mm \\
+\textbf{no depth noise, centroid jitter $0.3$~px} & 3.2 mm & 8.6 mm \\
+\bottomrule
+\end{tabular}
+\end{center}
+At the paper's rounding-level noise, depth error hardly matters for the \emph{planar} position
+(1.7 to 2.2~mm). A mere $0.3$-pixel jitter of the detected centroid hurts more (3.2~mm). Depth noise
+becomes important only if it is $5$ times larger or more.
+\end{toy}
+
+\begin{warn}[What that toy does and does not show]
+It shows that, for a \emph{downward-looking camera and a planar ball}, the dominant imperfections
+are not depth noise but (a)~pixel-level detection error, (b)~lost frames, (c)~delay and
+(d)~frame rate. Depth noise would matter more if the camera were tilted, mounted on the arm, or if
+we detected the ball from depth instead of colour. It also does not show the staircase effect:
+a coarse $2.6$~cm depth step shifts all pixels of the ball surface by the same amount, which
+produces a position \emph{bias} that depends on where the ball is, not random noise. (In my test
+the quantised case happened to give a smaller error than the ideal case; that is a coincidence of
+where the steps fall, not an improvement.)
+\end{warn}
+
+\begin{ours}[3. What goes into the sensor stage]
+Proposed switches for Step~1D (each independently on or off):
+\begin{enumerate}
+\item \textbf{Depth noise} $\sigma_Z=kZ^2$ with $k$ as above (sweep $\times1,5,20$).
+\item \textbf{Depth quantisation} with step $Z^2/(8fB)$ (optional).
+\item \textbf{Centroid jitter} in pixels (to be justified from paper 18; placeholder $0.3$~px).
+\item \textbf{Dropout}, flagged and silent hold (decided in the paper~11 deep dive).
+\item \textbf{Delay} (placeholder $40$~ms, swept) and \textbf{frame rate} ($60$~Hz).
+\end{enumerate}
+\end{ours}
+
+\begin{ours}[4. For the estimators]
+Use a measurement covariance $R$ that grows with the depth variance, $R\propto Z^4$ in the depth
+direction. For an overhead camera $Z$ is almost constant (about $2.94$ to $3$~m), so $R$ is nearly
+constant; it would matter for an arm-mounted camera in the later step.
+\end{ours}
+
+\begin{eqbox}[Open decision for you]
+Which imperfections should we put into the \emph{main} experiments? My proposal: depth noise
+(baseline $k$, sweeping $\times1,5,20$), centroid jitter, flagged dropout, delay and frame rate,
+with depth quantisation off by default. If you prefer to simulate a specific real camera (for
+instance the Kinect with $B=75$~mm), say so and I will use its parameters.
+\end{eqbox}
+
+% ============================================================ 8
+\section{Test yourself}
+
+\begin{enumerate}
+\item Why does a constant error in disparity become an error in depth that grows with the square
+of the distance? Derive $\sigma_Z=Z^2\sigma_D/(fB)$ from $Z=fB/D$.
+\item With $B=75$~mm and $f=587$~px, what is the depth error caused by one pixel of disparity error
+at $Z=1$~m? (Answer: $1000^2/(75\cdot587)=22.7$~mm.)
+\item What does the log-log slope of $1.967$ validate, and what does it \emph{not} validate?
+\item Why should a Kalman filter that gets depth measurements from different distances use
+$R\propto Z^4$?
+\item For a camera 3~m above the floor and a ball at $x=1.5$~m from the optical axis, how does a
+$1$~cm depth error change the measured $x$? (Answer: $\delta x=\delta Z\cdot x/Z=5$~mm.)
+\item Name three imperfections of our simulated camera that this paper does \emph{not} cover.
+\item Why is depth noise less important for a downward-looking camera than for a tilted one?
+\end{enumerate}
+
+\appendix
+\section{Map of the paper}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+Paper part & Content and where it is in this guide \\
+\midrule
+Sec.~1 & Related work on Kinect noise (Sec.~4.1) \\
+Sec.~2.1 & Noise model, Eq.~1--2, Kinect numbers (Sec.~4.2) \\
+Sec.~2.2 & Empirical validation, $1/8$ px, Algorithm~1 (Sec.~4.3) \\
+Sec.~3.1--3.2 & Adaptive bilateral filter, $\sigma_d=kZ^2$ (Sec.~4.4) \\
+Sec.~3.3 & Weighted volumetric scan merging, $w=1/Z^4$ (Sec.~4.4) \\
+Sec.~3.4--3.5 & Plane extraction from disparity (Sec.~4.4) \\
+Sec.~4 & Conclusion (Sec.~4.5) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

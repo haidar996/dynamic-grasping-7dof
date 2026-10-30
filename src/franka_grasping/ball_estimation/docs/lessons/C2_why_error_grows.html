@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C2 - لماذا يكبر خطأ التكميم مع المسافة</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C2 &middot; توضيح</p>
+<h1>لماذا يكبر خطأ التكميم مع المسافة؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: الخطوة عند 2.5 م = <span class='en'>2.5<sup>2</sup> &times; 0.125 / 31.2 = 25.1 mm</span>.</p></div>
+
+<div class="card"><h2>1. الفكرة بجملة واحدة</h2>
+<p>الحساس يقيس <b>الإزاحة</b> (disparity) وليس العمق. والإزاحة تتغير <b>بسرعة</b> عندما تتحرك الأشياء القريبة، وتتغير <b>ببطء شديد</b> عندما تتحرك الأشياء البعيدة. فعلامات المسطرة المتساوية على محور الإزاحة تقابل مسافات صغيرة قرب الكاميرا ومسافات كبيرة بعيداً عنها.</p>
+<p>تشبيه: ضع إبهامك أمام عينيك وأغلق عينًا ثم الأخرى. إبهامك «يقفز» كثيراً. الآن انظر إلى جبل بعيد: لا يقفز تقريباً. لو كان عندك مقياس يحس بقفزة أقل من حد معين، فإنك لن تفرّق بين 3000 م و3040 م للجبل، لكنك تفرّق بين 30 سم و34 سم للإبهام.</p></div>
+
+<div class="card"><h2>2. الرسم</h2>
+<img src="img/C2_why.png" alt="why" style='width:100%;max-width:640px;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<p>المنحنى الأزرق هو الإزاحة <span class='en'>d = f B / Z</span>. رسمتُ علامات المسطرة بخطوات 2 بكسل (مبالغ فيها للتوضيح). الخطوط الأفقية البرتقالية متساوية البعد. وأين تقطع المنحنى؟ النقاط الحمراء، وإسقاطها على محور العمق <span class='en'>Z</span>:</p>
+<ul>
+<li>قرب الكاميرا المنحنى <b>شديد الانحدار</b>، فالنقاط الحمراء قريبة من بعضها (الفرق في العمق صغير).</li>
+<li>بعيداً عن الكاميرا المنحنى <b>شبه أفقي</b>، فالنقاط متباعدة (الفرق في العمق كبير).</li>
+</ul>
+<p>هذا هو السبب الكامل. الخطوات متساوية على المحور الرأسي، وغير متساوية على المحور الأفقي.</p></div>
+
+<div class="card"><h2>3. بأرقام حقيقية (خطوة 0.125 بكسل)</h2>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>d marks (px)</b></td><td style="padding:4px 12px"><b>depth Z = fB/d (m)</b></td><td style="padding:4px 12px"><b>gap between depths</b></td></tr>
+<tr><td style="padding:4px 12px">20.750 / 20.875 / 21.000</td><td>1.5025 / 1.4935 / 1.4846</td><td style="padding:4px 12px"><b>9.0 mm</b></td></tr>
+<tr><td style="padding:4px 12px">10.250 / 10.375 / 10.500</td><td>3.0416 / 3.0050 / 2.9692</td><td style="padding:4px 12px"><b>36 mm</b></td></tr>
+</table>
+<p>نفس الخطوة 0.125 بكسل، فرق في العمق 9 مم عند 1.5 م و36 مم عند 3 م: أربعة أضعاف لأن المسافة ضعفان ومربعها أربعة.</p></div>
+
+<div class="card"><h2>4. من زاوية أخرى: تحريك الجسم 1 سم</h2>
+<p>ماذا يحدث للإزاحة إذا اقترب الجسم 1 سم؟</p>
+<ul>
+<li>عند 1.5 م: تتغير الإزاحة بحوالي <span class='en'>0.139 px</span>، وهذا أكبر من خطوة 0.125: يحس الحساس بحركة 1 سم.</li>
+<li>عند 3 م: تتغير بحوالي <span class='en'>0.035 px</span> فقط، أي ربع خطوة: الحساس <b>لا يرى</b> الحركة (يحتاج حوالي 4 سم).</li>
+</ul></div>
+
+<div class="card"><h2>5. المعادلة (بالتفاضل)</h2>
+<p>ميل المنحنى <span class='en'>d = fB/Z</span> هو <span class='en'>dd/dZ = &minus;fB/Z<sup>2</sup></span>. الميل صغير عندما <span class='en'>Z</span> كبير. خطوة <span class='en'>&Delta;</span> على <span class='en'>d</span> تقابل خطوة في العمق:</p>
+<p class="en" style="text-align:center">&Delta;Z = &Delta; / |dd/dZ| = Z<sup>2</sup> &Delta; / (f B)</p>
+<p>وهذه هي الصيغة التي ذكرناها، وهي الآن ليست رقماً يجب حفظه بل نتيجة شكل المنحنى.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>عند <span class='en'>Z = 1 m</span>: كم خطوة العمق (بخطوة 0.125 وبـ <span class='en'>f B = 31.2</span>)؟ وكم تتغير الإزاحة لو اقترب الجسم 1 سم؟ (فكّر: هل يحس الحساس بحركة 1 سم عند 1 م؟)</p></div>
+<p class="tag">القادم: نعود إلى C2 الطبقة 2 (التعريفات والاشتقاق).</p>
+</main></body></html>

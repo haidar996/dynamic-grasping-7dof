@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L1 - صورة العمق</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 1: الحدس</p>
+<h1>صورتان من كاميرا واحدة: اللون والعمق</h1>
+
+<div class="box"><p>صور هذه الصفحة <b>حقيقية</b>: رسمها MuJoCo من كاميرتنا (3 م، 60&deg;) والكرة عند <span class='en'>(0.5, 0.3)</span>.</p></div>
+
+<div class="card"><h2>1. صورة اللون (<span class="en">RGB</span>)</h2>
+<img src="img/B2_rgb.png" alt="rgb" style='width:100%;max-width:520px;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<p>نرى الساحة في وسط الصورة (مربع رمادي)، حولها إطار الجدران بدرجات رمادي مختلفة، وخارجها خلفية سوداء (ما وراء الأرض). الكرة نقطة خضراء صغيرة عند اليمين والأعلى قليلاً. الكرة تظهر بحوالي <b>52 بكسلاً</b> أخضر.</p>
+<img src="img/B2_crop.png" alt="crop" style='width:100%;max-width:520px;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<p>هذه الكرة مكبّرة (كل مربع صغير بكسل واحد): دائرة من البكسلات الخضراء، أفتح في الوسط. المرحلة الأولى في برنامجنا هي إيجاد هذه البكسلات.</p></div>
+
+<div class="card"><h2>2. صورة العمق (<span class="en">depth</span>)</h2>
+<img src="img/B2_depth.png" alt="depth" style='width:100%;max-width:520px;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<p>في هذه الصورة لا يوجد لون حقيقي. كل بكسل يخزّن رقماً: <b>بُعد النقطة المرئية عن الكاميرا</b> بالمتر. وفي الصورة أعلاه أعطيتُ الألوان معاني للتوضيح: الأصفر الأقرب، والبنفسجي الأبعد، والرمادي «لا يوجد سطح» (خلفية).</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>what the pixel sees</b></td><td style="padding:4px 12px"><b>depth (m)</b></td></tr>
+<tr><td style="padding:4px 12px">floor</td><td>3.000</td></tr>
+<tr><td style="padding:4px 12px">top of a wall (0.1 m high)</td><td>2.900</td></tr>
+<tr><td style="padding:4px 12px">top of the ball</td><td>2.941</td></tr>
+<tr><td style="padding:4px 12px">nothing (beyond the floor)</td><td>very large</td></tr>
+</table>
+<p>الجدار أقرب (2.90) لأن ارتفاعه 10 سم. وقمة الكرة 2.94 = 3 &minus; 0.06، أي ارتفاع القمة فوق الأرض (قطر الكرة).</p></div>
+
+<div class="card"><h2>3. كيف نحصل على مكان الكرة؟ أربع خطوات</h2>
+<ol>
+<li><b>نجد الكرة في صورة اللون:</b> نأخذ البكسلات الخضراء.</li>
+<li><b>نحسب مركزها:</b> متوسط أماكن هذه البكسلات: <span class='en'>(u, v) = (389.5, 197.5)</span>.</li>
+<li><b>نقرأ العمق عند هذا البكسل:</b> <span class='en'>z = 2.9408 m</span>.</li>
+<li><b>نحوّل إلى متر</b> بالإسقاط العكسي (B1 L3 و L4): <span class='en'>(x, y) = (0.5003, 0.3002)</span>.</li>
+</ol>
+<p>الحقيقة <span class='en'>(0.5, 0.3)</span>. الخطأ أقل من ملّيمتر في هذا المثال (حوالي 0.3 مم). وهذا ما يفعله برنامجنا لكل صورة، 60 مرة في الثانية.</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لماذا نحتاج إلى صورة اللون <b>و</b> صورة العمق معاً؟ ماذا لو امتلكنا واحدة فقط منهما؟ (فكّر: أي منهما يخبرنا «أين الكرة في الصورة»، وأيهما «كم تبعد».)</p></div>
+<p class="tag">القادم: B2 الطبقة 2 (التعريفات: صورة العمق كمصفوفة، قناع اللون، المركز).</p>
+</main></body></html>

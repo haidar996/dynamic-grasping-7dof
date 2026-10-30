@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A3 L3 - كم مرة ترتد الكرة؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A3 &middot; الطبقة 3: الرياضيات</p>
+<h1>كم مرة ترتد الكرة؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: مساحة منطقة البداية <span class='en'>1.74<sup>2</sup> = 3.03 m<sup>2</sup></span>، ومساحة <span class='en'>C</span> هي <span class='en'>1.94<sup>2</sup> = 3.76 m<sup>2</sup></span>، فالنسبة <span class='en'>3.03 / 3.76 = 0.80</span>، أي 80%.</p></div>
+
+<div class="card"><h2>1. حركة المحورين مستقلة</h2>
+<p>إذا تجاهلنا الاحتكاك وجعلنا <span class='en'>E = 1</span> (ارتداد كامل)، فكل محور يتحرك لوحده: <span class='en'>x</span> يتحرك بسرعة ثابتة <span class='en'>|v<sub>x</sub>|</span> ويرتد بين <span class='en'>&minus;&ell;</span> و<span class='en'>+&ell;</span>، و<span class='en'>y</span> كذلك. جدار <span class='en'>x</span> لا يؤثر على <span class='en'>v<sub>y</sub></span>.</p>
+<p>المسافة بين الجدارين <span class='en'>2&ell; = 1.94 m</span>. إذن الزمن بين ارتدادين متتاليين على محور <span class='en'>x</span>:</p>
+<p class="en" style="text-align:center">&Delta;t<sub>x</sub> = 2&ell; / |v<sub>x</sub>|, &nbsp;&nbsp; &Delta;t<sub>y</sub> = 2&ell; / |v<sub>y</sub>|</p>
+<p>ومعدل الارتداد الكلي (ارتدادات في الثانية) = <span class='en'>|v<sub>x</sub>|/2&ell; + |v<sub>y</sub>|/2&ell;</span>.</p></div>
+
+<div class="card"><h2>2. المعدل المتوسط على اتجاه عشوائي</h2>
+<p>إذا كانت السرعة <span class='en'>v</span> في اتجاه <span class='en'>&theta;</span>: <span class='en'>|v<sub>x</sub>| = v|cos &theta;|</span> و<span class='en'>|v<sub>y</sub>| = v|sin &theta;|</span>. متوسط <span class='en'>|cos &theta;|</span> على الدائرة هو <span class='en'>2/&pi;</span>، وكذلك <span class='en'>|sin &theta;|</span>. إذن:</p>
+<p class="en" style="text-align:center">average rate = v (2/&pi; + 2/&pi;) / 1.94 = <b>0.656 &middot; v</b> bounces per second</p>
+<p>مثال: <span class='en'>v = 3 m/s</span> يعطي حوالي 2 ارتداد في الثانية. وهذا يطابق تقديري القديم في الورقة 11 (0.66 &middot; v).</p></div>
+
+<div class="card"><h2>3. مع الاحتكاك</h2>
+<p>الكرة تقطع مسافة كلية <span class='en'>d = v<sub>0</sub><sup>2</sup>/(2&mu;)</span> ثم تتوقف (طالما <span class='en'>E = 1</span>). وكل مسافة على المحورين تُحسب: عدد الارتدادات الكلي تقريباً <span class='en'>d (|cos&theta;| + |sin&theta;|) / 1.94</span>، ومتوسطه <span class='en'>d &times; 0.656</span>.</p>
+<p>مثال: <span class='en'>v<sub>0</sub> = 5, &mu; = 1.5</span> فإن <span class='en'>d = 25/3 = 8.33 m</span>، والعدد المتوقع <span class='en'>8.33 &times; 0.656 &asymp; 5.5</span> ارتداداً.</p></div>
+
+<div class="card"><h2>4. فحص الصيغة على بياناتنا الحقيقية (500 إطلاق)</h2>
+<p>قارنت الصيغة مع عدد الارتدادات المسجل في ملفات الإطلاقات:</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>group</b></td><td style="padding:4px 12px"><b>measured (mean)</b></td><td style="padding:4px 12px"><b>formula (E=1)</b></td></tr>
+<tr><td style="padding:4px 12px">all 500</td><td>2.25</td><td>4.42</td></tr>
+<tr><td style="padding:4px 12px">E &gt; 0.9 (51 launches)</td><td>3.98</td><td>5.72</td></tr>
+<tr><td style="padding:4px 12px">E &lt; 0.6 (102 launches)</td><td>1.80</td><td>4.70</td></tr>
+</table>
+<p>الصيغة تعطي <b>حداً أعلى</b>، لأنها تجاهلت أن كل ارتداد يُنقص السرعة بالعامل <span class='en'>E</span> فتقصر المسافة الكلية. الفرق كبير عندما <span class='en'>E</span> صغير (1.8 مقابل 4.7)، وأصغر عندما <span class='en'>E</span> قريب من 1. هذا درس عام: صيغة تهمل خسارة الطاقة تعطي حداً أعلى، ولا تعطي القيمة الحقيقية.</p>
+<p>معلومات إضافية مقاسة من بياناتنا: 106 إطلاقاً من 500 (21%) لم يرتد أبداً؛ عند السرعة 5 م/ث متوسط الارتدادات 4.6، وعند السرعة 1 م/ث حوالي 0.5.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>سرعة <span class='en'>v = 2 m/s</span> بزاوية <span class='en'>30&deg;</span> (<span class='en'>v<sub>x</sub> = 1.732, v<sub>y</sub> = 1.0</span>). تجاهل الاحتكاك و<span class='en'>E = 1</span>. كم الزمن بين ارتدادين على <span class='en'>x</span>، وكم على <span class='en'>y</span>، وكم معدل الارتداد الكلي؟</p></div>
+<p class="tag">القادم: A3 الطبقة 4 (أين هذا في الكود: دالة launches.run_launch وعدّ الارتدادات).</p>
+</main></body></html>

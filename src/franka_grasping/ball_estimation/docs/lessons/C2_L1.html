@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C2 L1 - التكميم</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C2 &middot; الطبقة 1: الحدس</p>
+<h1>التكميم (quantisation)</h1>
+
+<div class="card"><h2>1. كيف تقيس كاميرا العمق؟</h2>
+<p>كاميرات العمق من نوع الضوء المنظّم والستيريو (مثل Kinect) لا تقيس المسافة مباشرة. تقيس <b>إزاحة</b> نقطة بين صورتين، وتسمى التباين (<span class='en'>disparity</span>) <span class='en'>d</span> وتقاس بالبكسل. ثم تحسب العمق:</p>
+<p class="en" style="text-align:center">Z = f B / d</p>
+<p>حيث <span class='en'>f</span> البعد البؤري بالبكسل و<span class='en'>B</span> المسافة بين العينين (القاعدة، <span class='en'>baseline</span>، عندنا 75 مم). نقطة بعيدة تعطي إزاحة صغيرة، وقريبة إزاحة كبيرة.</p></div>
+
+<div class="card"><h2>2. التكميم</h2>
+<p>الحساس يقيس الإزاحة <b>بخطوات منفصلة</b> فقط، مثلاً بخطوة <span class='en'>1/8 px = 0.125</span>، كمسطرة عليها علامات كل ثُمن بكسل. أي قيمة بينهما تُقرّب إلى أقرب علامة. هذا هو التكميم: تحويل قيمة مستمرة إلى قيم منفصلة.</p></div>
+
+<div class="card"><h2>3. لماذا يصبح الخطأ أكبر مع المسافة؟</h2>
+<p>الخطوات متساوية في <span class='en'>d</span> لكن العمق <span class='en'>Z = fB/d</span> <b>معكوس</b> <span class='en'>d</span>، فالخطوة المتساوية في <span class='en'>d</span> تعطي خطوة في <span class='en'>Z</span> تكبر مع المسافة:</p>
+<p class="en" style="text-align:center">step in Z &asymp; Z<sup>2</sup> &middot; &Delta; / (f B)</p>
+<p>بقيم كاميرتنا (<span class='en'>f B = 415.7 &times; 0.075 = 31.2 px&middot;m</span>، <span class='en'>&Delta; = 0.125</span>):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>Z (m)</b></td><td style="padding:4px 12px"><b>depth step</b></td><td style="padding:4px 12px"><b>error std = step/&radic;12</b></td></tr>
+<tr><td style="padding:4px 12px">1.5</td><td>9.0 mm</td><td>2.6 mm</td></tr>
+<tr><td style="padding:4px 12px">2.0</td><td>16.0 mm</td><td>4.6 mm</td></tr>
+<tr><td style="padding:4px 12px">3.0</td><td>36.1 mm</td><td>10.4 mm</td></tr>
+</table>
+<p>(قسمة الخطوة على <span class='en'>&radic;12</span> من درس A5 والطبقة 3 في B2: خطأ التقريب المنتظم.) عند 3 م يكون الخطأ 10.4 مم، أكبر من خطأ العمق العشوائي عند 3 م (7.4 مم).</p></div>
+
+<div class="card"><h2>4. الصورة (من الـ Sensor الحقيقي عندنا)</h2>
+<img src="img/C2_quant.png" alt="quantisation" style='width:100%;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'>
+<p><b>اليسار:</b> العمق المقيس مقابل العمق الحقيقي حول 3 م. بدل الخط المستقيم (المنقط) نرى <b>درجات</b> بعرض حوالي 36 مم. <b>اليمين:</b> حجم الخطوة يزداد مع <span class='en'>Z<sup>2</sup></span>: 9 مم عند 1.5 م، و36 مم عند 3 م.</p></div>
+
+<div class="card"><h2>5. ما الفرق عن الـ noise؟</h2>
+<ul>
+<li>الـ noise العشوائي يتغير في كل إطار. أما التكميم فهو <b>حتمي</b>: العمق الحقيقي نفسه يعطي الرقم المقيس نفسه دائماً. كرة ساكنة تعطي العمق ذاته في كل إطار (خطأ ثابت لا يتلاشى بالمتوسط).</li>
+<li>كرة تتحرك ببطء يبقى عمقها ثابتاً ثم يقفز درجة كاملة.</li>
+</ul>
+<p><b>ملاحظة صدق مهمة:</b> التكميم في كودنا <b>مغلق افتراضياً</b>، ولا يستعمله أي من الشروط الستة. هو خيار في نموذج المستشعر نختبره لاحقاً. أما في عالمنا المستوي فالعمق في الأصل غير ضروري (B1 L5)، فتأثيره على النتائج سيكون صغيراً أصلاً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>كم خطوة العمق عند <span class='en'>Z = 2.5 m</span> بقيم كاميرتنا (<span class='en'>f B = 31.2</span>، <span class='en'>&Delta; = 0.125</span>)؟</p></div>
+<p class="tag">القادم: C2 الطبقة 2 (التعريفات الدقيقة والاشتقاق: Z = fB/d، وتوزيع الخطأ).</p>
+</main></body></html>

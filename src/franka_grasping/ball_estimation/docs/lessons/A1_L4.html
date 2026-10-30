@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L4 - الرموز كما تظهر في مشروعنا</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 4: أين هذا في الكود والبيانات</p>
+<h1>الرموز كما تظهر في مشروعنا</h1>
+
+<div class="box"><p><b>إجابات الأسئلة السابقة:</b> (1) <span class="en">&radic;2 &times; 0.001 &times; 60 = 0.085 m/s</span>. (2) الـ lag لنافذة 10 صور: <span class="en">0.85 &times; (10/60) / 2 = 0.071 m/s</span>، وهو أكبر من حالة 5 صور (0.035)، لأن النافذة أطول.</p></div>
+
+<div class="card">
+<h2>1. جدول الترجمة: من الرمز إلى الكود</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px"><b>symbol</b></td><td><b>in our project</b></td></tr>
+<tr><td style="padding:6px">s (true state)</td><td>file arrays <code>pos</code>, <code>vel</code> (500 Hz); <code>true_xy</code>, <code>true_v</code> (at camera times)</td></tr>
+<tr><td style="padding:6px">z<sub>k</sub> (measurement)</td><td><code>rec["xy"][k]</code>, with <code>rec["valid"][k]</code></td></tr>
+<tr><td style="padding:6px">t<sub>k</sub></td><td><code>rec["t_capture"][k]</code> (arrival: <code>rec["t_arrival"][k]</code>)</td></tr>
+<tr><td style="padding:6px">Estimator</td><td>classes in <code>estimators/filters.py</code>: <code>FiniteDifference</code>, <code>EKF19</code></td></tr>
+<tr><td style="padding:6px">&#349;<sub>k</sub> (estimate)</td><td><code>est.s</code> = (x, y, vx, vy)</td></tr>
+<tr><td style="padding:6px">forecast</td><td><code>est.forecast(dt)</code></td></tr>
+<tr><td style="padding:6px">error</td><td><code>np.hypot(...)</code> in <code>estimators/metrics.py</code></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>2. ملف الإطلاق (launch file)</h2>
+<p>كل إطلاق للكرة محفوظ في ملف <span class="en">outputs/raw_60hz_h3_f60/launch_0000.npz</span> ... <span class="en">launch_0499.npz</span>. من الداخل (أسماء المفاتيح كما هي):</p>
+<ul class="en" style="direction:ltr;text-align:left">
+<li><code>t_phys, pos, vel</code>: the exact truth, 5000 steps (every 2 ms for 10 s)</li>
+<li><code>frame_t, true_xy, true_v</code>: the truth at the 600 camera times</li>
+<li><code>uvz</code>: the ideal camera detection (pixel u, v and depth z) at those 600 times</li>
+<li><code>bounces</code>: time, axis and side of each wall hit</li>
+<li><code>mu, e, p0, v0</code>: the launch settings</li>
+</ul>
+<p>الـ noise والـ dropout والـ delay <b>لا</b> تُخزَّن هنا. تُضاف لاحقاً من الدالة <span class="en">apply_condition</span> (درس C5).</p>
+</div>
+
+<div class="card">
+<h2>3. الـ interface المشترك للـ estimators</h2>
+<p>كل الـ estimators يُستعملون بنفس الطريقة، ولهذا نستطيع مقارنتها بعدالة:</p>
+<pre class="en" style="direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px">est.reset()                       # start a new launch
+est.update(t_capture, xy, valid)  # feed measurement number k
+est.ready, est.t, est.s           # has a state? its time, its value (x, y, vx, vy)
+est.forecast(dt)                  # state dt seconds after est.t</pre>
+<p>مثال حقيقي، هو الـ <span class="en">fd</span> الذي اشتققناه في الطبقة 3:</p>
+<pre class="en" style="direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px">d = (xy - self._last[1]) / (t - self._last[0])    # (z_k - z_{k-1}) / dt
+self.s = (xy[0], xy[1], d[0], d[1])                # position = measurement, velocity = d</pre>
+<p>السطر الأول هو المعادلة <span class="en">v&#770; = (z<sub>k</sub> &minus; z<sub>k&minus;1</sub>) / &Delta;t</span> حرفياً. والسطر الثاني يقول إن الـ state المخمَّن يأخذ المكان كما هو، والسرعة من الفرق.</p>
+</div>
+
+<div class="card">
+<h2>4. أين يُحسب الخطأ</h2>
+<pre class="en" style="direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px">x, y, vx, vy = est.forecast(ta - est.t)           # estimate at the arrival time
+tx, ty = np.interp(ta, tp, pp[:, 0]), np.interp(ta, tp, pp[:, 1])   # truth at that time
+out["now_pos"].append(np.hypot(x - tx, y - ty))   # e_pos = length of the difference</pre>
+<p>هنا <span class="en">np.hypot(a, b)</span> تحسب <span class="en">&radic;(a<sup>2</sup> + b<sup>2</sup>)</span> وهي نفس معادلة الخطأ في الطبقة 2. والـ <span class="en">np.interp</span> تأخذ قيمة الحقيقة عند الزمن <span class="en">ta</span> من المصفوفات ذات الـ 500 Hz.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد</h2>
+<p>في الأسطر الثلاثة أعلاه، أي متغير يمثل <span class="en">&#349;</span> (التخمين)، وأي متغيرين يمثلان <span class="en">s</span> (الحقيقة)؟</p>
+</div>
+
+<p class="tag">القادم: A1 الطبقة 5 (الافتراضات والحدود)، ثم الطبقة 6 (تمارين)، ثم ننتقل إلى A2.</p>
+</main></body></html>

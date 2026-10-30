@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C5 L1 - مجموعة البيانات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C5 &middot; الطبقة 1: الحدس</p>
+<h1>مجموعة البيانات (dataset)</h1>
+
+<div class="box"><p>انتقلنا إلى C5. جواب تمرين C4 الأخير مكتوب في الصفحة السابقة. هنا نجمع كل ما سبق في خط إنتاج واحد: من الإطلاق إلى القياسات التي تراها الـ estimators.</p></div>
+
+<div class="card"><h2>1. خط الإنتاج</h2>
+<svg viewBox="0 0 560 330" style="width:100%;max-width:640px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#888"/></marker></defs>
+<rect x="20" y="20" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="95.0" y="44.0" text-anchor="middle" fill="currentColor" font-weight="600">1. launch</text><text x="95.0" y="62.0" text-anchor="middle" fill="currentColor" font-size="11">random p0, v0, mu, E</text>
+<rect x="205" y="20" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="280.0" y="44.0" text-anchor="middle" fill="currentColor" font-weight="600">2. physics</text><text x="280.0" y="62.0" text-anchor="middle" fill="currentColor" font-size="11">truth every 2 ms</text>
+<rect x="390" y="20" width="150" height="56" rx="8" fill="#fbe9d4" stroke="#c0762b" stroke-width="1.5"/><text x="465.0" y="44.0" text-anchor="middle" fill="currentColor" font-weight="600">3. render (SLOW)</text><text x="465.0" y="62.0" text-anchor="middle" fill="currentColor" font-size="11">ideal (u, v, z) at 60 Hz</text>
+<rect x="205" y="115" width="150" height="56" rx="8" fill="#dff0e0" stroke="#2e9b3e" stroke-width="1.5"/><text x="280.0" y="139.0" text-anchor="middle" fill="currentColor" font-weight="600">STORED FILES</text><text x="280.0" y="157.0" text-anchor="middle" fill="currentColor" font-size="11">500 .npz, 23 MB total</text>
+<rect x="20" y="115" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="95.0" y="139.0" text-anchor="middle" fill="currentColor" font-weight="600">4. apply condition</text><text x="95.0" y="157.0" text-anchor="middle" fill="currentColor" font-size="11">noise / delay / dropout</text>
+<rect x="20" y="215" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="95.0" y="239.0" text-anchor="middle" fill="currentColor" font-weight="600">measurements</text><text x="95.0" y="257.0" text-anchor="middle" fill="currentColor" font-size="11">xy, valid, t_capture, t_arrival</text>
+<rect x="205" y="215" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="280.0" y="239.0" text-anchor="middle" fill="currentColor" font-weight="600">5. estimator</text><text x="280.0" y="257.0" text-anchor="middle" fill="currentColor" font-size="11">fd, cvkf, EKF, ...</text>
+<rect x="390" y="215" width="150" height="56" rx="8" fill="#eef4f8" stroke="#1f5f8b" stroke-width="1.5"/><text x="465.0" y="239.0" text-anchor="middle" fill="currentColor" font-weight="600">6. metrics</text><text x="465.0" y="257.0" text-anchor="middle" fill="currentColor" font-size="11">now, forecast errors (RMS)</text>
+<g stroke="#888" stroke-width="1.5" marker-end="url(#ar)" fill="none">
+<line x1="170" y1="48" x2="205" y2="48"/><line x1="355" y1="48" x2="390" y2="48"/>
+<path d="M465 76 L465 143 L355 143"/>
+<line x1="205" y1="143" x2="170" y2="143"/>
+<line x1="95" y1="171" x2="95" y2="215"/><line x1="170" y1="243" x2="205" y2="243"/><line x1="355" y1="243" x2="390" y2="243"/>
+</g>
+<text x="400" y="104" fill="#c0762b">77.7 min (once)</text>
+<text x="30" y="192" fill="#2e9b3e">seconds (as often as we like)</text>
+</svg>
+<ol>
+<li><b>الإطلاق:</b> نسحب نقطة البداية والسرعة و<span class='en'>&mu;</span> و<span class='en'>E</span> (A5).</li>
+<li><b>الفيزياء:</b> المحاكي يتحرك كل 2 ms ويسجل الحقيقة الدقيقة (A2 وA4).</li>
+<li><b>الرسم (بطيء):</b> نرسم صورة الكاميرا 60 مرة في الثانية، ونكشف الكرة، فنخزّن <span class='en'>(u, v, z)</span> <b>المثالية</b> (B2).</li>
+<li><b>تطبيق الشرط (سريع):</b> نضيف الـ noise والتأخير والانقطاع (الجزء C) إلى الأرقام المخزنة.</li>
+<li><b>الـ estimator:</b> يستلم القياسات ويقدّر.</li>
+<li><b>المقاييس:</b> نقارن بالحقيقة المخزنة (E).</li>
+</ol></div>
+
+<div class="card"><h2>2. لماذا نفصل الخطوة البطيئة؟</h2>
+<p>الرسم هو الخطوة الغالية: 16 ms للإطار، و300,000 إطار = <b>77.7 دقيقة</b>. أما تطبيق شرط على كل الإطلاقات فيأخذ ثواني. (قسته: ستة شروط لإطلاق واحد 0.34 ث، و50 إطلاقاً في شرط واحد 4.1 ث، أي حوالي 41 ث لـ 500 إطلاق.) فنرسم <b>مرة واحدة</b> ونطبّق الشروط كما نشاء: أسرع بأكثر من 100 مرة.</p></div>
+
+<div class="card"><h2>3. ما في الملفات؟</h2>
+<ul>
+<li>500 ملف <span class='en'>.npz</span>، بحجم كلي <b>23 MB</b> (حوالي 46 KB للإطلاق).</li>
+<li>الحقيقة كل 2 ms (5000 قراءة) والحقيقة عند أزمنة الإطارات، و<span class='en'>(u, v, z)</span> المثالية لـ 600 إطار، وقائمة الاصطدامات، وإعدادات الإطلاق، وإعدادات الكاميرا (للتحقق).</li>
+<li>لا يوجد noise ولا انقطاع ولا تأخير في الملفات. هذه تُضاف عند الطلب.</li>
+</ul></div>
+
+<div class="card"><h2>4. الشروط الستة</h2>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>condition</b></td><td style="padding:4px 12px"><b>what is switched on</b></td></tr>
+<tr><td style="padding:4px 12px">ideal</td><td>nothing</td></tr>
+<tr><td style="padding:4px 12px">noise</td><td>jitter 0.3 px, depth noise k = 8.2e-4</td></tr>
+<tr><td style="padding:4px 12px">dropout_flagged</td><td>5% loss, mean gap 6, flagged</td></tr>
+<tr><td style="padding:4px 12px">dropout_silent</td><td>5% loss, mean gap 6, silent hold</td></tr>
+<tr><td style="padding:4px 12px">delay</td><td>40 ms</td></tr>
+<tr><td style="padding:4px 12px">all</td><td>noise + flagged dropout + 40 ms</td></tr>
+</table>
+<p>كلها قيم مؤقتة. وكل شرط يغيّر أمراً واحداً (ما عدا all)، فنعرف أثر كل عيب منفرداً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لو أردنا تجربة قيمة noise جديدة (مثلاً jitter 0.5 بكسل)، فهل نعيد الرسم؟ ولو أردنا ارتفاع كاميرا جديداً (2 م بدل 3 م)؟</p></div>
+<p class="tag">القادم: C5 الطبقة 2 (التعريفات: ما في الملف بالتفصيل، paired، البذور).</p>
+</main></body></html>

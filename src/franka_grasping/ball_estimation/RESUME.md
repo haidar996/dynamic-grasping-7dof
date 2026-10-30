@@ -1,0 +1,192 @@
+# RESUME — read this first in every new chat
+
+## Message to paste in a new chat
+
+> Continue the ball-estimation project. Read `src/franka_grasping/ball_estimation/RESUME.md` first
+> (current state, decisions, next step), then tell me where we are before doing anything.
+
+---
+
+## Current state (updated 2026-10-30, end of turn)
+
+- **Plan:** `PLAN_2026-10-29.md` (replaces FINAL_PLAN_2026-10-28.md). We restart Phase 0 from **step 0.2 = pick the FOV properly**.
+- Step 0.1 (arena + static arm + bounces) done; quick test 10/10.
+- **DECIDED 2026-10-29: image 480x480, FOV 49°** (rule: smallest FOV with arena + 5 cm margin in view).
+- **Step 0.2 DONE 2026-10-30:** grid test confirms 49° → `camera_settings_locked.yaml`, results `outputs/fov_grid/` (table.json, fov_grid.png).
+- **Step 0.3 DONE 2026-10-30:** 500 launches in `outputs/raw_60hz_h3_f49_sq480_with_arm/` (24 MB, 90.5 min), 11/11 checks pass.
+- **Step 0.4 DONE 2026-10-30 (code + quick test):** user decided L from XML (1.22), new camera/data in step_0d,
+  **EKF models the arm box**, **keep depth** back-projection. Quick baseline test (50 launches, all 6 conditions) OK.
+- First full baseline run (untuned, 6 conditions) DONE 2026-10-30: renamed to
+  `outputs/baselines_h3_f49_sq480_with_arm_stride1_v1_untuned.json` / `outputs/baselines_full_stride1_v1_untuned.log`.
+- **Step 0.5 DONE 2026-10-30:** `split_500.json` (seed 2026; per speed 7 train, 2+1/1+2 val/test) via
+  `experiments/step_0h_make_split.py` (refuses to overwrite). Balanced: speeds 50/50/50, mu 0.82/0.89/0.81, e 0.72/0.73/0.73,
+  arm-hit launches 18.3%/12.0%/17.3%. Launch 303 is in test.
+- **Step 0.6 DONE 2026-10-30 ~16:25:** tuning `outputs/ekf_tuning_val.json/.log`; final baselines
+  `outputs/baselines_h3_f49_sq480_with_arm_stride1.json`, log `outputs/baselines_full_stride1.log` (8 conditions, ALL + TEST,
+  RMS/median/p95). These are the official Phase-0 baselines (Phase 1 reports on TEST).
+- **Step 0.7 DONE 2026-10-30:** README rewritten (current setup, scripts, legacy list), legacy GUI generator now exits,
+  `ball_estimation/` STAGED on branch `ball-estimation` (155 files, 2 MB; outputs/ and PDFs excluded) but the COMMIT FAILED:
+  git has no user.name/email on this machine. Waiting for user to say which author identity to use, then commit.
+- **PHASE 0 COMPLETE. Next = Phase 1 (gray-box learning: papers 03, 18, 01, 05)** — start with 1.1 = read + explain
+  guides, step by step, decisions before code.
+
+## Open decisions (waiting for user)
+
+(A2 L bug and A3 arm-in-EKF: FIXED in step 0.4.)
+
+## Audit of earlier chats' work (2026-10-29)
+
+- **A1 FOV 55° decision is not supported by its analysis.** `step_0a_camera_fov_test.py` called
+  `sample_launches(rng, arena, 30)` = 30 launches *per speed*, then rendered only the first 30, so the FOV 55/60 sets are
+  all 0.1 m/s launches (FOV 50: 0.1–0.3 m/s). Each FOV used different random launches (seed = fov). `step_0b_fov_analysis.py`
+  looked at 5 launches; its "coverage efficiency" is capped at 100 for both 50° and 55°; the 94.3 vs 91.5 gap comes from the
+  "centering" term, which depends on where the random launches were, not on the camera.
+  Geometry: at 3 m the narrowest FOV that sees the whole arena is ~46–47°; 55° sees it with ~22% margin (fine);
+  ~50° would give ~12% more pixels per metre (jitter error ~1.9 → ~1.7 mm). 55° is usable; only the reason was wrong.
+- **A2 BUG: estimators assume the old 2x2 m arena.** `EKF19` default `L=0.97` (filters.py:36) = 1.0 − 0.03.
+  New arena needs `L = 1.22`. `step_0d_baselines_with_arm.py` never passes L → every EKF (incl. oracle) would bounce
+  the ball 25 cm early → Phase 0.4 numbers wrong. Does NOT affect Phase 0.3 data.
+- **A3 Baseline EKFs know nothing about the arm base** (only walls). Arm bounces will look like model errors.
+- **A4 FINAL_PLAN numbers are predictions, not results.** e.g. "EKF19b 7.2 mm", "learned-Q 5.2 mm", "learned-Q-E 2.8 mm"
+  were never measured. Also it says the arm is at (1.25, 1.25); the arena is centred on the origin, so the arm is at (0, 0).
+- **A5 Data split:** plan says 350/75/75 train/val/test; step_0d evaluates all 500 (fine for baselines with nothing
+  learned, but Phase 1 must report on the test 75 only).
+- **A6 Stale docs:** README (2x2 m, 3 m/60°), CHECKPOINT_2026-10-29.md (old state) are out of date.
+- **A7 `experiments/step_0c_generate_with_gui.py`** writes into the real dataset folder with its own loop — do not run it.
+- **A8 Nothing in `ball_estimation/` is committed to git** (whole folder untracked).
+- OK: metrics.py, sensor.py, dataset conditions, camera geometry (ideal detection error median 1.64 mm).
+
+## Log
+
+### 2026-10-29 (this chat)
+- Found Phase 0.3 bug: with the jointed arm included, the ball is qpos[9:11] but code used qpos[:2] → the launch pushed
+  arm joints (damping 10000), the ball sat hidden in the arm base, uvz all NaN. Old 326 files → `outputs/_broken/`.
+  Also: arm joints not actually locked; arm collision geoms contype=0 (ball would pass through).
+- User decisions: arm frozen at **Q_HOME** (= [0,0,0,-0.1,0,0,0], nearly upright); ball bounces off arm base as a
+  **Python box obstacle** with the same restitution E as the walls; box = link0 footprint (x −0.154..0.072, y ±0.095).
+- Files: `scenes/make_static_panda.py` → `scenes/panda_static.xml` (no joints, nq=2); `scenes/arena.xml` includes it +
+  invisible geom `arm_base`; `arena_sim.py` arm obstacle + assert ball is qpos[0:2]; bounce log now 4 columns
+  (t, axis, side, source 0=wall 1=arm) in `dataset.py`/`launches.py`; launches never start in/near the base;
+  `experiments/step_0c_generate_500_with_arm.py` rewritten (parallel, `--quick N`);
+  `experiments/step_0c_check_with_arm.py` (10 realism checks + plot); `experiments/step_0c_view_with_arm.py` (GUI replay).
+- Quick test 10 launches: 10/10 pass (static arm, walls + 2 arm bounces, camera sees 99.9%, misses only by the arm,
+  detection median 1.64 mm). Plot: `outputs/test_with_arm/check.png`.
+- Viewer froze once (on-screen text update while holding the viewer lock) → removed; now works. Run it yourself with
+  `! cd .../ball_estimation && python3 experiments/step_0c_view_with_arm.py`.
+- Allowed start points: x,y in [−1.12, 1.12] m, excluding x∈(−0.284, 0.202), y∈(−0.225, 0.225) around the arm.
+- Agreed: update this file at the end of every turn.
+- User chose to restart from the FOV pick; wrote `PLAN_2026-10-29.md` (Phase 0 steps 0.1–0.7, phases 1–4 kept,
+  gates now relative, no invented mm targets). FINAL_PLAN marked superseded.
+- User asked for more FOVs (now 40–70° step 1°) and an arena-fill criterion (don't waste pixels outside the arena); plan 0.2 updated.
+- Researched image size + FOV criterion (user asked to think + search before running):
+  - Today 640x480 @ 55° fills only **48%** of the image with arena (half the pixels wasted).
+  - Accuracy depends on focal length in px f = (rows/2)/tan(fovy/2): at 49° f=527 px (5.6 mm/px, ball 10.6 px),
+    at 55° f=461 (6.4 mm/px). Same rows → same accuracy; extra columns of a 4:3 image only see outside the arena.
+  - 480x480 square: same accuracy as 640x480, 25% fewer pixels to render/process, fill 84% at 49°. Real square depth modes
+    exist (Azure Kinect WFOV 512x512 / 1024x1024). 720x720: 1.5x pixels/m, ~2.25x cost.
+  - FOV rule proposal: geometry fixes it — smallest FOV that keeps arena + 5 cm safety margin (≈1° mounting tilt at 3 m)
+    in view at wall-top height → 48.3° → **49°**; the 40–70° grid sweep verifies it and gives the error-vs-FOV plot.
+  - New finding: real stereo depth noise = Z²·subpixel/(f·B) (Intel). D435-like at 2.97 m ≈ 33 mm RMS vs our model 7.2 mm;
+    k should depend on f (FOV + resolution). Depth noise leaks into x,y by tan(angle) ≈ 0.41 at the arena edge.
+    Option for later: ball is planar → back-project with the known floor plane (RGB only, like RoboCup SSL-Vision) → no
+    depth noise in x,y. Decide at the sensor step.
+- User approved 480x480 + 49°. Wrote `experiments/step_0e_fov_grid.py` (2,4xx grid points, FOV 40–70°, paired noise) and started it.
+- 2026-10-30: grid test run 1 → visibility OK (smallest passing FOV 46°, matches analytic 46.1°; 49°: 0 cut, margin 18 px, fill 83%),
+  but errors jumped between FOVs (1 mm ↔ 15 mm). Cause: the Panda wrist LED (geom link6_12, material "green", rgba 0 1 0)
+  has the ball's colour → detector merged it into the ball at some FOVs. Fix: make_static_panda.py recolours it off-white;
+  panda_static.xml regenerated; spot check 49–52° now 0.4–5.5 mm. Grid test re-run started (run 1 results invalid for errors).
+- Grid test run 2 (clean): smooth. 49°: 0 cut, margin 18 px, fill 83.3%, ideal median 1.23 mm, noise median 2.79 / p95 7.19 mm,
+  corners p95 11.3 mm. Noise median grows 2.63 mm (46°) → 3.02 (55°) → 3.75 (70°). 10 grid points hidden by the arm.
+  (FOV 67 shows 1 "cut" point: arm-shadow edge pixel effect, not the image edge.) Locked in `camera_settings_locked.yaml`.
+- Step 0.3 part 1 done: generator/checker/viewer switched to 480x480 / 49° (`outputs/test_f49_sq480_with_arm/` quick,
+  `outputs/raw_60hz_h3_f49_sq480_with_arm/` full); files now store cam_w/cam_rows (dataset.py; old files assumed 640x480).
+  Old 55° quick test moved to outputs/_broken/. Running the 10-launch quick test (3 workers). Full run NOT approved yet.
+- Quick test 480x480/49°: 10/10 pass, detection median 1.11 mm (was 1.64 at 640x480/55°), p99 2.90 mm; 1.9 min for 10 launches with 3 workers (15.6 CPU-s/launch) → full 500 ≈ 80–95 min.
+- Full 500 run started with 3 workers (user approved).
+- Mid-run check (75/500 done, ~80 min left): 8/10 pass. "ball hits arm" fail = expected (first 75 are the slow 0.1–0.8 m/s).
+  REAL BUG: "speed never increases" fails in 6/75 (mu 1.13–1.38): at the end of a slide, when mu*dt > speed, friction
+  overshoots and reverses v → endless ±1.1–1.6 mm/s jiggle for the rest of the 10 s (v_stop = 1 mm/s never reached).
+  Positions unaffected (µm), but true velocity ≈1.4 mm/s instead of 0. Proposed fix in arena_sim.step: stop exactly when
+  mu*dt >= speed (same rule as estimators/model.py). Waiting for user: fix + restart run, or not.
+- User chose: stop, fix, restart. Run stopped at 89 files (moved to outputs/_broken/raw_f49_sq480_friction_jiggle_89files).
+  Fix in arena_sim.step: apply friction only if speed > max(v_stop, mu*dt), else stop exactly. Physics-only check over all
+  500 launches: 0 speed increases, 0 not-stopped (177 launches have mu > 1), 89 arm bounces in the dataset.
+  Checker gained "balls that should stop are at rest" → quick test 11/11 pass. Full run RESTARTED (3 workers).
+- Friction range explained to user: mu = sliding deceleration 0.2–1.5 m/s² (≈ coefficient 0.02–0.15 = mu/g); E 0.5–0.95.
+- Full run done (90.5 min): 500/500, 11/11 checks. 934 wall + 89 arm bounces (86 launches) = exactly the physics-only
+  prediction. 443/443 should-stop balls end at 0. Camera sees 99.6% of frames; 1,148 missed, all within 0.29 m of the base.
+  Detection error median 1.27 / p99 4.35 mm. Error vs distance from centre: median 0.6 mm (<0.4 m) → 2.2 mm (>1.1 m,
+  steeper view angle); no dependence on speed (renders have no motion blur).
+  Partial occlusion by the arm: 993 frames (0.33%) have error > 10 mm (max 72 mm), all within 0.33 m of the base —
+  visible-pixel centroid shifts when the arm hides part of the ball (only 6 from depth read on the arm). Realistic; kept.
+
+### 2026-10-30 — step 0.4
+- User decisions: 1 L from XML (yes), 2 new camera/data in step_0d (yes), 3 EKF knows the arm box (yes), 4 keep depth.
+- `estimators/model.py`: `propagate(..., L, obs)` + `_box_bounce`: arm box (ball-centre box, cx -0.041, cy 0, hx 0.143,
+  hy 0.125) with restitution E. **Swept segment test** (slab method): first version (smallest-penetration rule, like the
+  sim) failed with 10 ms forecast sub-steps — wrong face near corners and corner tunnelling (errors up to 2.3 m).
+  Started-inside (noisy state) → push out by smallest penetration, flip inward velocity.
+- `estimators/filters.py`: EKF19 `L` now REQUIRED (no 0.97 default), `obs` arg; ekf19b extra variance fires on any hit
+  (velocity component changes sign = wall or arm); cvkf drops L/obs. Old scripts step_f/step_g (old arena) now fail loudly — legacy.
+- `arena_sim.py`: `Arena.estimator_geometry()` → dict(L=1.22, obs=(...)) — single source, read from arena.xml.
+- NEW `experiments/step_0f_model_check.py`: true state + true mu/E, forecast 0.5 s, vs simulator (13,234 windows, 371 with
+  arm bounce). With arm box: median 0.99 / p95 2.68 mm; arm-bounce windows median 1.30 / p95 3.13 mm. Without arm box:
+  arm-bounce windows median 487 / p95 1990 mm. One leftover: launch 303 hits the box exactly at a corner (1 mm) — sim rule
+  says side face, swept rule says top face → up to 1.4 m in 5 windows. Accepted (exact corner = ambiguous).
+- `experiments/step_0d_baselines_with_arm.py`: RAW = raw_60hz_h3_f49_sq480_with_arm, Pinhole(3, 49, 480, 480), passes
+  geometry, args `[stride] [conds|all_conds] [workers=3]`, output `outputs/baselines_h3_f49_sq480_with_arm_stride{N}.json`.
+- Quick test stride 10 (50 launches, 6 conditions): 2.6 min. h0.5 RMS (mm), condition ideal / all:
+  fd 590/688, cvkf 633/712, ekf19-none 84/100, ekf19b-none 83/98, ekf19_oracle 11/27. Log `outputs/baselines_quick_stride10.log`.
+  Same pattern as before: stale guard fixes dropout_silent; hybrid gate hurts under noise for ekf19 (not ekf19b).
+  now_vel RMS ≈0.15 m/s even for oracle-ideal = a few frames at bounce instants (top 1% = 99% of the sum of squares);
+  median 0.007 m/s. Metric property, not a bug — consider reporting median/p95 too.
+- User said go → full baseline run started (all 500, 6 conditions, 3 workers).
+- Full baseline run done (500 launches, 6 conditions, 23 min). h0.5 RMS mm, ideal / noise / all:
+  fd 591/608/686, cvkf 629/630/711, ekf19-none 75/79/90, ekf19b-none 74/78/89, ekf19_oracle-none 20/32/33.
+  dropout_silent: plain EKFs ~185, ekf19b-none+stale 75 (stale guard works). Hybrid gate hurts under noise (ekf19 113 vs 79).
+  Oracle 3–4 m/s bin (30 mm) > 4–5 m/s (15): launch 303 (3.1 m/s, exact-corner arm hit) sits in that bin.
+- User asked for now_pos + all horizons: shown per condition from the stride1 JSON (no new run). now_pos ideal: EKFs 3.6 mm,
+  fd 4.7, cvkf 8.1; "all": ekf19b 7.2, oracle 5.9, fd 34, cvkf 41. h1.0 ideal: ekf19b 216, oracle 54, fd 1454.
+  Step 0.5 still waiting for OK.
+
+### 2026-10-30 — deep realism check of the baselines (user asked)
+- Scripts: `experiments/step_0g_error_breakdown.py`, `experiments/step_0g_depth_noise_test.py` (run from ball_estimation/).
+- Physics sanity: fd h0.5 median 99 mm ≈ ½·0.85·0.5² = 106 mm (ignores friction) ✓; ekf19b h0.5 median 49 mm ≈ ½·|Δμ|·t²
+  with median |Δμ|≈0.33 → 41 mm ✓; oracle h0.5 median 3.4 mm (model check from true state: 1 mm) ✓.
+- now_pos: ideal → EKF median 1.3 = measurement median 1.32 (error is a fixed view-angle bias, can't be filtered);
+  noise → measurement 2.86 → EKF 2.1 (filter helps) ✓.
+- RMS dominated by few launches: now_pos RMS 65% from 5 launches (235, 222, 247, 317, 188) = ball rolls into the camera's
+  blind spot under the arm (235: hidden 1.38–10 s, stops there), EKF predicts blind → 90–134 mm. Realistic, matters for grasping.
+  Oracle h0.5 RMS 19.5 → 14.3 without launch 303 (exact-corner arm hit, sim-vs-model rule mismatch = sim artefact).
+- Depth noise is OPTIMISTIC: ours σZ≈7 mm; D435-like stereo ≈33 mm (k=3.74e-3). With 33 mm: measurement median 7.0 mm;
+  h0.5 RMS fd 762, ekf19b 103, oracle 76 (vs 608/78/32) → oracle advantage shrinks from 2.4x to 1.35x. EKF R (5 mm) not
+  retuned for it.
+- Other sim gaps (all optimistic): no motion blur, exact known timestamps/fixed delay, perfect colour segmentation/lighting,
+  simple physics (constant sliding friction, no spin, same E walls+arm, tangential speed kept at bounce). "all" uses
+  flagged dropout, not silent.
+- Proposed decisions (waiting for user): (A) add realistic-depth-noise condition (and set EKF R per condition);
+  (B) report median + p95 next to RMS; (C) launch 303: keep + note, or exclude.
+- User: 'go to the next phase' → did step 0.5 (Phase 0 not finished: 0.6, 0.7 remain before Phase 1).
+
+### 2026-10-30 — step 0.6 (user: yes to A, B, C)
+- A: `dataset.py` new conditions `noise_real` and `all_real` (k_depth = K_REAL = 3.74e-3, ~33 mm at 3 m, D435-like).
+  EKF noise (sigma, q) tuned per condition on the VAL launches: `experiments/step_0i_tune_ekf_noise.py`, criterion h0.5 RMS.
+  Two families tuned separately (fair): "ekf" (tuned with ekf19b-none+stale, used by all ekf19*) and "cvkf" (needs larger q —
+  smoke test with EKF settings gave cvkf now_pos 29 mm). Grid sigma 2–30 mm × q 0.03–20; flags optimum on the grid edge.
+  First grid (q 0.1–2, ekf only): tuning changes little for old conditions (≤1–2 mm, default 5 mm/0.5 near-optimal), a lot
+  for noise_real (94.5 → 72.8 mm, sigma 12 mm, q 0.1 at grid edge) → widened grid. Old log `outputs/ekf_tuning_val_grid3q.log`.
+- B: `step_0d_baselines_with_arm.py` rewritten: per-frame errors → RMS / median / p95 for every metric, reported on ALL
+  and on TEST (split_500.json), uses tuned noise per family. Smoke test OK.
+- C: launch 303 kept (in test), to be noted in the thesis.
+- Previous untuned results kept as `outputs/baselines_h3_f49_sq480_with_arm_stride1_v1_untuned.json` / `.log`.
+- 12:48 user: stop everything (charging). Run killed; restart command at the top of this file.
+- 15:21 user: restart → tuning + baselines restarted (chained, background).
+- 0.6 DONE. Tuned EKF (val): ideal/dropout σ5 q2, noise/all σ8 q0.5, delay σ5 q5, noise_real/all_real σ12 q0.1 (94.5→72.8 mm
+  on val). cvkf tuned to q 5–20 (several on grid edge, gain tiny) → behaves ≈ fd.
+  h0.5 RMS (median) mm, ALL 500: ideal ekf19b 73 (47), oracle 23 (5), fd 591 (99); noise ekf19b 77 (52), oracle 25 (12);
+  all ekf19b 89 (60), oracle 28 (13); noise_real ekf19b 87 (60), oracle 28 (14); all_real ekf19b 99 (69), oracle 32 (15), fd 847.
+  → with tuned noise the oracle gap stays ~3x even with realistic depth noise (the 1.35x seen untuned was a tuning artefact).
+  Hybrid gate no longer hurts much once sigma is tuned (ideal 75 vs 73).
+  TEST vs ALL: medians/p95 match; RMS higher on test (oracle h0.5 40 vs 23, now_pos 6.8 vs 3.8) because test holds launch 303
+  (corner hit) and a blind-spot launch → report median/p95 with RMS.
+- 0.7: README rewritten, step_0c_generate_with_gui.py exits (legacy), committed (user: 'yes do 0.7 and commit'). Phase 0 complete.

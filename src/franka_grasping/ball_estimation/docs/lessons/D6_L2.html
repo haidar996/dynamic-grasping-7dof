@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D6 L2 - الارتداد: مثال رقمي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .compare { display:flex; gap:12px; margin:12px 0; }
+  .col { flex:1; background:#f0f0f0; padding:8px; border-radius:4px; font-size:85%; }
+  @media (prefers-color-scheme: dark) { .col { background:#2a2a2a; } }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D6 &middot; الطبقة 2: مثال—ارتداد بدون وبمع sigma_E</p>
+<h1>الكرة ترتد: كيف يتعامل EKF؟</h1>
+
+<div class="box"><p><b>جواب سؤال D6 L1:</b> نتنبأ بخطوة واحدة فقط (<span class='en'>s[a] + s[2+a]·h</span>) لأن هذا الوقت الحالي الذي سننفذ فيه التنبؤ. إذا تنبأنا بخطوتين أو أكثر، قد نضيف تأكد غير ضروري (الكرة قد لا ترتد بالفعل، أو قد ترتد قبل ذلك). خطوة واحدة = الحد الأدنى من المعلومات.</p></div>
+
+<div class="card"><h2>1. السيناريو: الكرة تقترب من جدار</h2>
+<p>الكرة تتحرك نحو الجدار الأيمن (x = L = 0.97):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+الخطوة N−1: s = [x=0.95, y=0.5, vx=0.5, vy=0.0]ᵀ<br>
+P = diag([25e-6, 25e-6, 0.1, 0.1])
+</p>
+<p>الكرة تقترب من الجدار بـ vx=+0.5 m/s (نحو x=0.97).</p>
+<p>المعاملات: <span class='en'>c=0.85, E=0.725, Δt=0.1 s, L=0.97, sigma_E (varies)</span></p>
+</div>
+
+<div class="card"><h2>2. الخطوة N: بدون sigma_E (ekf19)</h2>
+<p><b>التنبؤ:</b></p>
+<p class="en" style="text-align:center;margin:8px 0">
+x_new = 0.95 + 0.5 × 0.1 = 0.95 m<br>
+vx_new = 0.5 × (1 − 0.85 × 0.1) = 0.5 × 0.915 = 0.4575 m/s
+</p>
+<p>s⁻ = [0.95, 0.5, 0.4575, 0]ᵀ</p>
+
+<p><b>الشرط للتنبؤ بارتداد:</b></p>
+<p class="en" style="text-align:center">
+abs(s[0] + s[2] × Δt) = abs(0.95 + 0.4575 × 0.1) = abs(0.9946) > 0.97? <b>نعم!</b>
+</p>
+<p>لكن <span class='en'>sigma_E = 0</span> (لا حل ekf19b)، فـ <span class='en'>P⁻[2,2]</span> لا يتغير (بقي 0.1).</p>
+
+<p><b>التصحيح:</b> الكاميرا ترى الكرة <b>بعد الارتداد الفعلي</b>:</p>
+<p class="en" style="text-align:center">
+z = [0.96, 0.5]ᵀ  (x انجرفت قليلاً لكن بسرعة معاكسة الآن)
+</p>
+
+<p><b>التنبية—مشكلة!</b></p>
+<p class="en" style="text-align:center">
+y = z − H·s⁻ = [0.96, 0.5] − [0.95, 0.5] = [0.01, 0]
+</p>
+<p>لكن هذا <b>خادع</b>. الموقع أقرب من التوقع، لكن <b>الاتجاه تغير!</b> المرشح توقع vx موجب يبقى، لكن الحقيقة vx الآن سالب (بعد الارتداد).</p>
+
+<p><b>الكسب:</b> تباين السرعة صغير (0.1)، فـ K صغير، فنثق أكثر بالتنبؤ من القياس:</p>
+<p class="en" style="text-align:center">
+vx_corrected ≈ 0.4575 + K_small × (error) ≈ 0.4 m/s  (لا يزال موجب!)
+</p>
+
+<p class="warning"><b>⚠️ خطأ!</b> المرشح <b>لم يرَ</b> تغيير الاتجاه. سيستغرق عدة خطوات ليدرك أن الكرة الآن تتحرك بالعكس.</p>
+</div>
+
+<div class="card"><h2>3. الخطوة N: مع sigma_E (ekf19b)</h2>
+<p><b>التنبؤ:</b> نفسه (قبل الارتداد):</p>
+<p class="en" style="text-align:center">
+s⁻ = [0.95, 0.5, 0.4575, 0]ᵀ
+</p>
+
+<p><b>فحص الارتداد:</b> نفسه:</p>
+<p class="en" style="text-align:center">
+abs(0.9946) > 0.97? نعم → إذاً أضف تأكد!
+</p>
+
+<p><b>إضافة sigma_E:</b> مع <span class='en'>sigma_E = 0.13</span>:</p>
+<p class="en" style="text-align:center">
+P[2,2] += (0.13 × |0.4575|)² = (0.0595)² ≈ 0.0035<br>
+P_new[2,2] = 0.1 + 0.0035 = 0.1035
+</p>
+
+<p><b>التصحيح:</b> نفس القياس <span class='en'>z = [0.96, 0.5]ᵀ</span>:</p>
+<p class="en" style="text-align:center">
+y = [0.01, 0]
+</p>
+
+<p><b>الكسب—مختلف!</b> تباين السرعة الآن أكبر (0.1035)، فـ K أكبر، فنثق أكثر بالقياس:</p>
+<p class="en" style="text-align:center">
+vx_corrected ≈ 0.4575 + K_larger × (0.01) ≈ 0.48 m/s
+</p>
+
+<p>أقرب من قبل—لا يزال لم نرَ الارتداد بالضبط، لكن تصحيح أفضل.</p>
+</div>
+
+<div class="card"><h2>4. الخطوة N+1: بعد الارتداد</h2>
+<p><b>بدون sigma_E:</b> المرشح يتنبأ <span class='en'>vx ≈ 0.4 m/s</span> (موجب لا يزال)، لكن الكاميرا ترى الكرة تتحرك بالعكس. التنبية كبيرة، التصحيح ضعيف، يستغرق وقت طويل للتعافي.</p>
+
+<p><b>مع sigma_E:</b> المرشح يتنبأ <span class='en'>vx ≈ 0.48 m/s</span> (موجب، لكن أقل)، القياس أقرب، التصحيح أفضل، التعافي أسرع.</p>
+
+<p>الفرق: <b>sigma_E تُعد المرشح للارتداد</b>—لا تمنعه، لكن تزيد من تقبل التصحيحات.</p>
+</div>
+
+<div class="card"><h2>5. جدول المقارنة</h2>
+<table style="border-collapse:collapse;width:100%;font-size:85%">
+<tr style="border-bottom:1px solid var(--line)">
+<td style="padding:5px"><b>الخطوة</b></td>
+<td style="padding:5px"><b>ekf19 (sigma_E=0)</b></td>
+<td style="padding:5px"><b>ekf19b (sigma_E=0.13)</b></td>
+</tr>
+<tr>
+<td style="padding:5px">N−1</td>
+<td style="padding:5px">P[2,2]=0.100</td>
+<td style="padding:5px">P[2,2]=0.100</td>
+</tr>
+<tr>
+<td style="padding:5px">N (قبل تصحيح)</td>
+<td style="padding:5px">P⁻[2,2]=0.100</td>
+<td style="padding:5px">P⁻[2,2]=0.104 (sigma_E أضاف)</td>
+</tr>
+<tr>
+<td style="padding:5px">N (بعد تصحيح)</td>
+<td style="padding:5px">vx≈0.40, K صغير</td>
+<td style="padding:5px">vx≈0.48, K أكبر</td>
+</tr>
+<tr>
+<td style="padding:5px">N+1 (مع قياس حقيقي)</td>
+<td style="padding:5px">يتفاجأ من الاتجاه الجديد</td>
+<td style="padding:5px">أقل تفاجأ، تعافي أسرع</td>
+</tr>
+</table>
+</div>
+
+<div class="card"><h2>6. الحدس</h2>
+<p><span class='en'>sigma_E</span> ليست "حل" للارتداد—هي "تحضير" للمرشح:</p>
+<ul>
+<li>نتنبأ: "قد يحدث شيء غير متوقع قريباً"</li>
+<li>نزيد عدم اليقين في السرعة</li>
+<li>عندما يحدث الشيء غير المتوقع (الارتداد)، المرشح أقل مفاجأة</li>
+<li>التصحيح أسرع وأكثر استقراراً</li>
+</ul>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في السيناريو أعلاه، الفرق بين ekf19 و ekf19b ظهر في P⁻[2,2] (0.100 vs. 0.104). هذا فرق صغير جداً (~4%). لماذا يحدث فرق كبير في التعافي من الارتداد؟</p>
+</div>
+<p class="tag">القادم: D7 الطبقة 1 (الـ Gate والسياسات chi-square، skip/reset/hybrid).</p>
+</main></body></html>

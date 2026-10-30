@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L4 - الكود: الصنف Pinhole</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 4: أين هذا في الكود</p>
+<h1>الصنف Pinhole</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>X = 100 &times; 2.97 / 415.7 = 0.714 m</span>.</p></div>
+
+<div class="card"><h2>1. الكود (ملف <span class='en'>sensing/camera.py</span>)</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>class Pinhole:
+    def __init__(self, height=3.0, fovy=60.0, width=640, rows=480, radius=0.03):
+        self.W, self.R, self.radius = width, rows, radius
+        self.cx, self.cy = (width - 1) / 2, (rows - 1) / 2
+        self.set_geometry(height, fovy)
+
+    def set_geometry(self, height, fovy):
+        self.H, self.fovy = height, fovy
+        self.f = (self.R / 2) / np.tan(np.radians(fovy) / 2)
+
+    def back_project(self, u, v, z_surface):
+        zc = z_surface + self.radius                 # surface -> centre
+        return np.array([(u - self.cx) * zc / self.f,
+                         -(v - self.cy) * zc / self.f])      # rows grow downward</pre></div>
+
+<div class="card"><h2>2. شرح السطور</h2>
+<ul>
+<li><span class='en'>self.W, self.R</span>: عرض الصورة (640) وعدد صفوفها (480). <span class='en'>self.radius</span>: نصف قطر الكرة 0.03 م.</li>
+<li><span class='en'>self.cx, self.cy</span>: مركز الصورة <span class='en'>(319.5, 239.5)</span> (الدرس B1 L2).</li>
+<li><span class='en'>set_geometry</span>: تضبط الارتفاع <span class='en'>H</span> وزاوية الرؤية، وتحسب <span class='en'>f = (R/2)/tan(fovy/2)</span> (415.69 عند 60&deg;).</li>
+<li><span class='en'>back_project(u, v, z_surface)</span>: تأخذ بكسل <span class='en'>(u, v)</span> وعمق السطح الذي قاسته الكاميرا، وتعيد مكان مركز الكرة في العالم:
+<ul>
+<li><span class='en'>zc = z_surface + radius</span>: الكاميرا تقيس بُعد <b>قمة</b> الكرة (2.94 م)، ونحن نريد بُعد المركز (2.97 م)، فنضيف نصف القطر.</li>
+<li><span class='en'>x = (u &minus; cx) &middot; zc / f</span> (المعكوس من B1 L3).</li>
+<li><span class='en'>y = &minus;(v &minus; cy) &middot; zc / f</span>: إشارة سالبة لأن الصفوف تزداد نحو الأسفل بينما <span class='en'>y</span> العالم يزداد نحو الأعلى في الصورة.</li>
+</ul></li>
+</ul>
+<p>تحقق: <span class='en'>back_project(cx + 100, cy, 2.94)</span> يعطي <span class='en'>x = 0.7145 m, y = 0</span>. و<span class='en'>back_project(cx, cy &minus; 70, 2.94)</span> يعطي <span class='en'>x = 0, y = 0.5001 m</span>: صف أصغر (أعلى الصورة) يعني <span class='en'>y</span> موجباً.</p></div>
+
+<div class="card"><h2>3. لماذا Pinhole منفصل عن DepthCamera؟</h2>
+<p>الصنف <span class='en'>DepthCamera</span> يرث من <span class='en'>Pinhole</span> ويضيف الجزء الذي يحتاج MuJoCo (رسم الصورة، كشف الكرة). أما <span class='en'>Pinhole</span> فهندسة فقط، بلا نافذة رسم، فيصلح للاستعمال داخل العمليات المتوازية (<span class="en">worker processes</span>) التي تطبّق الـ noise على الملفات المخزنة. هذا ما استعملناه في التجارب كلها: كاميرا <span class='en'>Pinhole(3.0, 60.0)</span> تحوّل (u, v, z) المخزنة إلى (x, y).</p>
+<p>ومن التفاصيل التي تعلمناها بالخطأ: إنشاء <span class='en'>mujoco.Renderer</span> جديد لكل كاميرا أفسد الصور اللاحقة (أخطاء بالأمتار)، فأصبح هناك renderer واحد يُعاد استعماله، وتُغيَّر الإعدادات بالدالة <span class='en'>configure(height, fovy)</span>.</p></div>
+
+<div class="card"><h2>4. ربط الكاميرا بالمشهد والملفات</h2>
+<ul>
+<li>الكاميرا في <span class='en'>arena.xml</span>: <span class='en'>pos="0 0 3" fovy="60"</span>. وبدون تحديد اتجاه تنظر MuJoCo إلى الأسفل مع أن «أعلى الصورة» هو الاتجاه <span class='en'>+y</span> و«يمين الصورة» هو <span class='en'>+x</span> (وهذا ما افترضناه في الإشارات أعلاه، وتحققنا منه بالأرقام في B1 L3).</li>
+<li>كل ملف إطلاق يحفظ <span class='en'>cam_height</span> و<span class='en'>cam_fovy</span>. والدالة <span class='en'>apply_condition</span> تتحقق (<span class='en'>assert</span>) أن كاميرا الاستعمال تطابقهما، وإلا ترفض. هذا يمنع الخطأ الصامت لو غيّرنا الكاميرا وبقيت الملفات القديمة.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لو غيّرنا زاوية الرؤية إلى 40&deg; وحاولنا استعمال الملفات المخزنة (المصوَّرة عند 60&deg;)، فماذا يحدث؟ ولماذا هذا مفيد؟</p></div>
+<p class="tag">القادم: B1 الطبقة 5 (الافتراضات والحدود).</p>
+</main></body></html>

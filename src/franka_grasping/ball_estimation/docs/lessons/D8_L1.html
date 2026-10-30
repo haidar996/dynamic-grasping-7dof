@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D8 L1 - الـ Oracle والـ Stale Guard</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D8 &middot; الطبقة 1: الـ Oracle والـ Stale Guard</p>
+<h1>اثنان من الحيل: معرفة الحقيقة، والكشف عن التجميد</h1>
+
+<div class="box"><p><b>جواب سؤال D7 L3:</b> عند reset، نفترض السرعة صفر لأن:
+(1) بعد خسارة الثقة، لا نملك معلومة جيدة عن السرعة (تاريخنا قد يكون خاطئاً)
+(2) تخمين السرعة من قياس واحد وحيد مستحيل (القياس موقع فقط، لا سرعة)
+(3) البداية من الصفر حقنة محافظة (آمنة)—المرشح سيتعلم السرعة الصحيحة من القياسات القادمة بسرعة
+</p></div>
+
+<div class="card"><h2>1. الـ Oracle: ماذا لو عرفنا الحقيقة؟</h2>
+<p>في <b>محاكاة</b>، لدينا شيء فريد: نعرف الحقيقة الكاملة! المحاكاة (MuJoCo) تعرف الموقع والسرعة والاحتكاك والارتداد—كل شيء.</p>
+<p>فكرة: استخدم هذه المعلومة الحقيقية كمرجع.</p>
+<ul>
+<li><b>Oracle estimator:</b> مرشح يستخدم الحقيقة (الموقع الحقيقي والسرعة الحقيقية من المحاكاة) بدلاً من القياسات</li>
+<li><b>الهدف:</b> رؤية أفضل أداء ممكنة (ceiling)</li>
+<li><b>المقارنة:</b> كم بعيد مرشحنا عن الأفضل؟</li>
+</ul>
+<p>في الكود، يمكنك إنشاء <code>ekf19_oracle</code> أو <code>ekf19b_oracle</code> الذي يعرف الاحتكاك الحقيقي <span class='en'>mu</span> ومعامل الارتداد الحقيقي <span class='en'>e</span>:</p>
+<pre>oracle = make("ekf19_oracle", rec={'mu': 0.85, 'e': 0.725})</pre>
+<p>حتى مع معرفة المعاملات الحقيقية، هناك خطأ! لماذا؟</p>
+<ul>
+<li>جدران الساحة (عدم اليقين في الارتداد)—حتى مع <span class='en'>e</span> الصحيح، الارتداد ليس حتمياً</li>
+<li>التأخير (delay)—القياسات تأتي متأخرة</li>
+<li>الضجيج (noise)—حتى مع الحقيقة، الضجيج موجود</li>
+</ul>
+</div>
+
+<div class="card"><h2>2. مثال من نتائجنا</h2>
+<p>من الذاكرة (D3 L5 box 6):</p>
+<p class="en" style="text-align:center;font-size:90%">
+ideal fd 1.8/1466, cvkf 7.6/1519, ekf19 1.9/209, oracle 1.7/17.8<br>
+(الأول = خطأ الآن، الثاني = توقع 1 ثانية)
+</p>
+<p><b>الـ oracle:</b> أفضل بكثير (1.7 مم الآن، 17.8 مم التوقع).</p>
+<p><b>ekf19 الحقيقي:</b> قريب جداً من oracle (1.9 مم، 209 مم)—أداة جيدة!</p>
+<p>الفرق في التوقع الطويل (17.8 vs 209 مم) يأتي من الاختلافات الصغيرة في تقديرات المعاملات.</p>
+</div>
+
+<div class="card"><h2>3. الـ Stale Guard: الكشف عن الكاميرا المتجمدة</h2>
+<p>مشكلة شائعة: الكاميرا تتجمد—تعطي نفس القراءة مرات متتالية (بكسل بت بت متطابق).</p>
+<p>في محاكاة نظيفة: قراءة متكررة = خطأ الكاميرا.<br>
+في الواقع: الكرة قد تكون واقفة فعلاً، فالقراءة صحيحة.</p>
+<p>الحل: <b>Stale Guard</b>—يكتشف تكرار بت بت ويرفضها كقياس:</p>
+<pre>class StaleGuard:
+    def update(self, t, xy, valid):
+        if valid:
+            z = np.asarray(xy, float)
+            if self._last is not None and np.array_equal(z, self._last):
+                valid = False  # تجاهل: قراءة مكررة بالضبط
+                self.n_stale += 1
+            self._last = z
+        self.est.update(t, xy, valid)  # مرر إلى المرشح الحقيقي</pre>
+<p>الفحص: <span class='en'>np.array_equal(z, self._last)</span> = هل البت بت متطابق؟</p>
+</div>
+
+<div class="card"><h2>4. لماذا يعمل هذا؟</h2>
+<p>الافتراض (موثق):</p>
+<ul>
+<li>الكاميرا الحقيقية ضاجة—كل قراءة مختلفة قليلاً (حتى لو الكرة ساكنة)</li>
+<li>الكاميرا المتجمدة تعطي نفس البكسلات بالضبط</li>
+<li>الكرة الساكنة <b>في محاكاة نظيفة</b> (بدون ضجيج) قد ترجع قيم متطابقة، لكن هذا نادر جداً (احتمال 1 في مليون)</li>
+</ul>
+<p>في مشروعنا: المحاكاة لها ضجيج → أي تكرار بت بت = خطأ كاميرا (تجمد)</p>
+</div>
+
+<div class="card"><h2>5. الاستخدام</h2>
+<p>الـ Stale Guard يُطبق كـ wrapper:</p>
+<pre>ekf19_with_guard = StaleGuard(make("ekf19-hybrid"))</pre>
+<p>أو في الكود:</p>
+<pre>if name.endswith("+stale"):
+    return StaleGuard(make(name[:-len("+stale")], rec, **kw))</pre>
+<p>فمثلاً: <code>make("ekf19b-hybrid+stale")</code> ينشئ ekf19b مع stale guard.</p>
+</div>
+
+<div class="card"><h2>6. الفرق: Oracle vs. Stale Guard</h2>
+<p><b>Oracle:</b> مرجع نظري—كم أفضل ممكن إذا عرفنا كل شيء؟</p>
+<p><b>Stale Guard:</b> حيلة عملية—اكتشف خطأ كاميرا واضح وتجاهله.</p>
+<p>الاثنان مستقلان: يمكنك استخدام oracle مع stale guard:</p>
+<pre>oracle_with_guard = StaleGuard(make("ekf19_oracle+stale"))</pre>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في الـ Stale Guard، لماذا نستخدم <span class='en'>np.array_equal</span> (مقارنة بت بت) بدلاً من <span class='en'>np.allclose</span> (بتسامح صغير)؟</p>
+</div>
+<p class="tag">القادم: D8 الطبقة 2 (مثال: مقارنة ekf19 مع oracle وstale guard).</p>
+</main></body></html>

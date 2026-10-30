@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D8 L2 - Oracle والـ Stale Guard: مثال</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; }
+  td, th { border:1px solid var(--line); padding:6px; text-align:center; font-size:85%; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D8 &middot; الطبقة 2: Oracle والـ Stale Guard مقارنة</p>
+<h1>ثلاث مرشحات في الممارسة</h1>
+
+<div class="box"><p><b>جواب سؤال D8 L1:</b> <span class='en'>np.array_equal</span> (مقارنة بت بت) بدلاً من <span class='en'>np.allclose</span> (تسامح) لأن:
+(1) الكاميرا المتجمدة تعطي نفس البايتات بالضبط (تكرار برنامجي)
+(2) بـ allclose، قد نرفض قياسات حقيقية قريبة جداً (مثل الكرة تتحرك ببطء)
+(3) في محاكاة مع ضجيج: تكرار بت بت = تقريباً مستحيل بالصدفة
+</p></div>
+
+<div class="card"><h2>1. السيناريو: الكاميرا تتجمد لخطوتين</h2>
+<p>الكرة تتحرك، لكن في الخطوة 5 و 6، الكاميرا تعطي نفس القراءة (متجمدة):</p>
+<table>
+<tr><th>خطوة</th><th>الحقيقة</th><th>قياس الكاميرا</th><th>ملاحظة</th></tr>
+<tr><td>4</td><td>x=0.60</td><td>z=0.601</td><td>قياس طبيعي</td></tr>
+<tr><td>5</td><td>x=0.65</td><td>z=0.601</td><td>متجمد! (نفس 4)</td></tr>
+<tr><td>6</td><td>x=0.70</td><td>z=0.601</td><td>متجمد! (نفس 4)</td></tr>
+<tr><td>7</td><td>x=0.75</td><td>z=0.749</td><td>استيقظت</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>2. <span class='en'>ekf19-hybrid</span> (بدون stale guard)</h2>
+<p><b>الخطوة 5:</b></p>
+<ul>
+<li>التنبؤ: <span class='en'>x̂⁻ ≈ 0.65</span></li>
+<li>قياس: <span class='en'>z = 0.601</span> (قديم!)</li>
+<li>التنبية: <span class='en'>y = 0.601 − 0.65 = −0.049 m</span> (تنبية كبيرة!)</li>
+<li>chi-square test: <span class='en'>D² ≈ 100</span> (كبير جداً) → gate <b>يرفضه</b></li>
+<li>النتيجة: skip، بدون تصحيح</li>
+</ul>
+
+<p><b>الخطوة 6:</b> نفس الشيء—قياس نفس 0.601، رفع مرة ثانية.</p>
+
+<p><b>النتيجة النهائية:</b> بعد خطوتين من skip، المرشح اعتمد على التنبؤ فقط (بدون تصحيح):</p>
+<p class="en" style="text-align:center">
+x̂ (خطأ) ≈ 0.65, الحقيقة 0.70 → خطأ = 5 سم
+</p>
+<p>لكن في الخطوة 7، قياس جديد (0.749) يقترب، فالمرشح يتصحح ببطء.</p>
+</div>
+
+<div class="card"><h2>3. <span class='en'>ekf19-hybrid+stale</span> (مع stale guard)</h2>
+<p><b>الخطوة 5:</b></p>
+<ul>
+<li>Stale Guard يكتشف: <span class='en'>z[5] = z[4]?</span> → <b>نعم!</b></li>
+<li>يعلم المرشح: <span class='en'>valid = False</span></li>
+<li>المرشح يتجاهل (skip)، لا يقيم gate</li>
+<li>النتيجة: skip (بدون تصحيح)</li>
+</ul>
+
+<p><b>الخطوة 6:</b> نفس الشيء—stale guard يكتشف، skip.</p>
+
+<p><b>الخطوة 7:</b> قياس جديد (0.749)، stale guard يعبره، المرشح يتصحح:</p>
+<p class="en" style="text-align:center">
+x̂ ≈ 0.72 (أقرب من بدون guard)
+</p>
+
+<p><b>الفرق الرئيسي:</b> بدون stale guard، gate يرفع القياس القديم (لأنه مريب)، والمرشح ينجرف. مع stale guard، يكتشف التجمد <b>قبل</b> دخول gate، فـ skip أنظف.</p>
+</div>
+
+<div class="card"><h2>4. <span class='en'>ekf19_oracle</span> (يعرف الحقيقة)</h2>
+<p>Oracle يعرف الموقع الحقيقي والسرعة الحقيقية والاحتكاك الحقيقي:</p>
+<p class="en" style="text-align:center">
+الخطوة 5: x̂ = 0.65 (حقيقي!), vx̂ = 0.05 (حقيقي!)<br>
+الخطوة 6: x̂ = 0.70 (حقيقي!)<br>
+الخطوة 7: x̂ = 0.75 (حقيقي!)
+</p>
+
+<p>Oracle لا يحتاج قياسات على الإطلاق—يستخدم الحقيقة مباشرة.</p>
+
+<p><b>لكن حتى Oracle ليس مثالياً!</b> لأن:</p>
+<ul>
+<li>التأخير: قراءة الموقع الحقيقي في الخطوة 5 تعكس الموقع من 0.1 ثانية سابقاً</li>
+<li>الارتداد: حتى لو تعرف E، الارتداد يحدث على الحافة الدقيقة (عدم اليقين)</li>
+<li>الضجيج: حتى الحقيقة لها ضجيج في المحاكاة (floating-point errors)</li>
+</ul>
+</div>
+
+<div class="card"><h2>5. جدول المقارنة الكاملة</h2>
+<table>
+<tr><th>الجانب</th><th>ekf19-hybrid</th><th>ekf19+stale</th><th>oracle</th></tr>
+<tr><td>يستخدم قياسات</td><td>نعم</td><td>نعم</td><td>لا (الحقيقة)</td></tr>
+<tr><td>يكتشف تجمد</td><td>عبر gate (متأخر)</td><td>مباشرة (سريع)</td><td>N/A</td></tr>
+<tr><td>خطأ الآن</td><td>~8 مم</td><td>~7 مم</td><td>~1.7 مم</td></tr>
+<tr><td>توقع 1 ثانية</td><td>~200 مم</td><td>~190 مم</td><td>~18 مم</td></tr>
+<tr><td>ينجرف بدون قياس</td><td>نعم (بطيء)</td><td>نعم (بطيء)</td><td>لا</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>6. استخدام عملي</h2>
+<p><b>تطوير:</b> استخدم oracle كمرجع—كم أفضل ممكن؟</p>
+<p><b>الإنتاج:</b> استخدم <span class='en'>ekf19b-hybrid+stale</span>—يقترب من oracle بدون معرفة الحقيقة.</p>
+<p><b>التشخيص:</b> إذا كان الخطأ أقرب من oracle من ekf19b، شيء آخر خاطئ (مثل تأخير في القياس).</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في مثال التجمد أعلاه، بدون stale guard، gate رفع القياس القديم في الخطوات 5 و 6. لكن لو كان معامل الارتداد <span class='en'>E</span> أكبر (ارتداد أقوى)، قد يكون التغيير في الموقع أسرع—قد يرفع gate القياس بسبب مريب <b>حقيقي</b> (ارتداد)، وليس تجمد. كيف نفرق؟</p>
+</div>
+<p class="tag">القادم: E1 الطبقة 1 (القياس والتقييم: now_pos, forecast, RMS).</p>
+</main></body></html>

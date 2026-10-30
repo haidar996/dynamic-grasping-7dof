@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4 L3 - الرياضيات: الحل والارتداد</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A4 &middot; الطبقة 3: الرياضيات</p>
+<h1>اشتقاق الحل، وماذا يفعل الارتداد، وحساسية المستقبل</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>u = (3,4)/5 = (0.6, 0.8)</span>، <span class='en'>s<sub>0</sub> = 5</span>، تتوقف عند <span class='en'>t = 5/1 = 5 s</span>، وعند <span class='en'>p = u &times; 25/2 = 12.5 &times; (0.6, 0.8) = (7.5, 10.0) m</span>.</p></div>
+
+<div class="card"><h2>1. اشتقاق حل الاحتكاك</h2>
+<p>الاتجاه ثابت، فنتتبع السرعة (المقدار) <span class='en'>s(t)</span> فقط. المعادلة <span class='en'>ds/dt = &minus;&mu;</span> (طالما <span class='en'>s &gt; 0</span>). نكامل: <span class='en'>s(t) = s<sub>0</sub> &minus; &mu; t</span>. والمكان هو تكامل السرعة على الاتجاه <span class='en'>u</span>:</p>
+<p class="en" style="text-align:center">p(t) = p<sub>0</sub> + u &int;<sub>0</sub><sup>t</sup> (s<sub>0</sub> &minus; &mu; &tau;) d&tau; = p<sub>0</sub> + u ( s<sub>0</sub> t &minus; &mu; t<sup>2</sup>/2 )</p>
+<p>تتوقف عندما <span class='en'>s = 0</span> أي <span class='en'>t<sub>s</sub> = s<sub>0</sub>/&mu;</span>، والمسافة الكلية <span class='en'>s<sub>0</sub> t<sub>s</sub> &minus; &mu; t<sub>s</sub><sup>2</sup>/2 = s<sub>0</sub><sup>2</sup>/(2&mu;)</span>. هذا هو الحل الذي استعملناه في A2.</p></div>
+
+<div class="card"><h2>2. ماذا يفعل الارتداد بالسرعة؟</h2>
+<p>الارتداد على جدار <span class='en'>x</span>: <span class='en'>(v<sub>x</sub>, v<sub>y</sub>) &rarr; (&minus;E v<sub>x</sub>, v<sub>y</sub>)</span>.</p>
+<p><b>أ. السرعة (المقدار):</b> <span class='en'>|v&prime;| = &radic;(E<sup>2</sup> v<sub>x</sub><sup>2</sup> + v<sub>y</sub><sup>2</sup>)</span>. مثال <span class='en'>v = (3, 4)</span> و<span class='en'>E = 0.7</span>: <span class='en'>v&prime; = (&minus;2.1, 4)</span> والسرعة <span class='en'>&radic;(4.41 + 16) = 4.52</span> بدل 5.</p>
+<p><b>ب. الاتجاه:</b> تعريف الزاوية عن العمودي <span class='en'>&phi;</span>: <span class='en'>tan &phi; = |v<sub>t</sub>| / |v<sub>n</sub>|</span>. قبل الارتداد <span class='en'>tan &phi;<sub>in</sub> = 4/3</span> فتكون 53.1&deg;. بعده <span class='en'>tan &phi;<sub>out</sub> = 4/2.1 = 1.90</span> فتكون 62.3&deg;. القاعدة العامة:</p>
+<p class="en" style="text-align:center">tan &phi;<sub>out</sub> = tan &phi;<sub>in</sub> / E</p>
+<p>أي إذا كان <span class='en'>E &lt; 1</span> فالكرة تخرج بزاوية أكبر عن العمودي، أي أقرب إلى الجدار (لا تنطبق زاوية الخروج على زاوية الدخول كما في المرآة، إلا عندما <span class='en'>E = 1</span>).</p>
+<p><b>ج. ارتدادات متتالية رأسية:</b> بعد <span class='en'>k</span> ارتدادات على نفس الجدار تكون السرعة العمودية <span class='en'>E<sup>k</sup></span> من الأصلية. <span class='en'>E = 0.5</span> بعد 3 ارتدادات: 12.5%.</p></div>
+
+<div class="card"><h2>3. حساسية المستقبل لـ &mu; و E (لماذا الـ forecast يخطئ)</h2>
+<p>الـ estimator في أغلب تجاربنا يستعمل قيمتين تقريبيتين: <span class='en'>&mu; = 0.85</span> و<span class='en'>E = 0.725</span>، بينما الحقيقة تختلف من إطلاق لآخر. كم يكلّفنا ذلك؟</p>
+<p><b>خطأ &mu;:</b> إذا كان <span class='en'>&mu;</span> الحقيقي أكبر بمقدار <span class='en'>&Delta;&mu;</span> فالكرة تقطع بعد زمن <span class='en'>t</span> مسافة أقصر بحوالي <span class='en'>&Delta;&mu; t<sup>2</sup>/2</span> (من الحل في 1). التوزيع الذي نسحب منه <span class='en'>&mu;</span> مستو بين 0.2 و1.5، فانحرافه المعياري <span class='en'>1.3/&radic;12 = 0.375</span>. عند <span class='en'>t = 1 s</span>: <span class='en'>0.375 &times; 1/2 = 0.19 m</span>.</p>
+<p><b>خطأ E:</b> بعد الارتداد تبعد الكرة عن الجدار بحوالي <span class='en'>E v<sub>n</sub> (t &minus; t<sub>hit</sub>)</span>، فخطأ <span class='en'>&Delta;E</span> يعطي خطأ <span class='en'>&Delta;E v<sub>n</sub> (t &minus; t<sub>hit</sub>)</span>. الانحراف المعياري لـ <span class='en'>E</span> عندنا <span class='en'>0.45/&radic;12 = 0.13</span>؛ فمع <span class='en'>v<sub>n</sub> = 2.5 m/s</span> وبعد 0.3 ث من الارتداد: <span class='en'>0.13 &times; 2.5 &times; 0.3 &asymp; 0.1 m</span>.</p>
+<p><b>الخلاصة:</b> الرتبة 0.1 إلى 0.2 م بعد ثانية، وهذا يتفق مع ما رأيناه: خطأ forecast الـ EKF بعد ثانية حوالي <span class='en'>0.21 m</span>، وخطأ الـ oracle (الذي يعرف القيمتين) <span class='en'>0.018 m</span>. هذا مجرد اتفاق في <b>رتبة المقدار</b> (حسابي تقريبي، والكرة تتوقف أحياناً قبل ثانية)، وليس تنبؤاً دقيقاً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p><span class='en'>v = (3, 4)</span> يصطدم بجدار <span class='en'>x</span> مع <span class='en'>E = 0.5</span>. احسب <span class='en'>v&prime;</span> وسرعته، و<span class='en'>tan &phi;<sub>out</sub></span>.</p></div>
+<p class="tag">القادم: A4 الطبقة 4 (الكود: arena_sim وmodel.propagate، وكيف يختلفان).</p>
+</main></body></html>

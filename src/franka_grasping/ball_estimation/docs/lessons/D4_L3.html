@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D4 L3 - Kalman: قيود النموذج الخطي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .warning { border-right:4px solid #d97706; background:#fef3c7; padding:8px 12px; border-radius:4px; margin:12px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D4 &middot; الطبقة 3: حدود النموذج الخطي</p>
+<h1>ماذا يحدث حين يكون النموذج غير خطي؟</h1>
+
+<div class="box"><p><b>جواب سؤال D4 L2:</b> صفوف السرعة في <span class='en'>K</span> صفر لأن <span class='en'>H</span> تستخرج موقع فقط (الصفان الأولان من الحالة). السرعة تتحسّن بشكل غير مباشر: في الخطوة التنبؤ التالية، الموقع الأفضل ينتج تنبية أفضل، فالكسب يُحدّث التباين بطريقة تقلل عدم اليقين في السرعة تدريجياً (عبر ارتباطات المصفوفة <span class='en'>P</span> بين الموقع والسرعة).</p></div>
+
+<div class="card"><h2>1. الافتراض: الخطية</h2>
+<p>كل ما تعلمناه حتى الآن (D3 و D4) افترض <b>نموذج خطي</b>:</p>
+<p class="en" style="text-align:center">s_new = F·s_old + w</p>
+<p>الموقع الجديد = موقع + سرعة × وقت (لا توجد قوى أخرى).</p>
+<p>هذا يعمل إذا كانت الكرة <b>تتحرك في خط مستقيم</b> بسرعة ثابتة (أو متغيرة خطياً).</p>
+</div>
+
+<div class="card"><h2>2. المشكلة: الاحتكاك</h2>
+<p>في الواقع، الكرة تعاني <b>احتكاك</b>: الهواء والأرض يقاومان حركتها. السرعة تنخفض بمرور الزمن:</p>
+<p class="en" style="text-align:center">v_new = v_old - c·v_old·Δt = v_old·(1 - c·Δt)</p>
+<p>حيث <span class='en'>c ≈ 0.85</span> (معامل الاحتكاك). هذا <b>غير خطي</b> لأن السرعة الجديدة <b>تعتمد على السرعة القديمة نفسها</b> (ضرب في السرعة).</p>
+<p class="warning"><b>⚠️ مثال:</b> لو <span class='en'>v = 1 m/s</span> و<span class='en'>c = 0.85, Δt = 0.1</span>:<br>
+<span class='en'>v_new = 1 × (1 − 0.085) = 0.915 m/s</span> (السرعة انخفضت 8.5%)
+</p>
+</div>
+
+<div class="card"><h2>3. ماذا يحدث لو استخدمنا Kalman الخطي على نموذج غير خطي؟</h2>
+<p>لو تجاهلنا الاحتكاك وافترضنا <span class='en'>v_new = v_old</span> (سرعة ثابتة):</p>
+<ul>
+<li><b>التنبؤ سيكون خاطئاً:</b> نتوقع السرعة تبقى 1 m/s، لكن الحقيقة 0.915 m/s. الموقع المتنبأ به سيكون أبعد مما هو حقيقي.</li>
+<li><b>الكسب سيتعلم من هذا الخطأ:</b> كل قياس سيكون أقل من التنبؤ (لأن الكرة أبطأ من المتوقع). المرشح سيحاول تصحيح.</li>
+<li><b>لكن التصحيح سيكون بطيئاً وغير دقيق:</b> الكسب مصمم للخطية، فلن يسكون أمثل.</li>
+<li><b>في نهاية المطاف:</b> التنبيؤات تنجرف (drift)—خطأ تراكمي يكبر.</li>
+</ul>
+</div>
+
+<div class="card"><h2>4. الحل: Extended Kalman Filter (EKF)</h2>
+<p>بدلاً من استخدام <span class='en'>F</span> (مصفوفة خطية)، نستخدم <b>دالة غير خطية</b> <span class='en'>f(s)</span>:</p>
+<p class="en" style="text-align:center">s_new = f(s_old) + w</p>
+<p>حيث <span class='en'>f</span> تتضمن احتكاك:</p>
+<p class="en" style="text-align:center;font-size:90%">
+f(s) = [x + vx·Δt, y + vy·Δt, vx·(1 − c·Δt), vy·(1 − c·Δt)]ᵀ
+</p>
+<p>لكن Kalman الكلاسيكي يعمل على مصفوفات، لا دوال عامة! الحل: <b>نخطّط الدالة</b> (linearize) حول نقطة التنبؤ الحالية، مستخدمين <span class='en'>Jacobian</span>:</p>
+<p class="en" style="text-align:center">F ≈ ∂f/∂s</p>
+<p>هذه مصفوفة <b>المشتقات الجزئية</b> للدالة <span class='en'>f</span>.</p>
+</div>
+
+<div class="card"><h2>5. مثال: Jacobian للاحتكاك</h2>
+<p>للدالة <span class='en'>f(s) = [x + vx·Δt, y + vy·Δt, vx·(1 − c·Δt), vy·(1 − c·Δt)]ᵀ</span>:</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:85%">
+F = ∂f/∂s = <br>
+[1, 0, Δt,            0]<br>
+[0, 1, 0,             Δt]<br>
+[0, 0, 1 − c·Δt,      0]<br>
+[0, 0, 0,             1 − c·Δt]
+</p>
+<p>قارن مع النموذج الخطي (D4 L2):</p>
+<p class="en" style="text-align:center;font-size:85%">
+F_linear = <br>
+[1, 0, Δt,  0]<br>
+[0, 1, 0,   Δt]<br>
+[0, 0, 1,   0]<br>
+[0, 0, 0,   1]
+</p>
+<p>الفرق: الصفوف الثالث والرابع من القطر الآن <span class='en'>1 − c·Δt ≈ 0.915</span> بدلاً من 1. هذا يعني السرعة تنقص كل خطوة!</p>
+</div>
+
+<div class="card"><h2>6. الخطوات في EKF</h2>
+<p><b>التنبؤ:</b> استخدم الدالة غير الخطية <span class='en'>f</span> للموقع، لكن استخدم <span class='en'>Jacobian F</span> للتباين:</p>
+<p class="en" style="text-align:center">s⁻ = f(s_old)<br>P⁻ = F·P·Fᵀ + Q</p>
+<p><b>التصحيح:</b> متطابق تماماً مع Kalman الخطي (لأننا خطّطنا <span class='en'>f</span> بالفعل).</p>
+<p>النتيجة: EKF يتعامل مع الاحتكاك <b>تلقائياً</b>، دون افتراضات خاطئة.</p>
+</div>
+
+<div class="card"><h2>7. متى نحتاج EKF؟</h2>
+<p><b>استخدم Kalman الخطي إذا:</b> النموذج فعلاً خطي (مثل حركة مستقيمة بلا قوى).</p>
+<p><b>استخدم EKF إذا:</b> النموذج يحتوي قوى (احتكاك، جاذبية، جدران...).</p>
+<p>في مشروعنا: <b>نستخدم EKF</b> لأن الاحتكاك مهم.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في المثال أعلاه، عنصر القطر الثالث من <span class='en'>Jacobian F</span> هو <span class='en'>1 − c·Δt = 0.915</span>. ماذا يعني هذا العدد؟ وماذا سيحدث لو كان <span class='en'>c</span> أكبر (احتكاك أقوى)؟</p>
+</div>
+<p class="tag">القادم: D5 الطبقة 1 (الاحتكاك بالتفصيل والدالة f والـ Jacobian المكتوب).</p>
+</main></body></html>

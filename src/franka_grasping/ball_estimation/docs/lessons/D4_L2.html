@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D4 L2 - Kalman 2D: مثال رقمي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; --code:#f5f5f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; --code:#2a2a2a; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  code { background:var(--code); padding:2px 6px; border-radius:3px; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D4 &middot; الطبقة 2: المعادلات والأرقام</p>
+<h1>مثال كامل: التنبؤ والتصحيح في 2D</h1>
+
+<div class="box"><p><b>جواب سؤال D4 L1:</b> <span class='en'>H</span> هي 2×4 لأن الكاميرا تقيس 2 أشياء (x و y) فقط، ولا تقيس السرعة. لو كانت هويّة 4×4، معناه نقيس السرعة أيضاً—لكننا لا نستطيع (الكاميرا تعطينا بكسل، لا سرعة). إذاً <span class='en'>H</span> تستخرج السطرين الأولين من الحالة.</p></div>
+
+<div class="card"><h2>1. الحالة الأولية (في الخطوة 0)</h2>
+<p>الكرة تبدأ عند (<span class='en'>x=0.5 m, y=0.3 m</span>) وتتحرك بـ (<span class='en'>vx=0.1 m/s, vy=0.05 m/s</span>):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+s₀ = [0.5, 0.3, 0.1, 0.05]ᵀ
+</p>
+<p>عدم اليقين (P₀): نثق بالموقع تماماً (5 ملم)، لكن لا نثق بالسرعة (3 m/s):</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%">
+P₀ = diag([25×10⁻⁶, 25×10⁻⁶, 9, 9])
+</p>
+<p>(القطر: تباين x، تباين y، تباين vx، تباين vy)</p>
+</div>
+
+<div class="card"><h2>2. المعاملات</h2>
+<p><span class='en'>Δt = 0.1 s</span> (الفترة الزمنية بين القياسات)</p>
+<p><span class='en'>R = 25×10⁻⁶ I₂</span> (تباين الكاميرا: 5 ملم لكل محور)</p>
+<p><span class='en'>Q = diag([0, 0, q, q])</span> حيث <span class='en'>q = 0.01</span> (ضجيج في السرعة فقط)</p>
+<p><span class='en'>F = [[1, 0, 0.1, 0], [0, 1, 0, 0.1], [0, 0, 1, 0], [0, 0, 0, 1]]</span></p>
+<p><span class='en'>H = [[1, 0, 0, 0], [0, 1, 0, 0]]</span></p>
+</div>
+
+<div class="card"><h2>3. خطوة التنبؤ (Predict)</h2>
+<p><b>التنبؤ بالحالة:</b></p>
+<p class="en" style="text-align:center">s⁻ = F·s₀</p>
+<p class="en" style="text-align:center;margin:8px 0">
+s⁻ = [1 0 0.1 0][0.5]   [0.5 + 0.1×0.1]   [0.51]<br>
+     [0 1 0 0.1][0.3] = [0.3 + 0.05×0.1] = [0.305]<br>
+     [0 0 1 0  ][0.1]   [0.1]              [0.1]<br>
+     [0 0 0 1  ][0.05]  [0.05]             [0.05]
+</p>
+<p>الموقع تحرك قليلاً (الكرة تقدمت بـ 1 سم في 0.1 ثانية).</p>
+<p><b>التنبؤ بالتباين:</b></p>
+<p class="en" style="text-align:center">P⁻ = F·P₀·Fᵀ + Q</p>
+<p>(الحساب مملّ، لكن النتيجة: عدم اليقين في الموقع ينخفض قليلاً لأننا أضفنا معلومة من السرعة، وعدم اليقين في السرعة يبقى كبير)</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:85%">
+P⁻ ≈ diag([2.5e-5, 2.5e-5, 9, 9])  (تقريباً)
+</p>
+</div>
+
+<div class="card"><h2>4. خطوة التصحيح (Correct)</h2>
+<p>الكاميرا تقيس موقع جديد:</p>
+<p class="en" style="text-align:center">z = [0.515, 0.303]ᵀ</p>
+<p><b>التنبية (الفرق):</b></p>
+<p class="en" style="text-align:center">
+y = z - H·s⁻ = [0.515, 0.303]ᵀ - [0.51, 0.305]ᵀ = [0.005, -0.002]ᵀ
+</p>
+<p>القياس يختلف قليلاً عن التنبؤ (5 ملم أفقي، 2 ملم رأسي).</p>
+<p><b>تباين التنبية:</b></p>
+<p class="en" style="text-align:center">
+S = H·P⁻·Hᵀ + R = [[2.5e-5, 0], [0, 2.5e-5]] + [[2.5e-5, 0], [0, 2.5e-5]] ≈ [[5e-5, 0], [0, 5e-5]]
+</p>
+<p><b>الكسب (Gain):</b></p>
+<p class="en" style="text-align:center">
+K = P⁻·Hᵀ·S⁻¹
+</p>
+<p>النتيجة: K ≈ [[0.5, 0], [0, 0.5], [0, 0], [0, 0]]</p>
+<p>(نزن القياس بـ 50% والتنبؤ بـ 50%)</p>
+<p><b>تحديث الحالة:</b></p>
+<p class="en" style="text-align:center">
+s = s⁻ + K·y = [0.51, 0.305, 0.1, 0.05]ᵀ + K·[0.005, -0.002]ᵀ
+</p>
+<p class="en" style="text-align:center;margin:8px 0">
+s ≈ [0.5125, 0.304, 0.1, 0.05]ᵀ
+</p>
+<p>الموقع انزاح نحو القياس قليلاً (تعديل 2.5 ملم)، والسرعة بقيت ثابتة (لا قياس للسرعة).</p>
+<p><b>تحديث التباين:</b></p>
+<p class="en" style="text-align:center">
+P = (I - K·H)·P⁻
+</p>
+<p>النتيجة: عدم اليقين في الموقع انخفض أكثر (من 5 ملم إلى حوالي 3.5 ملم)، والسرعة بقيت بدون تحسن.</p>
+</div>
+
+<div class="card"><h2>5. الملاحظات الرئيسية</h2>
+<ul>
+<li><b>الموقع يُحسّن من كل قياس:</b> <span class='en'>K</span> للموقع غير صفر (نزن القياس).</li>
+<li><b>السرعة لا تُحسّن مباشرة:</b> الصفوف الثالث والرابع من <span class='en'>K</span> أصفار (لا نقيس السرعة).</li>
+<li><b>لكن السرعة تُحسّن بشكل غير مباشر:</b> عند الخطوة التالية، الموقع الأفضل ينتج توقعات أفضل، فتباين السرعة ينخفض عبر عدة خطوات.</li>
+<li><b>الموقع أسرع ثقة:</b> الموقع يُحسّن كل 0.1 ثانية (كل قياس). السرعة تحتاج عدة قياسات لتستقر.</li>
+</ul>
+</div>
+
+<div class="card"><h2>6. المقارنة مع D3</h2>
+<p>في D3 (1D، موقع فقط):</p>
+<p class="en" style="text-align:center">K = P⁻ / (P⁻ + R)  (عدد)</p>
+<p>في D4 (2D، موقع + سرعة):</p>
+<p class="en" style="text-align:center">K = P⁻·Hᵀ·(H·P⁻·Hᵀ + R)⁻¹  (مصفوفة)</p>
+<p>الصيغة <b>متطابقة</b>! الفرق الوحيد: الأبعاد أكبر.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في الخطوة التصحيح أعلاه، الصفان الثالث والرابع من <span class='en'>K</span> هما صفر (لا تأثر السرعة من القياس). لماذا؟ وكيف تحسّن السرعة إذاً عبر عدة خطوات؟ (تلميح: انظر إلى الخطوة التنبؤ التالية.)</p>
+</div>
+<p class="tag">القادم: D4 الطبقة 3 (الاحتكاك والنموذج اللاخطي - المقدمة).</p>
+</main></body></html>

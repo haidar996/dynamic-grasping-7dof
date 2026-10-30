@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E1 L2 - نمو خطأ التوقع</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس E1 &middot; الطبقة 2: الخطأ ينمو مع المسافة الزمنية</p>
+<h1>لماذا توقع 1 ثانية أسوأ بـ 30× من الآن؟</h1>
+
+<div class="box"><p><b>جواب سؤال E1 L1:</b> النموذج لا ينهار—لكن الأخطاء الصغيرة <b>تتضخم</b>:
+(1) السرعة المقدّرة خطأ بـ 1 مم/ثانية → بعد 0.2 ثانية خطأ 0.2 مم إضافي
+(2) بعد 1.0 ثانية نفس الخطأ 1 مم/ثانية → خطأ 1 سم إضافي
+(3) الاحتكاك المقدّر خطأ قليلاً → السرعة تنقص أبطأ أو أسرع مما يحدث → خطأ تراكمي
+(4) عدم اليقين في ضجيج النموذج Q → تنبؤات غير محددة بدقة
+</p></div>
+
+<div class="card"><h2>1. مثال بسيط: خطأ في السرعة</h2>
+<p>الموقع الحالي محدّد بدقة: <span class='en'>x̂ = 0.50 m</span> (خطأ = 0).</p>
+<p>لكن السرعة محدّدة بدقة أقل: <span class='en'>v̂ = 0.10 m/s</span> (الحقيقية 0.11 m/s، خطأ = 0.01 m/s).</p>
+
+<p>التنبؤ:</p>
+<p class="en" style="text-align:center">
+h=0.2 s: x = 0.50 + 0.10×0.2 = 0.520 m<br>
+الحقيقية: x_true = 0.50 + 0.11×0.2 = 0.522 m<br>
+خطأ = 0.002 m = 2 مم
+</p>
+
+<p>h=0.5 s:</p>
+<p class="en" style="text-align:center">
+x̂ = 0.50 + 0.10×0.5 = 0.550 m<br>
+x_true = 0.50 + 0.11×0.5 = 0.555 m<br>
+خطأ = 0.005 m = 5 مم (أكبر بـ 2.5×)
+</p>
+
+<p>h=1.0 s:</p>
+<p class="en" style="text-align:center">
+x̂ = 0.50 + 0.10×1.0 = 0.600 m<br>
+x_true = 0.50 + 0.11×1.0 = 0.610 m<br>
+خطأ = 0.010 m = 10 مم (أكبر بـ 5×)
+</p>
+
+<p><b>القاعدة:</b> خطأ السرعة × الوقت = خطأ الموقع التراكمي.</p>
+</div>
+
+<div class="card"><h2>2. مثال معقد: خطأ في الاحتكاك</h2>
+<p>السرعة الأولية: <span class='en'>v₀ = 1.0 m/s</span> (محددة بدقة).</p>
+<p>الاحتكاك المقدّر: <span class='en'>c = 0.85</span> (الحقيقي 0.86).</p>
+
+<p><b>التنبؤ:</b> <span class='en'>v(t) = v₀ × (1 − c·t)</span></p>
+<p class="en" style="text-align:center">
+بالمقدّر: v(0.5) = 1.0 × (1 − 0.85×0.5) = 1.0 × 0.575 = 0.575 m/s<br>
+بالحقيقي: v(0.5) = 1.0 × (1 − 0.86×0.5) = 1.0 × 0.570 = 0.570 m/s<br>
+خطأ السرعة = 0.005 m/s (0.5%)
+</p>
+
+<p>لكن الموقع؟</p>
+<p class="en" style="text-align:center">
+x(t) = ∫v(t)dt (تراكم السرعات)<br>
+خطأ الموقع يتراكم أكثر من خطأ السرعة!
+</p>
+
+<p>بعد 0.5 ثانية: خطأ موقع ≈ 1 سم.<br>
+بعد 1.0 ثانية: خطأ موقع ≈ 10 سم (تراكم!).</p>
+</div>
+
+<div class="card"><h2>3. معادلة الخطأ التقريبية</h2>
+<p>للتنبؤ الخطي (بدون احتكاك):</p>
+<p class="en" style="text-align:center">
+error(h) = error_now + error_velocity × h
+</p>
+
+<p>للتنبؤ مع احتكاك (غير خطي):</p>
+<p class="en" style="text-align:center">
+error(h) ∝ h  (قريب الأجل, h < 0.5 s)<br>
+error(h) ∝ h²  (بعيد الأجل, h > 1.0 s)
+</p>
+
+<p>في بيانات حقيقية:</p>
+<p class="en" style="text-align:center">
+خطأ بـ h=0.2: ~30 مم<br>
+خطأ بـ h=1.0: ~230 مم (أكبر بـ 7.5×)<br>
+النسبة: 1.0/0.2 = 5، لكن الخطأ زاد بـ 7.5× (نمو تربيعي تقريباً)
+</p>
+</div>
+
+<div class="card"><h2>4. الحدس: لماذا لا يمكن توقع بعيد الأمد؟</h2>
+<p><b>الكاميرا ضاجة:</b> هناك خطأ دائماً في السرعة المقدّرة (من القياسات الضاجة).</p>
+
+<p><b>النموذج غير دقيق:</b> الاحتكاك قيمة تقريبية، ليست مثالية.</p>
+
+<p><b>عدم اليقين في Q:</b> المرشح لا يعرف كل القوى (دوران، عدم كمالية الأرض).</p>
+
+<p>كل هذه الأخطاء الصغيرة تتضخم كـ <span class='en'>O(h²)</span> بمرور الوقت.</p>
+
+<p><b>القيمة:</b> إذا كنت تخطط لـ 0.2 ثانية، التنبؤ دقيق جداً (30 مم)—كافٍ لروبوت! لكن إذا حاولت التخطيط لـ 1 ثانية (230 مم)—خطر!</p>
+</div>
+
+<div class="card"><h2>5. المقارنة: cvkf vs ekf19b</h2>
+<p>في E1 L1:</p>
+<p class="en" style="text-align:center">
+cvkf: h=0.2 → 40 مم, h=1.0 → 1519 مم<br>
+ekf19b: h=0.2 → 30 مم, h=1.0 → 227 مم
+</p>
+
+<p>النسبة في cvkf: 1519/40 ≈ 38 (نمو هائل!).<br>
+النسبة في ekf19b: 227/30 ≈ 7.6 (أفضل بـ 5×).</p>
+
+<p>السبب: cvkf لا يعرف الاحتكاك—يفترض السرعة ثابتة. الخطأ ينمو <b>خطياً</b> مع الوقت، ثم ينفجر!</p>
+
+<p>ekf19b يعرف الاحتكاك—يعلم السرعة تنقص. الخطأ ينمو ببطء أكثر.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>إذا كنا نريد توقع دقيق لمدة 1 ثانية (خطأ < 50 مم)، ما الذي يجب نفعله؟
+(أ) تحسين دقة الكاميرا (تقليل σ)
+(ب) تحسين نموذج الاحتكاك (تقليل Q)
+(ج) استخدام oracle (المعرفة الحقيقية)
+(د) لا شيء ممكن—الطبيعة محتمة
+</p>
+</div>
+<p class="tag">القادم: E2 الطبقة 1 (الضجيج والاختلاف بين RMS والمتوسط).</p>
+</main></body></html>

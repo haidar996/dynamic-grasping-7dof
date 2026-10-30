@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L1 - الكاميرا: البكسل وزاوية الرؤية</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 1: الحدس</p>
+<h1>الصورة والبكسل وزاوية الرؤية</h1>
+
+<div class="box"><p>لا يوجد درس باسم A6: الجزء A انتهى عند A5 (الإطلاقات). التالي في خطتنا هو <b>B1، الكاميرا</b>، فانتقلت إليه (وتركت طبقات A5 من 4 إلى 6). جواب سؤال A5 الأخير: لنصف العرض نحتاج <b>أربعة أضعاف</b> الإطلاقات، أي حوالي 2000، لأن عدم اليقين يتناسب مع <span class='en'>1/&radic;n</span>.</p></div>
+
+<div class="card"><h2>1. الصورة شبكة من البكسلات</h2>
+<p>الصورة التي تلتقطها الكاميرا شبكة من نقاط صغيرة اسمها <b>بكسل</b> (<span class='en'>pixel</span>). كاميرتنا الافتراضية: <span class='en'>640 &times; 480</span> أي 640 عموداً و480 صفاً، المجموع 307,200 بكسل. لكل بكسل لون، وفي كاميرتنا أيضاً <b>عمق</b> (<span class='en'>depth</span>): كم تبعد النقطة عن الكاميرا.</p>
+<p>الكاميرا لا تعرف أمتاراً. هي تعرف فقط «أي بكسل يظهر فيه الكرة». تحويل البكسل إلى متر هو موضوع الدرسين التاليين.</p></div>
+
+<div class="card"><h2>2. زاوية الرؤية (<span class="en">field of view</span>)</h2>
+<p>الكاميرا ترى «مخروطاً» من العالم. <b>زاوية الرؤية</b> هي زاوية هذا المخروط. كلما كبرت رأت الكاميرا مساحة أكبر. وفي كاميرتنا هي <span class='en'>60&deg;</span> <b>رأسية</b>، أي الزاوية بين أعلى الصورة وأسفلها كما تراها الكاميرا.</p>
+<svg viewBox="0 0 400 290" style="width:100%;max-width:520px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<polygon points="200,30 73.0,249.9 327.0,249.9" fill="#1f5f8b" opacity="0.13" stroke="#1f5f8b"/>
+<line x1="20" y1="249.9" x2="380" y2="249.9" stroke="currentColor" stroke-width="2"/>
+<rect x="126.7" y="245.9" width="146.6" height="8" fill="#b03a3a" opacity="0.85"/>
+<circle cx="200" cy="30" r="5" fill="#c0762b"/>
+<line x1="200" y1="30" x2="200" y2="249.9" stroke="#9a9a94" stroke-dasharray="4 3"/>
+<text x="208" y="34" fill="#c0762b">camera</text>
+<text x="206" y="140" fill="currentColor">3 m</text>
+<text x="170" y="72" fill="#1f5f8b">60&deg;</text>
+<text x="69" y="268" fill="#1f5f8b">floor seen: 3.46 m</text>
+<text x="129" y="240" fill="#b03a3a">arena 2 m</text>
+</svg>
+<p>الرسم جانبي: الكاميرا على ارتفاع 3 م تنظر إلى الأسفل. الزاوية 60&deg; تعني أن الأرض المرئية في الاتجاه الرأسي للصورة هي <span class='en'>2 &times; 3 &times; tan 30&deg; = 3.46 m</span>. وبما أن الصورة 640 &times; 480 فعرض المرئي <span class='en'>3.46 &times; 640/480 = 4.62 m</span>.</p></div>
+
+<div class="card"><h2>3. ماذا نرى في صورتنا؟</h2>
+<ul>
+<li>الأرض المرئية: <span class='en'>4.62 &times; 3.46 m</span>.</li>
+<li>الساحة <span class='en'>2 &times; 2 m</span> تقع كلها داخل الصورة، وتشغل <span class='en'>277</span> بكسلاً في كل اتجاه (58% من ارتفاع الصورة).</li>
+<li>كل بكسل يغطي حوالي <span class='en'>7.2 mm</span> من الأرض (<span class='en'>3.46 m / 480</span>).</li>
+<li>الكرة (قطرها 6 سم) تظهر بحجم حوالي <span class='en'>8</span> بكسلات.</li>
+</ul>
+<p>هذا يفسّر دقة خطأ الكاميرا المثالية: 1.7 مم، أقل من حجم البكسل (7.2 مم)، لأننا نحسب مركز الكرة من عشرات البكسلات فنصل إلى جزء من البكسل (<span class="en">sub-pixel</span>).</p></div>
+
+<div class="card"><h2>4. المقايضة</h2>
+<p>زاوية أكبر = ترى مساحة أكبر لكن كل بكسل يغطي أرضاً أكبر، فالدقة أقل. زاوية أصغر = «تكبير»: دقة أعلى لكن ترى أقل، وقد لا تدخل الساحة كلها. اخترنا ارتفاع 3 م وزاوية 60&deg; اختياراً <b>مؤقتاً</b>، وسنقرر لاحقاً بالتجربة.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو كانت زاوية الرؤية الرأسية <span class='en'>40&deg;</span> والارتفاع 3 م: كم متراً ترى الكاميرا رأسياً؟ وكم ملّيمتراً يغطي البكسل الواحد؟ وهل تدخل الساحة كلها؟</p></div>
+<p class="tag">القادم: B1 الطبقة 2 (التعريفات: البُعد البؤري f وعلاقته بالزاوية).</p>
+</main></body></html>

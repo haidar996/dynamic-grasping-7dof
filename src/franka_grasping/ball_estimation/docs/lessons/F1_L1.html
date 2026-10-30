@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F1 L1 - النتائج: الشروط المثالية</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:85%; }
+  td, th { border:1px solid var(--line); padding:6px; }
+  th { background:var(--accent); color:white; }
+  .best { background:#d4edda; font-weight:bold; }
+  @media (prefers-color-scheme: dark) { .best { background:#1b4620; } }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس F1 &middot; الطبقة 1: الشروط المثالية</p>
+<h1>النتائج الأولى: بدون ضجيج، بدون مشاكل</h1>
+
+<div class="box"><p><b>جواب سؤال E2 L1:</b> dropout silent نادر! في الشروط "dropout silent"، الكاميرا تتوقف تماماً عن إرسال قياسات (مثل كابل مقطوع). هذا قد يحدث في 1-5% من الوقت في السيناريو الأسوأ. بقية الوقت، المرشح يعمل بشكل طبيعي. إذاً RMS الكلي = 90% × (خطأ عادي) + 10% × (خطأ سيء) = ≠ متوسط عددي بسيط.</p></div>
+
+<div class="card"><h2>1. سيناريو "ideal": الساحة المثالية</h2>
+<p><b>الشروط:</b></p>
+<ul>
+<li>بدون ضجيج على الكاميرا (قراءة دقيقة)</li>
+<li>بدون dropout (كل قياس يصل)</li>
+<li>بدون تأخير (قياس فوري)</li>
+<li>نعرف الاحتكاك والارتداد بدقة</li>
+</ul>
+<p>هذا هو <b>السقف السفلي</b> على الأداء. إذا كان المرشح سيء حتى في ideal، شيء خاطئ بالهندسة.</p>
+</div>
+
+<div class="card"><h2>2. جدول النتائج: ideal</h2>
+<table>
+<tr>
+<th>المرشح</th>
+<th>now_pos (mm)</th>
+<th>forecast 0.2s (mm)</th>
+<th>forecast 0.5s (mm)</th>
+<th>forecast 1.0s (mm)</th>
+<th>ملاحظة</th>
+</tr>
+<tr>
+<td><b>oracle</b></td>
+<td class="best">1.7</td>
+<td class="best">5.2</td>
+<td class="best">9.8</td>
+<td class="best">17.8</td>
+<td>المثل الأعلى</td>
+</tr>
+<tr>
+<td><b>ekf19b-hybrid+stale</b></td>
+<td class="best">1.8</td>
+<td class="best">5.8</td>
+<td>11.2</td>
+<td>42.1</td>
+<td>قريب من oracle</td>
+</tr>
+<tr>
+<td><b>ekf19-hybrid</b></td>
+<td>1.9</td>
+<td>6.1</td>
+<td>11.8</td>
+<td>48.3</td>
+<td>بدون sigma_E</td>
+</tr>
+<tr>
+<td><b>cvkf</b></td>
+<td>1.8</td>
+<td>6.2</td>
+<td>15.4</td>
+<td>156.7</td>
+<td>خطي، بدون احتكاك</td>
+</tr>
+<tr>
+<td><b>fd (فرق محدود)</b></td>
+<td>1.8</td>
+<td>7.1</td>
+<td>18.3</td>
+<td>466.2</td>
+<td>بدون نموذج</td>
+</tr>
+</table>
+
+<p><b>الملاحظات:</b></p>
+<ul>
+<li><b>now_pos:</b> الجميع متساوون تقريباً (~1.8 مم). الكاميرا المثالية = كل مرشح يعمل بنفس الدقة الآن.</li>
+<li><b>0.2s forecast:</b> الجميع قريب (5-7 مم). الفرق صغير جداً.</li>
+<li><b>1.0s forecast:</b> فرق ضخم!</li>
+  <ul>
+  <li>oracle: 17.8 مم (الأفضل)</li>
+  <li>ekf19b: 42.1 مم (أسوأ من oracle بـ 2.4×)</li>
+  <li>cvkf: 156.7 مم (بدون احتكاك، ينجرف)</li>
+  <li>fd: 466 مم (لا يوجد نموذج على الإطلاق)</li>
+  </ul>
+</ul>
+</div>
+
+<div class="card"><h2>3. البصيرة الأساسية</h2>
+<p><b>الآن:</b> كل مرشح محدود بدقة الكاميرا (≈1.8 مم). الكاميرا الأفضل = الأداء الأفضل الآن.</p>
+
+<p><b>التوقع:</b> النموذج <span class='en'>f(s)</span> هو ما يهم. oracle يعرفه بدقة → 17.8 مم. ekf19b تخمين جيد → 42 مم. cvkf يتجاهله → 157 مم.</p>
+
+<p><b>مع الشروط المثالية:</b></p>
+<ul>
+<li>ekf19b أفضل من cvkf بـ 3.7× (42 vs 157)</li>
+<li>ekf19b أسوأ من oracle بـ 2.4× فقط (42 vs 18)</li>
+</ul>
+<p>النتيجة: في ideal، الفرق بين ekf19b و ekf19-hybrid صغير (42 vs 48 مم عند 1s)—sigma_E (تصحيح bounce) لا يساعد كثيراً في ideal!</p>
+</div>
+
+<div class="card"><h2>4. لماذا oracle أفضل؟</h2>
+<p>حتى في ideal:</p>
+<ul>
+<li><b>التأخير:</b> قراءة الموقع الحقيقي من المحاكاة تعكس الماضي (قديمة قليلاً)</li>
+<li><b>الضجيج:</b> floating-point errors في المحاكاة نفسها</li>
+<li><b>الارتداد:</b> حتى مع معرفة E، اللحظة الدقيقة للارتداد غير محددة (boundary conditions)</li>
+</ul>
+<p>oracle ليس مثالياً—لكنه قريب جداً.</p>
+</div>
+
+<div class="card"><h2>5. المقارنة مع الأخرى</h2>
+<p>في ideal، cvkf ينهار في التوقع البعيد (156 مم)—بدون احتكاك، السرعة الثابتة المفترضة انهيار كارثي.</p>
+
+<p>fd (finite difference) أسوأ—بلا نموذج على الإطلاق، فقط السرعة من آخر قياسين.</p>
+
+<p><b>النتيجة العملية:</b> في ideal، أي مرشح بنموذج (ekf19, ekf19b) أفضل بـ 3-25× من الخطوط الأساسية.</p>
+</div>
+
+<div class="card"><h2>6. ماذا تتوقع في الشروط الحقيقية؟</h2>
+<p>في ideal، ekf19b يصل 42 مم في 1s. في الواقع مع ضجيج وdropout وتأخير؟</p>
+<ul>
+<li>قد يزيد إلى 50-60 مم (small impact)</li>
+<li>قد يزيد إلى 100+ مم إذا كان dropout مستمراً</li>
+<li>قد يزيد إلى 200+ مم إذا كان تأخير كبير</li>
+</ul>
+<p>القادم: F2 (نتائج مع ضجيج) لنرى الفرق الحقيقي.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في جدول ideal أعلاه، لماذا ekf19b قريب جداً من ekf19-hybrid؟ ألا يجب أن يكون ekf19b أفضل (لديه sigma_E لـ bounce)؟ إذا كان ideal، هل توقعات الارتداد مهمة؟</p>
+</div>
+<p class="tag">القادم: F2 الطبقة 1 (النتائج مع الضجيج—الفرق الحقيقي يظهر).</p>
+</main></body></html>

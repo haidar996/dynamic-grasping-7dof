@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C2 L5 - حدود نموذج التكميم</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C2 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>حدود نموذج التكميم</h1>
+<div class="box"><p>انتقلت إلى الطبقة 5 كما طلبت (دالة الكود <span class='en'>corrupt_depth</span> سبق أن رأيناها في الطبقة 2 وC1 L4). جواب السؤال السابق: <span class='en'>0.0019 &times; 0.5 = 0.95 mm</span> و<span class='en'>0.0019 &times; 1.37 = 2.6 mm</span>.</p></div>
+<div class='card'><h2>1. خطأ التكميم عشوائي ومنتظم</h2><p>هذا ما اشتققناه في الطبقة 2.</p><p><b>إذا لم يتحقق:</b> <b>لا ينطبق في عالمنا</b>: عمق الكرة شبه ثابت، فكل الإطارات تعطي نفس الرقم المكمَّم، والخطأ انحياز ثابت (&minus;6.7 مم) وليس noise (الطبقة 3).</p></div><div class='card'><h2>2. الخطوة 1/8 بكسل والقاعدة 75 مم قيم Kinect</h2><p>أخذناها من ورقة Chatterjee، لكن البعد البؤري <span class='en'>f = 415.7</span> هو لكاميرتنا. لو كانت Kinect حقيقية (<span class='en'>f = 587</span>) لكانت الخطوة عند 3 م <span class='en'>25.6 mm</span> وليس 36 مم.</p><p><b>إذا لم يتحقق:</b> نموذجنا مزيج: لا يمثّل أي جهاز حقيقي بعينه. إن أردنا جهازاً محدداً فعلينا أخذ قيمه من ورقة بياناته.</p></div><div class='card'><h2>3. الحساس الحقيقي يُخرج تكميماً بهذه الصورة</h2><p>كثير من الحساسات الحديثة تخرج العمق بالمليمتر بعد معالجة داخلية (ترشيح ومعايرة)، فلا يبقى أثر واضح للخطوات.</p><p><b>إذا لم يتحقق:</b> قد لا يوجد هذا الخطأ أصلاً، أو يظهر بشكل آخر.</p></div><div class='card'><h2>4. التقريب إلى أقرب علامة بلا ضجيج قبله</h2><p>نضيف noise العمق (<span class='en'>7.4 mm</span>) قبل التكميم، لكنه أصغر بكثير من الخطوة (<span class='en'>36 mm</span>) فلا يغيّر النتيجة: لا يكفي ليوزّع القيم على علامتين (لا «dithering»).</p><p><b>إذا لم يتحقق:</b> لو كان الـ noise في حدود الخطوة أو أكبر، لتوزّع القيم المكمَّمة وصار الخطأ أقرب إلى العشوائي.</p></div><div class='card'><h2>5. العمق ضروري لقياس المكان</h2><p>في عالمنا المستوي ارتفاع الكرة ثابت ومعروف (B1 L5).</p><p><b>إذا لم يتحقق:</b> لو استبدلنا العمق المقيس بالارتفاع المعروف لانتفى التكميم والـ noise في العمق معاً. نحتفظ بالعمق لأن المشروع يفترضه.</p></div><div class='card'><h2>6. الكرة تبقى على ارتفاع واحد</h2><p>تتغير قمتها فقط بين <span class='en'>2.9400</span> و<span class='en'>2.9435</span> م بسبب الشكل المنحني.</p><p><b>إذا لم يتحقق:</b> كرة تقفز أو تطير تقطع عدة خطوات، فيصبح التكميم أقرب إلى النموذج العشوائي، وستظهر قفزات في العمق.</p></div><div class='card'><h2>7. لا يوجد في أي شرط من الشروط الستة</h2><p>الخيار موجود في الكود وقيمته 0 دائماً.</p><p><b>إذا لم يتحقق:</b> فلا نتيجة من نتائجنا تعتمد عليه. لو شغّلناه فالأثر المتوقع: انحياز مقياس <span class='en'>&minus;0.2%</span> (حتى 2.6 مم عند الزاوية) يتداخل مع خطأ المقياس +0.18% الذي في الكاميرا المثالية نفسها.</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لو خفضنا الكاميرا إلى 1.5 م (قمة الكرة عند 1.44 م)، فالخطوة تصبح <span class='en'>1.44<sup>2</sup> &times; 0.125/31.18 = 8.3 mm</span>. هل يقترب التكميم من سلوك «الـ noise العشوائي»؟ ومتى (عند أي ارتفاع تقريباً) يحدث ذلك؟ (تلميح: عندما تصغر الخطوة عن مدى تغيّر عمق الكرة وهو 3.5 مم.)</p></div>
+<p class="tag">القادم: C2 الطبقة 6 (تمارين)، ثم C3: معدل الإطارات والتأخير.</p>
+</main></body></html>

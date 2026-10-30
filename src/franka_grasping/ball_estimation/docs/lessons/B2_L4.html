@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L4 - الكود: render وmeasure_parts</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 4: أين هذا في الكود</p>
+<h1>من المشهد إلى (u, v, z)</h1>
+
+<div class="box"><p>جواب السؤال السابق: البكسل <span class='en'>2/415.7 = 4.81 mm</span>، وخطأ التقريب <span class='en'>4.81/&radic;12 = 1.39 mm</span>. الكاميرا الأقرب أدق.</p></div>
+
+<div class="card"><h2>1. render: صورتان في كل إطار</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>def render(self, data):
+    self.renderer.disable_depth_rendering()
+    self.renderer.update_scene(data, camera=self.name)
+    rgb = self.renderer.render().astype(int)      # colour image
+    self.renderer.enable_depth_rendering()
+    self.renderer.update_scene(data, camera=self.name)
+    depth = self.renderer.render().copy()         # depth image (metres, float32)
+    return rgb, depth</pre>
+<ul>
+<li><span class='en'>update_scene</span> يجعل الرسّام يقرأ حالة المحاكي الحالية (<span class='en'>data</span>) ومن منظور كاميرتنا <span class='en'>overhead</span>.</li>
+<li>ثم رسمتان: واحدة للون وواحدة للعمق. لذلك الإطار الواحد يكلّف حوالي 16 ms، و300,000 إطار (500 إطلاق) أخذت 77.7 دقيقة.</li>
+<li><span class='en'>.astype(int)</span> <b>مهمة</b>: الصورة تأتي أعداداً صحيحة بحجم 8 بت (0 إلى 255). لو كتبنا <span class='en'>R + 40</span> على هذا النوع لانقلب الرقم عند 255. جرّبتُ: <span class='en'>250 + 40</span> بنوع 8 بت يعطي <span class='en'>34</span> لا <span class='en'>290</span>. فنحوّل إلى أعداد أكبر قبل المقارنة في القناع.</li>
+<li><span class='en'>.copy()</span> لأن المصفوفة التي يعيدها الرسّام تُعاد كتابتها في الرسم التالي، فننسخها.</li>
+</ul></div>
+
+<div class="card"><h2>2. measure_parts: خطوة الكشف</h2>
+<pre style='direction:ltr;text-align:left;overflow-x:auto;background:var(--box);padding:12px;border-radius:8px'>def measure_parts(self, data):
+    rgb, depth = self.render(data)
+    uv = self.detect(rgb)                  # mask + centroid (B2 L2)
+    if uv is None:
+        return None                        # ball not seen
+    return uv[0], uv[1], depth[int(round(uv[1])), int(round(uv[0]))]</pre>
+<ul>
+<li>ترجع ثلاثة أعداد <span class='en'>(u, v, z)</span> أو <span class='en'>None</span> إذا لم تُرَ الكرة.</li>
+<li>القراءة <span class='en'>depth[int(round(v)), int(round(u))]</span>: الصف أولاً ثم العمود.</li>
+<li>تفصيلة: دالة <span class='en'>round</span> في Python تقرّب النصف إلى أقرب عدد <b>زوجي</b>: <span class='en'>round(197.5) = 198</span> و<span class='en'>round(2.5) = 2</span> و<span class='en'>round(3.5) = 4</span>. لا أثر عملي هنا (فرق بكسل واحد في قراءة العمق)، لكنه يفاجئ.</li>
+</ul></div>
+
+<div class="card"><h2>3. لماذا نحفظ (u, v, z) ولا نحفظ (x, y)؟</h2>
+<p><span class='en'>measure</span> تضيف الخطوة الأخيرة: <span class='en'>back_project(*parts)</span>. لكن في توليد البيانات (دورة 77.7 دقيقة) حفظنا <span class='en'>(u, v, z)</span> <b>المثالية</b> بلا noise في الملفات. ثم نضيف الـ noise (<span class='en'>jitter</span> على <span class='en'>u, v</span>، وخطأ العمق على <span class='en'>z</span>) لاحقاً، وفي كل مرة نشاء، ثم نحوّل إلى <span class='en'>(x, y)</span>. لو حفظنا <span class='en'>(x, y)</span> لما استطعنا إضافة noise العمق بشكله الصحيح (يتناسب مع <span class='en'>Z<sup>2</sup></span>) على الأرقام الخام.</p></div>
+
+<div class="card"><h2>4. شرط مهم قبل الرسم</h2>
+<p>في <span class='en'>record_launch</span> نستدعي <span class='en'>mj_forward</span> قبل كل رسم. السبب: بعد <span class='en'>mj_step</span> ثم تصحيح الارتداد في Python، تكون الأشكال الهندسية في MuJoCo متأخرة خطوة، فلو رسمنا مباشرة لحصلنا على صورة الكرة قبل ميليمترات من مكانها الحقيقي (خطأ وجدناه ومعالجناه).</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>ماذا يحدث لو أزلنا <span class='en'>.astype(int)</span> من <span class='en'>render</span>؟ أعطِ مثالاً بلون بكسل أخضر ساطع (R=0, G=250, B=0) وبلون بكسل أحمر ساطع (R=250, G=0, B=0). (فكّر: ما نتيجة <span class='en'>G &gt; R + 40</span> و<span class='en'>G &gt; B + 40</span> في كل حالة مع انقلاب الأعداد؟)</p></div>
+<p class="tag">القادم: B2 الطبقة 5 (الافتراضات والحدود)، ثم 6 (تمارين).</p>
+</main></body></html>

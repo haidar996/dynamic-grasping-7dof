@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D7 L1 - الـ Gate والسياسات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .policy { background:#f9f9f9; padding:8px; border-left:4px solid #1f5f8b; margin:8px 0; border-radius:2px; }
+  @media (prefers-color-scheme: dark) { .policy { background:#2a2a2a; } }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D7 &middot; الطبقة 1: سياسات الرفض (Rejection Policies)</p>
+<h1>ماذا نفعل حين يرفع الـ Gate قياس؟</h1>
+
+<div class="box"><p><b>جواب سؤال D6 L2:</b> الفرق 4% في P[2,2] صغير، لكن يؤثر على <span class='en'>K = P·Hᵀ/(H·P·Hᵀ + R)</span> بشكل غير خطي. K يزيد بنسبة أكبر من 4%. بعد الارتداد، K الأكبر يعني تصحيح أقوى → السرعة تتغير أسرع نحو الاتجاه الصحيح → تعافي أسرع. التأثير <b>تراكمي</b> عبر عدة خطوات.</p></div>
+
+<div class="card"><h2>1. المشكلة المرة أخرى</h2>
+<p>الـ Gate (<span class='en'>chi-square test</span>) يقول: "هذا القياس مريب جداً، رفضه".</p>
+<p>لكن ماذا بعدها؟ لدينا خيارات:</p>
+<ul>
+<li><b>تجاهل القياس وانتظر القياس التالي</b> (policy = "skip")</li>
+<li><b>أعد ضبط المرشح من الصفر</b> (policy = "reset")</li>
+<li><b>غيّر الاستراتيجية بناءً على عدد الرفضات</b> (policy = "hybrid")</li>
+<li><b>لا تستخدم gate على الإطلاق</b> (policy = "none")</li>
+</ul>
+</div>
+
+<div class="card"><h2>2. السياسة الأولى: <span class='en'>policy = "none"</span></h2>
+<div class="policy">
+<p><b>القاعدة:</b> لا gate على الإطلاق. قبل كل قياس مهما كان.</p>
+<p><b>المميزات:</b></p>
+<ul>
+<li>بسيط جداً—بدون فحوصات</li>
+<li>يثق بالقياسات (حتى السيئة)</li>
+</ul>
+<p><b>العيوب:</b></p>
+<ul>
+<li>قياس سيء واحد يفسد التقدير</li>
+<li>عند الارتداد، يرى تغيير مفاجئ (outlier) → انجراف</li>
+</ul>
+<p><b>متى تستخدم:</b> الكاميرا موثوقة جداً (مثل روبوت صناعي بكاميرا مغلقة مع ضوء ثابت)</p>
+</div>
+</div>
+
+<div class="card"><h2>3. السياسة الثانية: <span class='en'>policy = "skip"</span></h2>
+<div class="policy">
+<p><b>القاعدة:</b> إذا رفع الـ Gate القياس، تجاهله وانتظر الخطوة التالية.</p>
+<p><b>التطبيق:</b></p>
+<p class="en" style="text-align:center;font-size:90%">
+if test_statistic > gate:<br>
+&nbsp;&nbsp;return  # تجاهل، لا تحديث<br>
+else:<br>
+&nbsp;&nbsp;تحديث طبيعي
+</p>
+<p><b>المميزات:</b></p>
+<ul>
+<li>يرفع القياسات السيئة</li>
+<li>المرشح يستمر بتنبيؤه (بدون تصحيح)</li>
+</ul>
+<p><b>العيوب:</b></p>
+<ul>
+<li>إذا كانت قياسات سيئة متتالية (كاميرا متجمدة)، لا تصحيح، المرشح ينجرف</li>
+<li>بدون أي قياس "جيد"، التنبيؤ وحده يخطئ أكثر فأكثر</li>
+</ul>
+<p><b>متى تستخدم:</b> القياسات السيئة نادرة (عطل مفاجئ كل عدة دقائق)</p>
+</div>
+</div>
+
+<div class="card"><h2>4. السياسة الثالثة: <span class='en'>policy = "reset"</span></h2>
+<div class="policy">
+<p><b>القاعدة:</b> إذا رفع الـ Gate القياس، أعد ضبط المرشح من الصفر:</p>
+<p class="en" style="text-align:center;font-size:90%">
+if test_statistic > gate:<br>
+&nbsp;&nbsp;s = [z_x, z_y, 0, 0]  # موقع من القياس، سرعة صفر<br>
+&nbsp;&nbsp;P = P0  # تباين أولي<br>
+else:<br>
+&nbsp;&nbsp;تحديث طبيعي
+</p>
+<p><b>المميزات:</b></p>
+<ul>
+<li>إذا حدث شيء مجهول (قفزة)، نبدأ من جديد</li>
+<li>نثق بالقياس الجديد كنقطة انطلاق</li>
+</ul>
+<p><b>العيوب:</b></p>
+<ul>
+<li>نفقد كل ما تعلمناه (السرعة، الثقة)</li>
+<li>سرعة نُفترض صفر (خطأ غالباً)</li>
+<li>إذا كانت قياسات سيئة متتالية، نعيد ضبط كل مرة (مزعزع)</li>
+</ul>
+<p><b>متى تستخدم:</b> القياسات السيئة تشير إلى تغيير حاد (الروبوت تحرك، الكاميرا أُزيحت)</p>
+</div>
+</div>
+
+<div class="card"><h2>5. السياسة الرابعة: <span class='en'>policy = "hybrid"</span> (الأفضل)</h2>
+<div class="policy">
+<p><b>القاعدة:</b> حاول "skip" أولاً. إذا فشلت قياسات متتالية، انتقل إلى "reset":</p>
+<p class="en" style="text-align:center;font-size:90%">
+fails = 0  # عداد الرفضات المتتالية<br><br>
+if test_statistic > gate:<br>
+&nbsp;&nbsp;fails += 1<br>
+&nbsp;&nbsp;if fails >= k_reset (مثل 3):  # 3 رفضات متتالية<br>
+&nbsp;&nbsp;&nbsp;&nbsp;reset()  # أعد ضبط<br>
+&nbsp;&nbsp;else:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return  # skip فقط<br>
+else:<br>
+&nbsp;&nbsp;fails = 0  # عاد قياس جيد، أعد العداد<br>
+&nbsp;&nbsp;تحديث طبيعي
+</p>
+<p><b>المميزات:</b></p>
+<ul>
+<li>قياس سيء واحد؟ skip فقط (بدون فقدان التعلم)</li>
+<li>قياسات سيئة متتالية (كاميرا متجمدة)؟ reset (نبدأ من جديد)</li>
+<li>توازن بين الثبات والمرونة</li>
+</ul>
+<p><b>العيوب:</b> أعقد قليلاً</p>
+<p><b>متى تستخدم:</b> البيئات الحقيقية مع خليط من الأخطاء (متقطعة ومفاجئة)</p>
+</div>
+</div>
+
+<div class="card"><h2>6. المقارنة: سيناريو بـ 3 رفضات متتالية</h2>
+<table style="border-collapse:collapse;width:100%;font-size:85%">
+<tr style="border-bottom:1px solid var(--line)">
+<td style="padding:5px"><b>السياسة</b></td>
+<td style="padding:5px"><b>بعد الرفع الأول</b></td>
+<td style="padding:5px"><b>بعد الرفع الثالث</b></td>
+</tr>
+<tr>
+<td style="padding:5px">none</td>
+<td style="padding:5px">قياس سيء يفسد الحالة</td>
+<td style="padding:5px">فوضى تامة</td>
+</tr>
+<tr>
+<td style="padding:5px">skip</td>
+<td style="padding:5px">تجاهل، تنبؤ فقط</td>
+<td style="padding:5px">تنبؤ صار بعيد جداً، انجراف</td>
+</tr>
+<tr>
+<td style="padding:5px">reset</td>
+<td style="padding:5px">reset ← أعد ضبط</td>
+<td style="padding:5px">reset ← أعد ضبط (مزعزع)</td>
+</tr>
+<tr>
+<td style="padding:5px">hybrid</td>
+<td style="padding:5px">skip ← انتظر قياس جيد</td>
+<td style="padding:5px">reset ← عدد > k_reset</td>
+</tr>
+</table>
+</div>
+
+<div class="card"><h2>7. في الكود</h2>
+<pre>if self.policy != "none" and y @ np.linalg.solve(S, y) > self.gate:
+    self.n_gate += 1
+    self.fails += 1
+    if self.policy == "reset" or (self.policy == "hybrid" and self.fails >= self.k_reset):
+        self._reset_to(t, z)
+    return  # skip: لا تحديث
+self.fails = 0  # قياس جيد، أعد العداد</pre>
+<p><code>self.k_reset</code> افتراضي 3 (رفضات متتالية قبل reset).</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>إذا استخدمنا <span class='en'>policy = "hybrid"</span> مع <span class='en'>k_reset = 2</span> بدلاً من 3، ماذا يحدث؟ هل يصير أفضل أو أسوأ؟</p>
+</div>
+<p class="tag">القادم: D7 الطبقة 2 (مثال: قياسات سيئة متتالية، والسياسات تتصرف).</p>
+</main></body></html>

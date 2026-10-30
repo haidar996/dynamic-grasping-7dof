@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 part2 - من أين تأتي المعلومات؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 1: الحدس &middot; الجزء 2</p>
+<h1>من أين تأتي المعلومات؟</h1>
+
+<div class="card">
+<h2>الكاميرا</h2>
+<p>الذراع لا ترى الكرة بنفسها. نضع كاميرا فوق الطاولة تنظر إلى الأسفل، وتلتقط صورة كل جزء من الثانية (في مشروعنا: 60 صورة في الثانية).</p>
+<p>لكن الصورة ليست رقماً. برنامج صغير يبحث عن الكرة داخل الصورة، ثم يحوّل مكانها في الصورة إلى مكان على الطاولة: رقمان <span class="en">(x, y)</span> بالمتر. هذا الناتج نسمّيه <span class="en">measurement</span>.</p>
+</div>
+
+<div class="card">
+<h2>لماذا لا تكفي الكاميرا وحدها؟</h2>
+<p>الكاميرا تعطينا <span class="en">measurement</span> فيه ثلاث مشاكل. سنسمّيها الآن فقط، وندرس كل واحدة بالتفصيل لاحقاً:</p>
+<ol>
+<li><b>ناقص (<span class="en">partial</span>):</b> الصورة الواحدة تعطي المكان فقط. لا تعطي السرعة. لا يمكنك أن ترى سرعة من صورة واحدة، كما لا يمكنك أن تعرف أن السيارة تتحرك من صورة ثابتة واحدة.</li>
+<li><b>فيه خطأ عشوائي (<span class="en">noisy</span>):</b> الرقم الذي نحصل عليه يختلف قليلاً عن المكان الحقيقي، وبمقدار عشوائي.</li>
+<li><b>قد يضيع أو يتأخر:</b> أحياناً لا يجد البرنامج الكرة، وأحياناً يصل الرقم بعد أن تحركت الكرة.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>مثال بأرقام</h2>
+<p>التقطت الكاميرا الكرة عند <span class="en">x = 0.500 m</span>، وبعد 1/60 ثانية عند <span class="en">x = 0.510 m</span>. السرعة تساوي المسافة مقسومة على الزمن:</p>
+<p class="en" style="text-align:center">v = 0.010 / (1/60) = 0.6 m/s</p>
+<p>الآن افترض أن الرقم الثاني فيه خطأ صغير: 5 مم فقط، أي 0.005 م. فتصبح المسافة 0.015 بدل 0.010، وتصبح السرعة 0.9 بدل 0.6.</p>
+<p><b>خطأ 5 مم في المكان تحوّل إلى خطأ 0.3 م/ث في السرعة.</b> هذا كبير. فنحن لا نستطيع أن نثق بالأرقام الخام كما هي.</p>
+</div>
+
+<div class="box">
+<p><b>الخلاصة:</b> نحتاج برنامجاً يأخذ سلسلة من الأرقام الناقصة والمشوشة، ويخرج منها أفضل تخمين للمكان والسرعة. هذا البرنامج اسمه <span class="en">estimator</span>، وهو موضوع هذا الفصل كله.</p>
+</div>
+
+<div class="card">
+<h2>ما الذي تغيّر عن الفصل الأول؟</h2>
+<p>في الفصل الأول من الرسالة، كانت الذراع تحصل على مكان الكرة وسرعتها الدقيقين مجاناً من المحاكي (<span class="en">simulator</span>). هذا لا يحدث في الواقع. في هذا الفصل نحذف تلك المعلومة المجانية، ونعطي الذراع كاميرا و<span class="en">estimator</span> بدلاً منها، ثم نقيس كم يسوء الأداء، وكيف نحسّنه.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد</h2>
+<p>في المثال أعلاه، لو كان الخطأ في المكان 2 مم بدل 5 مم، كم يصبح الخطأ في السرعة؟ (اقسم الخطأ على 1/60 ثانية.)</p>
+</div>
+
+<p class="tag">الدرس القادم (الطبقة 2 من A1): تعريف المشكلة بشكل دقيق بالرموز: <span class="en">state</span> و<span class="en">measurement</span> و<span class="en">estimate</span> و<span class="en">forecast</span>.</p>
+</main></body></html>

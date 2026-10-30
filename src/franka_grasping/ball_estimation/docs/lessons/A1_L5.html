@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L5 - ماذا نفترض، وماذا ينكسر؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>ماذا نفترض، وماذا ينكسر؟</h1>
+<div class="box"><p>إجابة السؤال السابق: التخمين هو <span class='en'>x, y, vx, vy</span> (ناتج <span class='en'>est.forecast</span>)، والحقيقة هي <span class='en'>tx, ty</span> (ناتج <span class='en'>np.interp</span> على المصفوفات).</p></div>
+<p>كل تعريف في الطبقات السابقة يقوم على افتراضات. عالم الأكاديميا يسأل دائماً: ما هي، وماذا يحدث إذا انكسرت؟ هذه قائمتنا:</p>
+<div class='card'><h2>1. الكرة تتحرك على مستوٍ فقط</h2><p>لا تطير ولا تدور (<span class='en'>planar, no spin</span>). هذا قرار اتخذناه. بفضله يكفي <b>أربعة أرقام</b> للـ state. لو أضفنا الدوران لصار هناك أرقام إضافية في الـ state، ولأصبح الاحتكاك والارتداد أصعب.</p><p><b>ماذا لو لم يتحقق؟</b> النموذج كله يتغير. الأربعة أرقام لا تكفي.</p></div><div class='card'><h2>2. نموذج الحركة من نوع معروف</h2><p>في المحاكي: الاحتكاك قوة ثابتة تعاكس السرعة (تباطؤ <span class='en'>&mu;</span>)، والجدار يعكس السرعة ويُنقصها بمعامل <span class='en'>E</span>. الـ estimators تستعمل <b>نفس نوع</b> المعادلات. هذه نقطة أكاديمية مهمة: العالم الذي نختبر فيه مكتوب بنفس اللغة التي يفهمها الـ estimator (ويسمّيها بعض الباحثين <span class='en'>inverse crime</span>).</p><p><b>ماذا لو لم يتحقق؟</b> في عالم حقيقي توجد تأثيرات لا يعرفها النموذج (اهتزاز، سطح غير مستوٍ، دوران). فالأرقام عندنا قد تكون <b>متفائلة</b> مقارنة بالواقع. لهذا نعرض الحالة المثالية (<span class='en'>oracle</span>) كحدّ أعلى، وليس كتوقع للواقع.</p></div><div class='card'><h2>3. الـ noise عشوائي ومستقل</h2><p>في المحاكاة نسحب الـ noise من توزيع طبيعي (<span class='en'>Gaussian</span>) ومستقل بين الصور. الاشتقاق في الطبقة 3 استعمل هذا الافتراض.</p><p><b>ماذا لو لم يتحقق؟</b> في كاميرا حقيقية قد يكون الخطأ مرتبطاً بين الصور المتتالية (مثلاً انحياز ثابت)، فتختلف الأرقام. وحتى في حالتنا المثالية، الخطأ ليس عشوائياً بل ناتج عن شبكة البكسل (<span class='en'>deterministic</span>).</p></div><div class='card'><h2>4. السرعة ثابتة بين صورتين</h2><p>معادلة الـ <span class='en'>fd</span> افترضت ذلك. الحقيقة أن الكرة تبطأ، وقد تصطدم بجدار بين الصورتين.</p><p><b>ماذا لو لم يتحقق؟</b> لو حدث اصطدام بين صورتين فالفرق بين المكانين لا يمثل أي سرعة حقيقية (الاتجاه انقلب)، فتخرج سرعة خاطئة تماماً. لهذا نعرف أن الاصطدام نقطة ضعف، وسنعالجها في D6.</p></div><div class='card'><h2>5. كل شيء محاكاة</h2><p>لا كاميرا حقيقية ولا ذراع حقيقية. كل قيم الحساسية (<span class='en'>k = 8.2e-4</span>، الـ jitter 0.3 بكسل، الـ delay 40 ms، الـ dropout 5%) هي <b>قيم مؤقتة</b> اخترناها (<span class='en'>placeholders</span>)، ولم نقسها من جهاز.</p><p><b>ماذا لو لم يتحقق؟</b> النتائج تقارن الطرق ببعضها، ولا تعطي رقماً مطلقاً للواقع. هذا يجب أن يُكتب في الرسالة.</p></div><div class='card'><h2>6. الزمن معروف بدقة</h2><p>نفترض أننا نعرف زمن التقاط كل صورة بدقة تامة (<span class='en'>capture time stamp</span>).</p><p><b>ماذا لو لم يتحقق؟</b> في نظام حقيقي توجد أخطاء في الساعات، وتأخير متغير.</p></div><div class='card'><h2>7. الـ estimator سببي (<span class='en'>causal</span>)</h2><p>لا ينظر إلى المستقبل. هذا ضروري لأن الذراع تعمل في الزمن الحقيقي.</p><p><b>ماذا لو لم يتحقق؟</b> أي طريقة تنظر إلى المستقبل (<span class='en'>smoothing</span>) أدق، لكنها غير صالحة لهذه المهمة.</p></div><div class='card'><h2>8. الحقيقة (<span class='en'>ground truth</span>) متاحة</h2><p>نقيس الخطأ لأن المحاكي يعطينا المكان والسرعة الحقيقيين بدقة تامة.</p><p><b>ماذا لو لم يتحقق؟</b> في الواقع لا توجد حقيقة مطلقة. تُقاس أحياناً بنظام آخر (مثل <span class='en'>motion capture</span>)، وله خطؤه هو أيضاً.</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>أي افتراض في القائمة يجعل نتيجة الـ <span class='en'>oracle</span> (التي يعرف فيها الـ estimator قيمتي <span class='en'>&mu;</span> و<span class='en'>E</span> الحقيقيتين) متفائلة أكثر من الواقع؟ ولماذا؟</p></div>
+<p class="tag">القادم: A1 الطبقة 6 (تمارين تحلّها بنفسك)، ثم ننتقل إلى A2 (ما هو الـ simulator).</p>
+</main></body></html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D6 L1 - الجدران والارتداد</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D6 &middot; الطبقة 1: الجدران والارتداد</p>
+<h1>الكرة ترتد: ماذا يحدث للمرشح؟</h1>
+
+<div class="box"><p><b>جواب سؤال D5 L3:</b> الشرط <code>if sp > self.c * h:</code> يتجنب <b>قسمة على صفر</b>. عندما السرعة صفر أو صغيرة جداً (<span class='en'>sp ≤ c·h</span>)، الكرة تقريباً متوقفة، والاحتكاك اتجاهي لا معنى له (لا اتجاه معروف). في هذه الحالة نستخدم افتراض بسيط (أو نتجاهل الحد).</p></div>
+
+<div class="card"><h2>1. المشكلة: الساحة لها حدود</h2>
+<p>الساحة ليست لا نهائية—عندها جدران (4 حدود: يسار، يمين، أمام، خلف):</p>
+<ul>
+<li>اليسار والحق: <span class='en'>x = 0</span> و<span class='en'>x = L</span> (حيث <span class='en'>L = 0.97 m</span> مثلاً)</li>
+<li>الأمام والخلف: <span class='en'>y = 0</span> و<span class='en'>y = L</span></li>
+</ul>
+<p>عندما تصل الكرة إلى جدار، هل تخترقها؟ لا—ترتد (bounce) وتتحرك بالعكس.</p>
+</div>
+
+<div class="card"><h2>2. فيزياء الارتداد: معامل الارتداد <span class='en'>E</span></h2>
+<p>عندما الكرة ترتد:</p>
+<p class="en" style="text-align:center">v_after = −E × v_before</p>
+<p>حيث <span class='en'>E</span> = معامل الارتداد (coefficient of restitution):</p>
+<ul>
+<li><span class='en'>E = 1</span>: ارتداد مثالي (الكرة ترتد بنفس سرعة الاقتراب)</li>
+<li><span class='en'>E < 1</span>: ارتداد حقيقي (الكرة تفقد طاقة، ترتد أبطأ)</li>
+<li><span class='en'>E = 0</span>: لا ارتداد (الكرة تلتصق بالجدار)</li>
+</ul>
+<p>في مشروعنا: <span class='en'>E = 0.725</span>—الكرة تفقد ~27.5% من طاقتها الحركية عند كل ارتداد.</p>
+</div>
+
+<div class="card"><h2>3. مثال: ارتداد 1D</h2>
+<p>الكرة تقترب من جدار يسار بـ <span class='en'>vx = −1 m/s</span> (تتحرك يساراً):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+v_before = −1 m/s<br>
+v_after = −E × (−1) = 0.725 m/s
+</p>
+<p>بعد الارتداد: <span class='en'>vx = +0.725 m/s</span> (تتحرك يميناً، أبطأ من قبل).</p>
+</div>
+
+<div class="card"><h2>4. المشكلة: عدم اليقين في الارتداد</h2>
+<p>مسألة كبيرة للمرشح:</p>
+<ul>
+<li><b>اللحظة الدقيقة:</b> كم فترة زمنية بالضبط حتى الارتداد؟ إذا كانت الفترة 0.1 ثانية، قد تحدث الكرة في أي وقت خلالها.</li>
+<li><b>معامل الارتداد الحقيقي:</b> <span class='en'>E = 0.725</span> هو تقدير. الحقيقي يعتمد على سرعة الاقتراب، درجة الحرارة، شكل الكرة، إلخ.</li>
+<li><b>الموقع بعد الارتداد:</b> الكرة قد تخترق الجدار قليلاً قبل الارتداد (حسب المحاكاة).</li>
+</ul>
+<p>النتيجة: <b>عدم اليقين يزيد</b> حول السرعة (والطاقة) بعد الارتداد.</p>
+</div>
+
+<div class="card"><h2>5. التأثير على EKF</h2>
+<p>قبل الارتداد: المرشح يثق بتنبيؤه (تباين صغير).</p>
+<p>بعد الارتداد مباشرة: المرشح <b>لم يرَ</b> الارتداد!</p>
+<ul>
+<li>التنبؤ يقول: الكرة تقتقدم بنفس السرعة السالبة (نحو الجدار أكثر)</li>
+<li>الحقيقة: الكرة ارتدت، الآن تتحرك بالعكس</li>
+<li>القياس يفاجئ المرشح: "الكرة هنا، لكن أين اتجاهها؟"</li>
+</ul>
+<p>التنبية <span class='en'>y = z − x̂⁻</span> تصير كبيرة جداً (outlier)، والـ gate قد يرفضها!</p>
+</div>
+
+<div class="card"><h2>6. الحل في الكود: <span class='en'>sigma_E</span> (ekf19b)</h2>
+<p>الحل: أضفنا معامل <span class='en'>sigma_E</span> (غير موجود في الورقة الأصلية Liu et al. 2021):</p>
+<p class="en" style="text-align:center">إذا حدث ارتداد → أضف تأكد (variance) إضافي في السرعة</p>
+<p>في الكود:</p>
+<pre>if self.sigma_E > 0:
+    for a in (0, 1):
+        if abs(s[a] + s[2+a] * h) > self.L:  # هل ستخترق الكرة الجدار؟
+            P[2+a, 2+a] += (self.sigma_E * abs(s[2+a])) ** 2</pre>
+<p>المعنى:</p>
+<ul>
+<li>إذا توقعنا أن الكرة ستخترق الجدار قريباً</li>
+<li>أضف تأكد في السرعة بمقدار <span class='en'>(sigma_E × |v|)²</span></li>
+<li>بعد الارتداد، تباين السرعة أكبر، فـ K أصغر، فنثق بالقياس أكثر</li>
+</ul>
+<p>هذا نموذج اسمه <span class='en'>ekf19b</span> (b = "bounce fix").</p>
+</div>
+
+<div class="card"><h2>7. الفرق: <span class='en'>ekf19</span> vs. <span class='en'>ekf19b</span></h2>
+<p><b>ekf19 (الأصلي):</b> بدون <span class='en'>sigma_E</span> (sigma_E=0)</p>
+<ul>
+<li>لا يتوقع الارتداد</li>
+<li>بعد الارتداد، تنبيته ينجرف</li>
+<li>قد يرفضها الـ gate كـ outlier</li>
+</ul>
+
+<p><b>ekf19b (محسّن):</b> مع <span class='en'>sigma_E = 0.13</span> مثلاً</p>
+<ul>
+<li>يضيف تأكد قبل الارتداد المتوقع</li>
+<li>بعد الارتداد، K أصغر، فيقبل القياس بدون مبالغة</li>
+<li>يتكيّف بشكل أفضل مع الارتداد</li>
+</ul>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في الكود، الشرط <code>if abs(s[a] + s[2+a] * h) > self.L:</code> يتنبأ: "هل الكرة ستخترق الجدار في خطوة واحدة؟" لماذا نتنبأ بخطوة واحدة فقط، وليس خطوتين أو ثلاث؟</p>
+</div>
+<p class="tag">القادم: D6 الطبقة 2 (مثال: الكرة ترتد وكيف يتعامل EKF).</p>
+</main></body></html>

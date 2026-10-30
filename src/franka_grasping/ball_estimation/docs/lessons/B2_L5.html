@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L5 - افتراضات وحدود الكشف</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>ماذا يفترض الكشف وقراءة العمق؟</h1>
+<div class="box"><p>جواب السؤال السابق: بدون <span class='en'>.astype(int)</span> يلتف الرقم بعد 255. للبكسل الأخضر الساطع <span class='en'>(0, 250, 0)</span> لا مشكلة: <span class='en'>R+40 = 40</span> و<span class='en'>250 &gt; 40</span> صح. وللأحمر الساطع <span class='en'>(250, 0, 0)</span>: <span class='en'>R + 40</span> يصبح <span class='en'>34</span> و<span class='en'>G = 0</span> ليس أكبر من 34، فالنتيجة خطأ (صحيحة). لكن <b>البكسلات الساطعة جداً</b> تسبب مشكلة: الأبيض <span class='en'>(255, 255, 255)</span> يعطي <span class='en'>R + 40 = 39</span> و<span class='en'>255 &gt; 39</span> فيُقبل خطأً كأنه كرة (وكذلك أي بكسل فيه أحمر وأزرق فوق 215). لذلك الدالة تحتاج التحويل.</p></div>
+<div class='card'><h2>1. كرة واحدة خضراء ولا شيء أخضر غيرها</h2><p>القناع يقبل أي بكسل أخضر، ويأخذ مركز <b>كل</b> البكسلات الخضراء معاً.</p><p><b>إذا لم يتحقق:</b> لو وُجد جسم أخضر آخر (أو ذراع ملوّنة بالأخضر) لانتقل المركز إلى نقطة بين الجسمين، ولم نعرف. يجب أن يكون لون الذراع مختلفاً عن الكرة.</p></div><div class='card'><h2>2. الإضاءة ثابتة والألوان ثابتة</h2><p>في المحاكاة اللون الأخضر نفسه دائماً (ما عدا التظليل على الكرة).</p><p><b>إذا لم يتحقق:</b> في الواقع تتغير الإضاءة والظلال والانعكاسات، فتحتاج عتبات متكيّفة أو خوارزمية كشف أقوى.</p></div><div class='card'><h2>3. الكرة ظاهرة بكاملها</h2><p>المركز يمثل مركز الكرة فقط إذا ظهرت كلها. لو أخفى الذراع نصفها، فمركز النصف المرئي يبعد عن مركز الكرة بمقدار <span class='en'>4r/(3&pi;) = 4 &times; 30/(3&pi;) = 12.7 mm</span> (مركز نصف قرص). هذا أكبر من خطأ الـ noise بأربعة أضعاف.</p><p><b>إذا لم يتحقق:</b> الحجب الجزئي يولّد <b>انحيازاً</b> وليس فقداناً فقط، والـ Kalman filter يفترض noise بلا انحياز، فسيتأثر. هذه نقطة حاسمة عندما نضيف الذراع.</p></div><div class='card'><h2>4. الكرة كبيرة بما يكفي (على الأقل 3 بكسلات)</h2><p>حجم الكرة في الصورة <span class='en'>r f / Z</span>. بارتفاع 3 م قطرها 8 بكسلات.</p><p><b>إذا لم يتحقق:</b> يفشل الكشف تقريباً عندما تصير مساحتها أقل من 3 بكسلات، أي عند ارتفاع حوالي <span class='en'>12.7 m</span> (بهذه الزاوية). قبل ذلك تتدهور الدقة تدريجياً.</p></div><div class='card'><h2>5. الـ noise يُضاف على القياسات (u, v, z) لا على بكسلات الصورة</h2><p>في الجزء C سنضيف خطأ عشوائياً إلى المركز وإلى العمق مباشرة. وهذا <b>نموذج للـ noise على مستوى القياس</b>، وليس محاكاة لضوضاء المستشعر داخل الصورة.</p><p><b>إذا لم يتحقق:</b> ضوضاء الصورة الحقيقية تؤثر على القناع والمركز بطرق أعقد (تغيّر البكسلات الحافية، وتحذف بعضها...). نموذجنا تقريب، وهو مقبول لدراسة المقارنة بين الـ estimators.</p></div><div class='card'><h2>6. العمق ممتاز في الأصل</h2><p>العمق من MuJoCo دقيق (float32 بالمتر) بلا ثقوب. كل ما فيه من خطأ سنضيفه نحن.</p><p><b>إذا لم يتحقق:</b> كاميرات العمق الحقيقية فيها ثقوب وانعكاسات وخطأ أكبر عند الأسطح اللامعة أو الحواف، وهذا غير موجود بالمحاكاة إلا إذا أضفناه.</p></div><div class='card'><h2>7. الرسم لحظي ومتزامن تماماً مع المحاكي</h2><p>الصورة تُرسم من الحالة الدقيقة عند زمن الالتقاط (مع mj_forward).</p><p><b>إذا لم يتحقق:</b> كاميرا حقيقية لها زمن تعريض وتأخير، وهذا ما سنحاكيه بالـ delay في الجزء C.</p></div>
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>إذا أخفى الذراع نصف الكرة، فكم يصبح انحياز القياس بالملّيمتر؟ (مركز نصف قرص نصف قطره <span class='en'>r</span> يبعد <span class='en'>4r/(3&pi;)</span> عن القطر.) وقارنه بـ noise الكاميرا (3 مم).</p></div>
+<p class="tag">القادم: B2 الطبقة 6 (تمارين)، ثم B3.</p>
+</main></body></html>

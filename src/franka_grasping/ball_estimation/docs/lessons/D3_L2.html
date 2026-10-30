@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 L2 - Kalman 1D: التعريفات</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D3 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>مرشّح Kalman في بُعد واحد: المعادلات</h1>
+
+<div class="box"><p>جواب سؤال D3 السابق: يقترب الناتج من <b>التنبؤ</b> (10 مم) لأن الكاميرا صارت أسوأ (20 مم)، فوزنها أقل: <span class='en'>K = 10<sup>2</sup>/(10<sup>2</sup> + 20<sup>2</sup>) = 0.2</span>، والناتج <span class='en'>600 + 0.2 &times; 12 = 602.4 mm</span>.</p>
+<p>حول سؤالك عن عدد الطبقات: بقي حوالي 80 إلى 90 طبقة (كما في ردي)، ونكمل بالإيقاع الحالي.</p></div>
+
+<div class="card"><h2>1. النموذج المبسّط (متغير واحد: المكان)</h2>
+<p>نبدأ ببُعد واحد ومتغير واحد <span class='en'>x</span> (المكان)، ونفترض أننا نعرف مقدار تقدّمه في كل خطوة <span class='en'>u</span> (مثلاً <span class='en'>u = v &Delta;t = 1 &times; 1/60 = 0.0167 m</span>). النموذجان:</p>
+<ul>
+<li><b>نموذج الحركة:</b> <span class='en'>x<sub>k</sub> = x<sub>k&minus;1</sub> + u + w<sub>k</sub></span> حيث <span class='en'>w<sub>k</sub> ~ N(0, Q)</span> خطأ النموذج (ما لا نعرفه من قوى صغيرة).</li>
+<li><b>نموذج القياس:</b> <span class='en'>z<sub>k</sub> = x<sub>k</sub> + n<sub>k</sub></span> حيث <span class='en'>n<sub>k</sub> ~ N(0, R)</span> خطأ الكاميرا.</li>
+</ul>
+<p>(في D4 سنضيف السرعة كمتغير ثانٍ، فتصير المعادلات بمصفوفات.)</p></div>
+
+<div class="card"><h2>2. الرموز</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:5px"><b>symbol</b></td><td><b>meaning</b></td></tr>
+<tr><td style="padding:5px">x&#770;</td><td>the estimate (our best guess of x)</td></tr>
+<tr><td style="padding:5px">P</td><td>variance of the estimate (how unsure we are), in m<sup>2</sup></td></tr>
+<tr><td style="padding:5px">x&#770;<sup>&minus;</sup>, P<sup>&minus;</sup></td><td>after predict, before using the measurement</td></tr>
+<tr><td style="padding:5px">Q</td><td>process (model) noise variance added per step</td></tr>
+<tr><td style="padding:5px">R</td><td>measurement noise variance</td></tr>
+<tr><td style="padding:5px">y = z &minus; x&#770;<sup>&minus;</sup></td><td>innovation: how much the measurement surprised us</td></tr>
+<tr><td style="padding:5px">S = P<sup>&minus;</sup> + R</td><td>variance of the innovation</td></tr>
+<tr><td style="padding:5px">K = P<sup>&minus;</sup> / S</td><td>Kalman gain (weight given to the measurement)</td></tr>
+</table></div>
+
+<div class="card"><h2>3. الخطوتان</h2>
+<p><b>Predict:</b></p>
+<p class="en" style="text-align:center">x&#770;<sup>&minus;</sup> = x&#770; + u, &nbsp;&nbsp; P<sup>&minus;</sup> = P + Q</p>
+<p><b>Correct:</b></p>
+<p class="en" style="text-align:center">y = z &minus; x&#770;<sup>&minus;</sup>, &nbsp; S = P<sup>&minus;</sup> + R, &nbsp; K = P<sup>&minus;</sup>/S</p>
+<p class="en" style="text-align:center">x&#770; = x&#770;<sup>&minus;</sup> + K y, &nbsp;&nbsp; P = (1 &minus; K) P<sup>&minus;</sup></p>
+<p>الحدس: التنبؤ يزيد عدم اليقين بمقدار <span class='en'>Q</span>، والتصحيح يُنقصه. والكسب <span class='en'>K</span> بين 0 و1: قريب من 1 إذا كان التنبؤ غير موثوق (<span class='en'>P<sup>&minus;</sup> &gt;&gt; R</span>) فنتبع القياس، وقريب من 0 إذا كان القياس غير موثوق (<span class='en'>R &gt;&gt; P<sup>&minus;</sup></span>) فنبقى مع التنبؤ.</p></div>
+
+<div class="card"><h2>4. مثال بأرقام (ثلاث خطوات)</h2>
+<p><span class='en'>x&#770;<sub>0</sub> = 0.5000, P<sub>0</sub> = 2.5&times;10<sup>-5</sup> (5 mm), u = 0.0167, Q = 4&times;10<sup>-6</sup> (2 mm), R = 2.5&times;10<sup>-5</sup> (5 mm)</span>:</p>
+<table class="en" style="margin:auto;border-collapse:collapse;font-size:90%">
+<tr><td style="padding:3px 8px"><b>k</b></td><td><b>x&#770;<sup>&minus;</sup></b></td><td><b>P<sup>&minus;</sup></b></td><td><b>z</b></td><td><b>y</b></td><td><b>S</b></td><td><b>K</b></td><td><b>x&#770;</b></td><td><b>P (std)</b></td></tr>
+<tr><td style="padding:3px 8px">1</td><td>0.5167</td><td>2.90e-5</td><td>0.5210</td><td>+0.0043</td><td>5.40e-5</td><td>0.537</td><td>0.5190</td><td>1.34e-5 (3.7 mm)</td></tr>
+<tr><td style="padding:3px 8px">2</td><td>0.5357</td><td>1.74e-5</td><td>0.5330</td><td>&minus;0.0027</td><td>4.24e-5</td><td>0.411</td><td>0.5346</td><td>1.03e-5 (3.2 mm)</td></tr>
+<tr><td style="padding:3px 8px">3</td><td>0.5512</td><td>1.43e-5</td><td>0.5560</td><td>+0.0048</td><td>3.93e-5</td><td>0.363</td><td>0.5530</td><td>9.08e-6 (3.0 mm)</td></tr>
+</table>
+<ul>
+<li>الكسب ينخفض مع الخطوات (0.54 ثم 0.41 ثم 0.36)، لأن المرشّح <b>يتعلم</b> فيزداد وثوقه (P ينقص) فيعتمد أقل على كل قياس.</li>
+<li>يستقر على قيمة ثابتة: بعد حوالي 200 خطوة <span class='en'>K = 0.33</span> و<span class='en'>P = 8.2&times;10<sup>-6</sup></span> (انحراف <span class='en'>2.86 mm</span>): أفضل من كاميرا وحدها (5 مم).</li>
+<li>التوازن بين <span class='en'>Q</span> و<span class='en'>R</span> هو الذي يحدد الاستقرار: <span class='en'>Q</span> أكبر = لا نثق بالنموذج = <span class='en'>K</span> أكبر.</li>
+</ul></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>أعد الخطوة 3 بنفسك ابتداءً من <span class='en'>x&#770;<sub>2</sub> = 0.5346, P<sub>2</sub> = 1.03&times;10<sup>-5</sup></span> و<span class='en'>z<sub>3</sub> = 0.5560</span>: احسب <span class='en'>x&#770;<sup>&minus;</sup>, P<sup>&minus;</sup>, S, K, x&#770;, P</span>. وتحقق مع الجدول.</p></div>
+<p class="tag">القادم: D3 الطبقة 3 (الرياضيات: لماذا K = P&minus;/(P&minus; + R) هو الأفضل؟ اشتقاقه).</p>
+</main></body></html>

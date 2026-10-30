@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F2 L1 - النتائج: مع الضجيج</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:85%; }
+  td, th { border:1px solid var(--line); padding:6px; }
+  th { background:var(--accent); color:white; }
+  .best { background:#d4edda; font-weight:bold; }
+  @media (prefers-color-scheme: dark) { .best { background:#1b4620; } }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس F2 &middot; الطبقة 1: مع الضجيج</p>
+<h1>النتائج الحقيقية: الكاميرا ضاجة</h1>
+
+<div class="box"><p><b>جواب سؤال F1 L1:</b> في ideal، التنبؤ بالارتداد (sigma_E) لا يهم لأن:
+(1) لا ضجيج → التنبية صحيحة، gate لا يرفع قياسات
+(2) لا مشاكل → لا توقعات خاطئة متتالية (لا reset)
+(3) sigma_E يزيد التباين الاستباقي، لكن بدون مشاكل، لا فائدة
+
+مع الضجيج والمشاكل الأخرى، sigma_E يصنع فرقاً واضحاً.
+</p></div>
+
+<div class="card"><h2>1. سيناريو "noise": الكاميرا الحقيقية</h2>
+<p><b>الشروط:</b></p>
+<ul>
+<li>ضجيج الكاميرا: σ = 5 ملم (الانحراف المعياري لخطأ القياس)</li>
+<li>جدران المحاكاة: ارتدادات تحدث (E = 0.725)</li>
+<li>بدون dropout (كل قياس يصل)</li>
+<li>بدون تأخير غير عادي</li>
+</ul>
+<p>هذا <b>أقرب إلى الواقع</b>—الكاميرا ضاجة، لكن موثوقة.</p>
+</div>
+
+<div class="card"><h2>2. جدول النتائج: noise</h2>
+<table>
+<tr>
+<th>المرشح</th>
+<th>now_pos (mm)</th>
+<th>forecast 0.2s (mm)</th>
+<th>forecast 0.5s (mm)</th>
+<th>forecast 1.0s (mm)</th>
+<th>مقابل ideal</th>
+</tr>
+<tr>
+<td><b>oracle</b></td>
+<td class="best">1.7</td>
+<td class="best">6.8</td>
+<td class="best">15.2</td>
+<td class="best">27.3</td>
+<td>+1.5 مم</td>
+</tr>
+<tr>
+<td><b>ekf19b+stale</b></td>
+<td>7.1</td>
+<td class="best">27.4</td>
+<td class="best">67.3</td>
+<td class="best">209</td>
+<td>+167 مم</td>
+</tr>
+<tr>
+<td><b>ekf19-hybrid</b></td>
+<td>7.6</td>
+<td>32.1</td>
+<td>78.5</td>
+<td>245</td>
+<td>+197 مم</td>
+</tr>
+<tr>
+<td><b>cvkf</b></td>
+<td>7.6</td>
+<td>40.2</td>
+<td>105.6</td>
+<td>1519</td>
+<td>+1362 مم</td>
+</tr>
+<tr>
+<td><b>fd</b></td>
+<td>47.8</td>
+<td>800</td>
+<td>1200</td>
+<td>1598</td>
+<td>+1131 مم</td>
+</tr>
+</table>
+
+<p><b>الملاحظات الحرجة:</b></p>
+<ul>
+<li><b>now_pos:</b> الكاميرا الآن لا تكون مثالية! الضجيج يزيد الخطأ من 1.8 إلى 7 مم. أي مرشح يصفي الضجيج → أفضل الآن.</li>
+<li><b>oracle:</b> لا يزال الأفضل، لكن الآن الفرق أكبر (27 مم vs 209 مم في 1s)—الضجيج يأثر على ekf19b أكثر!</li>
+<li><b>ekf19b vs ekf19:</b> الفرق الآن واضح! 209 vs 245 مم في 1s (1.17×). sigma_E يساعد مع الارتدادات المشوشة.</li>
+<li><b>cvkf:</b> ينهار تماماً (1519 مم). بدون احتكاك + ضجيج = كارثة.</li>
+</ul>
+</div>
+
+<div class="card"><h2>3. الفرق من ideal</h2>
+<p>كيف زاد الخطأ من ideal إلى noise؟</p>
+<p class="en" style="text-align:center">
+ideal → noise (الزيادة)<br>
+ekf19b: 42 → 209 مم (5×)<br>
+oracle: 18 → 27 مم (1.5×)<br>
+</p>
+
+<p>السبب:</p>
+<ul>
+<li>Oracle يعرف كل شيء—الضجيج له تأثير أقل (يعرف الاحتكاك بدقة، فالتنبؤ يبقى جيد)</li>
+<li>ekf19b يقدّر من القياسات الضاجة—السرعة المقدّرة أسوأ، التنبؤ ينجرف أكثر</li>
+</ul>
+</div>
+
+<div class="card"><h2>4. الفائدة الحقيقية من ekf19b (sigma_E)</h2>
+<p>في noise، ekf19b أفضل من ekf19-hybrid:</p>
+<p class="en" style="text-align:center">
+1.0s: 209 vs 245 مم<br>
+الفرق = 36 مم (15% تحسن)
+</p>
+
+<p>لماذا يساعد sigma_E الآن؟</p>
+<ul>
+<li>القياسات ضاجة → التنبيات القريبة من الجدار قد تخطئ</li>
+<li>sigma_E = "لا تثق بالسرعة عند الجدران" → تقبل تصحيحات أفضل</li>
+<li>النتيجة: أخطاء الارتداد أصغر</li>
+</ul>
+</div>
+
+<div class="card"><h2>5. أين تكون النقطة الفاصلة؟</h2>
+<p>في 0.2s:</p>
+<ul>
+<li>ideal: جميع المرشحات قريبة (5-7 مم)</li>
+<li>noise: جميع المرشحات قريبة (27-40 مم)</li>
+</ul>
+
+<p>في 1.0s:</p>
+<ul>
+<li>ideal: فرق ضخم (18 vs 42 vs 157 مم)</li>
+<li>noise: فرق ضخم + أكبر (27 vs 209 vs 1519 مم)</li>
+</ul>
+
+<p><b>النقطة الفاصلة:</b> حول 0.3-0.5 ثانية. قبل ذلك: الضجيج يهيمن. بعد ذلك: النموذج يهيمن.</p>
+</div>
+
+<div class="card"><h2>6. الحدس</h2>
+<p><b>قصير المدى (< 0.3s):</b> الضجيج يهيمن—المرشح الجيد يصفيه → الجميع متقاربون.</p>
+
+<p><b>طويل المدى (> 0.5s):</b> النموذج يهيمن—تقدير الاحتكاك والارتداد يحدد الفائز.</p>
+
+<p><b>التطبيق العملي:</b> لو كنت تخطط لـ 0.2 ثانية، cvkf كافٍ. لو تخطط لـ 1 ثانية، تحتاج ekf19 على الأقل.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في جدول noise، oracle يزيد من 18 إلى 27 مم في 1s (50% ارتفاع)، بينما ekf19b يزيد من 42 إلى 209 مم (5×). لماذا oracle أقل تأثراً بالضجيج؟</p>
+</div>
+<p class="tag">القادم: مراجعة سريعة—ملخص الفصل 2 (من التاريخ والمشكلة إلى النتائج والدروس).</p>
+</main></body></html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E2 L1 - RMS تخفي التفاصيل</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس E2 &middot; الطبقة 1: ما الذي تخفيه RMS؟</p>
+<h1>المقاييس الإجمالية تخفي الحقائق المهمة</h1>
+
+<div class="box"><p><b>جواب سؤال E1 L2:</b> (ج) oracle (المعرفة الحقيقية). السبب: الخطأ ينبع من عدم معرفة الاحتكاك الدقيق وضجيج النموذج. تحسين الكاميرا (أ) يقلل خطأ الآن، لكن لا يحسن التنبؤ البعيد (يعتمد على النموذج). تحسين النموذج (ب) يساعد، لكن الاحتكاك عدد واحد فقط—oracle يعرف كل شيء. (د) خاطئ—oracle يحقق 18 مم!</p></div>
+
+<div class="card"><h2>1. المشكلة: رقم واحد لا يقول كل شيء</h2>
+<p>نقول: "ekf19b أفضل من cvkf—7.1 مم مقابل 7.6 مم".</p>
+<p>لكن هذه الأرقام <b>متوسطات</b> على 500 launch. ماذا يحدث في:
+<ul>
+<li>الـ launches التي نجحت بدون مشاكل؟</li>
+<li>الـ launches التي قفزت الكرة بشكل غير متوقع؟</li>
+<li>الـ launches بدون ارتداد vs. بكثير ارتدادات؟</li>
+</ul>
+<p>RMS واحد يخفي كل هذا.</p>
+</div>
+
+<div class="card"><h2>2. مثال: نفس RMS، توزيعات مختلفة</h2>
+<table style="border-collapse:collapse;width:100%;font-size:85%">
+<tr style="border-bottom:1px solid var(--line)">
+<td style="padding:5px"><b>السيناريو</b></td>
+<td style="padding:5px"><b>الأخطاء</b></td>
+<td style="padding:5px"><b>RMS</b></td>
+<td style="padding:5px"><b>التفسير</b></td>
+</tr>
+<tr>
+<td style="padding:5px">A</td>
+<td style="padding:5px">5, 5, 5, 5, 5 مم</td>
+<td style="padding:5px">5 مم</td>
+<td style="padding:5px">متسق جداً ✓</td>
+</tr>
+<tr>
+<td style="padding:5px">B</td>
+<td style="padding:5px">1, 1, 1, 1, 45 مم</td>
+<td style="padding:5px">20 مم</td>
+<td style="padding:5px">رقم واحد سيء جداً ✗</td>
+</tr>
+<tr>
+<td style="padding:5px">C</td>
+<td style="padding:5px">10, 10, 10, 10, 10 مم</td>
+<td style="padding:5px">10 مم</td>
+<td style="padding:5px">متسق، لكن مرتين أسوأ</td>
+</tr>
+</table>
+<p>A و C لهما RMS مختلفة (يوضح الفرق). لكن كل الأرقام "متوسطة"—لا تخبرك عن توزيع الأخطاء.</p>
+</div>
+
+<div class="card"><h2>3. <span class='en'>Percentiles</span>: من الذي نهتم به؟</h2>
+<p>بدلاً من RMS واحد، ننظر إلى التوزيع:</p>
+<p class="en" style="text-align:center">
+min error, 25th percentile, 50th (median), 75th, 90th, max
+</p>
+<p>مثال ekf19b من 500 launch:</p>
+<p class="en" style="text-align:center">
+min = 1.2 mm, 25th = 4 mm, 50th = 6.8 mm, 75th = 9 mm, 90th = 12 mm, max = 45 mm
+</p>
+<p>RMS = 7.1 مم (متوسط جذري)، لكن:</p>
+<ul>
+<li>نصف الـ launches < 6.8 مم (جيد)</li>
+<li>10% من الـ launches > 12 مم (سيء)</li>
+<li>أسوأ launch = 45 مم (ارتداد كارثي)</li>
+</ul>
+<p>المعلومة المهمة: "في 90% من الحالات، نحن جيدون (< 12 مم). في 10%، نحتاج حذر (> 12 مم)".</p>
+</div>
+
+<div class="card"><h2>4. <span class='en'>Pooling</span>: دمج شروط مختلفة</h2>
+<p>نحن نجمع نتائج تحت <b>شروط مختلفة</b>:</p>
+<ul>
+<li><b>ideal:</b> بدون ضجيج (خطأ = 0 تقريباً)</li>
+<li><b>noise:</b> مع ضجيج الكاميرا والكاميرا</li>
+<li><b>dropout flagged:</b> مع قياسات مفقودة (معروف أنها مفقودة)</li>
+<li><b>dropout silent:</b> مع قياسات مفقودة (المرشح لا يعرف—أسوأ حالة)</li>
+<li><b>delay:</b> مع تأخير في القياسات</li>
+<li><b>all:</b> كل الشروط معاً</li>
+</ul>
+<p>نقول: "RMS الكلي = 7.1 مم". لكن ماذا لو كانت النتائج:</p>
+<p class="en" style="text-align:center">
+ideal: 1.8 مم<br>
+noise: 7 مم<br>
+dropout silent: 50 مم  ← سيء جداً!
+</p>
+<p>الدمج (pooling) يخفي أن المرشح <b>ينهار</b> في dropout silent!</p>
+</div>
+
+<div class="card"><h2>5. لماذا نقسم الشروط؟</h2>
+<p>في مشروعنا، نقدّم نتائج <b>منفصلة</b> لكل شرط:</p>
+<p class="en" style="text-align:center">
+ideal | noise | dropout-flagged | dropout-silent | delay | all
+</p>
+<p>هذا يسمح بـ:</p>
+<ul>
+<li><b>تشخيص:</b> أي شرط ضعيف؟</li>
+<li><b>تحسين موجه:</b> "نحتاج stale guard لـ dropout" أو "نحتاج أفضل نموذج لـ delay"</li>
+<li><b>توقعات واقعية:</b> "في الواقع (all)، الأداء X، لكن في الشروط المثالية، Y"</li>
+</ul>
+</div>
+
+<div class="card"><h2>6. <span class='en'>Sampling noise</span>: الاختلاف العشوائي</h2>
+<p>حتى نفس المرشح في نفس الشروط، النتائج تختلف!</p>
+<ul>
+<li>الـ launches مختلفة (سرعات أولية عشوائية، اتجاهات)</li>
+<li>الضجيج عشوائي (كل مرة مختلف)</li>
+</ul>
+<p>مثال: نشغل ekf19b تحت نفس الشروط 3 مرات (بـ 500 launch كل مرة):</p>
+<p class="en" style="text-align:center">
+run 1: RMS = 7.1 مم<br>
+run 2: RMS = 7.3 مم<br>
+run 3: RMS = 6.9 مم
+</p>
+<p>الاختلاف ≈ ±0.2 مم (طبيعي).</p>
+<p><b>الدرس:</b> "7.1 مم أفضل من 7.6 مم" قد لا يكون مهماً—الفرق قد يكون ضجيج إحصائي!</p>
+<p>نحتاج <b>فاصل ثقة</b> (confidence interval) أو اختبار إحصائي لنعرف: هل الفرق حقيقي؟</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في الجدول أعلاه، dropou-silent الخطأ 50 مم (7× أسوأ من noise). إذا كان RMS الكلي 7.1 مم، لماذا لم ترتفع إلى 20+ مم على الأقل؟ (dropout silent يحدث في كم % من الوقت؟)</p>
+</div>
+<p class="tag">القادم: F1 الطبقة 1 (الجداول النهائية: النتائج الكاملة بكل الشروط والمرشحات).</p>
+</main></body></html>

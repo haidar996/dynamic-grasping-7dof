@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L6 - تمارين</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 6: تمارين</p><h1>تمارين تحلّها بنفسك</h1>
+<div class="box"><p>جواب السؤال السابق: انحياز نصف الكرة <span class='en'>4 &times; 30/(3&pi;) = 12.7 mm</span>، أي أربعة أضعاف noise الكاميرا (3 مم).</p></div>
+<p>احسب بالورقة ثم افتح الجواب.</p>
+<div class='card'><h2>تمرين 1</h2><p>بكسلات القناع: <span class='en'>(20,10), (21,10), (22,10), (20,11), (21,11), (22,11)</span>. ما المركز؟ وإلى أي عنصر في مصفوفة العمق نقرأ؟ (انتبه إلى تقريب Python.)</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>u<sub>c</sub> = (20+21+22)/3 = 21.0</span> و<span class='en'>v<sub>c</sub> = (10+11)/2 = 10.5</span>. القراءة <span class='en'>D[int(round(10.5)), int(round(21.0))] = D[10, 21]</span> لأن <span class='en'>round(10.5) = 10</span> (أقرب عدد زوجي)، وليس 11.</p></details></div><div class='card'><h2>تمرين 2</h2><p>المركز <span class='en'>(u, v) = (250.0, 300.0)</span> والعمق المقيس <span class='en'>2.95 m</span>. احسب <span class='en'>(x, y)</span> بـ <span class='en'>f = 415.69</span>.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>z<sub>c</sub> = 2.95 + 0.03 = 2.98</span>. <span class='en'>x = (250 &minus; 319.5) &times; 2.98 / 415.69 = &minus;0.498 m</span>. <span class='en'>y = &minus;(300 &minus; 239.5) &times; 2.98 / 415.69 = &minus;0.434 m</span>.</p></details></div><div class='card'><h2>تمرين 3</h2><p>أيّ هذه البكسلات يقبلها القناع <span class='en'>G &gt; R+40 and G &gt; B+40</span>؟ <span class='en'>(30,180,40)</span>، <span class='en'>(120,160,100)</span>، <span class='en'>(50,100,40)</span>.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>(30,180,40)</span>: <span class='en'>G&minus;R = 150</span> و<span class='en'>G&minus;B = 140</span>: <b>نعم</b>. <span class='en'>(120,160,100)</span>: <span class='en'>G&minus;R = 40</span> ليس أكبر من 40: <b>لا</b>. <span class='en'>(50,100,40)</span>: <span class='en'>G&minus;R = 50</span> و<span class='en'>G&minus;B = 60</span>: <b>نعم</b> (أخضر غامق، مثل حافة مظلّلة).</p></details></div><div class='card'><h2>تمرين 4</h2><p>كم إطاراً في 500 إطلاق (10 ث، 60 إطاراً/ث)؟ وكم دقيقة لرسمها بمعدل 16 ms للإطار؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>10 &times; 60 = 600</span> إطار لكل إطلاق، <span class='en'>600 &times; 500 = 300,000</span>. الوقت <span class='en'>300000 &times; 0.016 s = 4800 s = 80 min</span>. (المقيس فعلاً 77.7 دقيقة.)</p></details></div><div class='card'><h2>تمرين 5</h2><p>بحسب جدول الطبقة 3، كم تتوقع خطأ المركز لكرة نصف قطرها <span class='en'>8.3</span> بكسل (ضعف كرتنا) عند <span class='en'>7.22 mm/px</span>؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>من الجدول بين نصف قطر 6 (<span class='en'>0.060 px</span>) و10 (<span class='en'>0.052 px</span>): حوالي <span class='en'>0.055 px = 0.40 mm</span>. أي لم يتحسن كثيراً رغم أن المساحة صارت أربعة أضعاف (فالخطأ من الحافة).</p></details></div><div class='card'><h2>تمرين 6</h2><p>اذكر ثلاثة أسباب لحفظ (u, v, z) المثالية في الملفات بدل (x, y) أو الصور نفسها.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>(1) نضيف الـ noise بشكله الصحيح (العمق يتناسب مع <span class='en'>Z<sup>2</sup></span>) ونغيّر قوته متى نشاء بلا إعادة رسم (80 دقيقة). (2) الملفات صغيرة (23 MB لكل شيء) بينما صور الإطارات ضخمة. (3) نحصل على نفس الإطارات لكل الـ estimators وكل الشروط، فالمقارنة عادلة.</p></details></div>
+<div class="card"><h2>انتهى الدرس B2</h2><p>تعلمنا: صورة اللون والعمق، القناع والمركز، أن المتوسط يعطي دقة أقل من بكسل (حوالي 0.6 مم لكرتنا)، الكود (render وmeasure_parts)، وحدود الكشف (مثل انحياز الحجب الجزئي). <b>القادم: B3، تفاصيل البكسل إلى المتر: الإسقاط العكسي بالكامل وخطؤه.</b> (في الحقيقة غطّينا جزءاً منه، فسأحدد معك هل ننتقل مباشرة إلى B4: اختيار ارتفاع الكاميرا والزاوية، أو إلى الجزء C: الـ noise.)</p></div>
+</main></body></html>

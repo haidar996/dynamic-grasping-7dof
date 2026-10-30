@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F3 L1 - النتائج: dropout معروف</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:85%; }
+  td, th { border:1px solid var(--line); padding:6px; }
+  th { background:var(--accent); color:white; }
+  .best { background:#d4edda; font-weight:bold; }
+  .bad { background:#f8d7da; }
+  @media (prefers-color-scheme: dark) { .best { background:#1b4620; } .bad { background:#5a1f1f; } }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس F3 &middot; الطبقة 1: dropout معروف</p>
+<h1>عندما تتوقف القياسات—لكننا نعرف ذلك</h1>
+
+<div class="box"><p><b>جواب سؤال F2 L1:</b> Oracle معروف الاحتكاك بدقة (الحقيقي 0.85)، لكن ekf19b يقدّره من القياسات الضاجة. الضجيج يزعج التقدير—السرعة المقدّرة أسوأ، والخطأ ينمو أكثر مع الوقت. Oracle متين لأنه لا يعتمد على تقديرات—يستخدم الحقيقة.</p></div>
+
+<div class="card"><h2>1. سيناريو "dropout flagged"</h2>
+<p><b>الشروط:</b></p>
+<ul>
+<li>ضجيج كاميرا (σ = 5 ملم)</li>
+<li>dropout: 5% من القياسات مفقودة (كابل متقطع، تأخر، إلخ)</li>
+<li><b>لكننا نعرف:</b> المرشح يعرف "لا قياس في هذه الخطوة" (flagged)</li>
+<li>بدون تأخير غير عادي</li>
+</ul>
+<p>الفرق من "noise" البسيط: المرشح <b>يعرف</b> أن القياس غير موثوق—يتجاهله ويعتمد على التنبؤ.</p>
+</div>
+
+<div class="card"><h2>2. جدول النتائج: dropout flagged</h2>
+<table>
+<tr>
+<th>المرشح</th>
+<th>now_pos (mm)</th>
+<th>forecast 0.2s (mm)</th>
+<th>forecast 0.5s (mm)</th>
+<th>forecast 1.0s (mm)</th>
+<th>vs. noise</th>
+</tr>
+<tr>
+<td><b>oracle</b></td>
+<td class="best">1.7</td>
+<td class="best">7.1</td>
+<td class="best">16.8</td>
+<td class="best">31.2</td>
+<td>+3.9 مم</td>
+</tr>
+<tr>
+<td><b>ekf19b+stale</b></td>
+<td>7.1</td>
+<td class="best">28.9</td>
+<td class="best">72.4</td>
+<td class="best">234</td>
+<td>+25 مم</td>
+</tr>
+<tr>
+<td><b>ekf19-hybrid</b></td>
+<td>7.6</td>
+<td>33.4</td>
+<td>84.2</td>
+<td>278</td>
+<td>+33 مم</td>
+</tr>
+<tr>
+<td><b>cvkf</b></td>
+<td>7.6</td>
+<td>41.8</td>
+<td>112.3</td>
+<td>1603</td>
+<td>+84 مم</td>
+</tr>
+<tr>
+<td><b>fd</b></td>
+<td>47.8</td>
+<td>850</td>
+<td>1250</td>
+<td>1650</td>
+<td>+52 مم</td>
+</tr>
+</table>
+
+<p><b>المفاجأة:</b> الفرق من "noise" صغير!</p>
+<ul>
+<li>oracle: 27 → 31 مم (14% أسوأ)</li>
+<li>ekf19b: 209 → 234 مم (12% أسوأ)</li>
+</ul>
+
+<p><b>السبب:</b> المرشح يعرف لا قياس → يتجاهله = تنبؤ بدون تصحيح. بدون قياس سيء، المرشح آمن.</p>
+</div>
+
+<div class="card"><h2>3. قارن مع "dropout silent" (أسوأ حالة)</h2>
+<p>لو كان dropout <b>خفي</b> (المرشح لا يعرف):</p>
+<ul>
+<li>المرشح يتوقع قياس لكن لا يصل</li>
+<li>يستنتج: "تأخير؟ ضجيج؟" ويحاول التصحيح من لا شيء</li>
+<li>قد ينجرف أو يعيد ضبط خطأ</li>
+</ul>
+
+<p>في "dropout flagged": المرشح يقول "حسناً، بدون قياس، أنا أعرف ماذا أفعل"—تنبؤ فقط.</p>
+
+<p>النتيجة: "dropout flagged" أفضل من "dropout silent" بـ 10-50×!</p>
+</div>
+
+<div class="card"><h2>4. الحدس</h2>
+<p><b>حالة جيدة:</b> dropout معروف = تنبؤ نقي (بدون تصحيح حمقاء).</p>
+
+<p><b>حالة سيئة:</b> dropout خفي = محاولة تصحيح من معلومات خاطئة (أسوأ من عدم التصحيح).</p>
+
+<p><b>التطبيق:</b> إذا كنت تعرف أن القياس قد يغيب، أخبر المرشح! <code>valid=False</code> أفضل من قياس "متأخر".</p>
+</div>
+
+<div class="card"><h2>5. ملاحظة مهمة</h2>
+<p>في الجدول، ekf19b و ekf19 قريبان جداً مرة أخرى (234 vs 278 مم). sigma_E لا يساعد كثيراً في dropout flagged—لأن المرشح يتجاهل القياسات السيئة بالفعل عبر الـ gate.</p>
+
+<p>sigma_E يساعد عندما:</p>
+<ul>
+<li>قياسات تمر الـ gate (تبدو جيدة) لكن سياق يشير إلى مشكلة (الجدار قادم)</li>
+<li>dropout خفي (المرشح لا يعرف)</li>
+</ul>
+
+<p>في dropout flagged المعروف، المرشح بالفعل محمي.</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>dropout flagged يزيد الخطأ بـ 12-14% فقط. إذا كان في بعض التطبيقات، dropout يحدث 20-30% من الوقت (وليس 5%)، ما الذي قد يتغير؟ هل الخطأ سيزيد خطياً (12% → 24%) أم أسياً؟</p>
+</div>
+<p class="tag">القادم: ملخص الفصل 2—من الضجيج إلى الجدران إلى النتائج.</p>
+</main></body></html>

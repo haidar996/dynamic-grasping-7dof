@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 L6 - تمارين</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B1 &middot; الطبقة 6: تمارين</p><h1>تمارين تحلّها بنفسك</h1>
+<div class="box"><p>جواب السؤال السابق: ميلان 0.5&deg; يعطي إزاحة <span class='en'>3 &times; tan 0.5&deg; = 26 mm</span>، أي حوالي ثمانية أضعاف خطأ الـ noise (3 مم). فالتركيب الدقيق للكاميرا أهم من الـ noise نفسه في الواقع.</p></div>
+<p>احسب بالورقة ثم افتح الجواب.</p>
+<div class='card'><h2>تمرين 1</h2><p>كاميرا ذات زاوية رؤية رأسية <span class='en'>75&deg;</span> و480 صفاً. احسب <span class='en'>f</span> وحجم البكسل على الأرض عند <span class='en'>Z = 3 m</span>.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>f = 240 / tan(37.5&deg;) = 312.8 px</span>، وحجم البكسل <span class='en'>3 / 312.8 = 9.59 mm</span> (أكبر من 7.22 عند 60&deg;، فالدقة أقل).</p></details></div><div class='card'><h2>تمرين 2</h2><p>كرة مركزها <span class='en'>(x, y) = (&minus;0.3, 0.8)</span> و<span class='en'>Z<sub>c</sub> = 2.97</span> و<span class='en'>f = 415.7</span>. في أي بكسل <span class='en'>(u, v)</span> تظهر؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>u &minus; c<sub>x</sub> = &minus;0.3 &times; 415.7 / 2.97 = &minus;42.0</span> فـ <span class='en'>u = 319.5 &minus; 42.0 = 277.5</span>. و<span class='en'>c<sub>y</sub> &minus; v = 0.8 &times; 415.7 / 2.97 = 112.0</span> فـ <span class='en'>v = 239.5 &minus; 112.0 = 127.5</span>.</p></details></div><div class='card'><h2>تمرين 3</h2><p>استعمل <span class='en'>back_project</span> بحساب يدوي: البكسل <span class='en'>(450, 150)</span> والعمق المقيس <span class='en'>2.94 m</span>.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>z<sub>c</sub> = 2.94 + 0.03 = 2.97</span>. <span class='en'>x = (450 &minus; 319.5) &times; 2.97 / 415.69 = 130.5 &times; 0.007145 = 0.932 m</span>. <span class='en'>y = &minus;(150 &minus; 239.5) &times; 0.007145 = +0.639 m</span>. (تحققت بالكود: 0.9324 و0.6395.)</p></details></div><div class='card'><h2>تمرين 4</h2><p>الكاميرا مائلة <span class='en'>2&deg;</span>. كم الإزاحة التقريبية على الأرض؟ وكم يلزم أن تكون دقة الميلان لكي يبقى الخطأ تحت 3 مم؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>3 &times; tan 2&deg; = 0.105 m = 105 mm</span>. لخطأ 3 مم: <span class='en'>tan &delta; = 0.003/3 = 0.001</span>، أي <span class='en'>&delta; = 0.057&deg;</span> تقريباً. دقة الميلان المطلوبة عالية جداً (أقل من عُشر درجة).</p></details></div><div class='card'><h2>تمرين 5</h2><p>أي ارتفاع للكاميرا يعطي بكسلاً بحجم <span class='en'>5 mm</span> على الأرض عند زاوية 60&deg;؟ وكم يرى رأسياً حينها؟ وهل الساحة تدخل؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>Z/f = 5 mm</span> فـ <span class='en'>Z = 0.005 &times; 415.7 = 2.08 m</span>. المرئي رأسياً <span class='en'>2 &times; 2.08 &times; tan 30&deg; = 2.40 m</span>. الساحة 2 م تدخل لكن الهامش صغير (0.2 م على كل جانب، أقل بعد حساب ارتفاع الكرة).</p></details></div><div class='card'><h2>تمرين 6</h2><p>متى يصبح قياس العمق ضرورياً فعلاً (ولا يكفي معرفة أن الكرة على الأرض)؟ اذكر حالتين.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>(1) إذا طارت الكرة أو قفزت، فارتفاعها يتغير. (2) إذا كانت الطاولة مائلة أو غير معروفة الارتفاع أو الكاميرا مائلة بمقدار غير معروف. وفي الحالتين لا نعرف <span class='en'>Z<sub>c</sub></span> بدون قياس.</p></details></div>
+<div class="card"><h2>انتهى الدرس B1</h2><p>تعلمنا: الصورة والبكسل، زاوية الرؤية والبعد البؤري، نموذج الثقب واشتقاقه، الصنف <span class='en'>Pinhole</span>، وافتراضات الكاميرا. <b>القادم: B2، صورة العمق والإسقاط العكسي بالتفصيل: كيف نحصل على (x, y) من (u, v, z) خطوة خطوة.</b></p></div>
+</main></body></html>

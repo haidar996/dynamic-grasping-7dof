@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 L4 - Kalman في البرنامج</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; --code:#1e1e1e; --codetext:#d4d4d4; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; --code:#1e1e1e; --codetext:#d4d4d4; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:800px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  code { background:var(--code); color:var(--codetext); padding:2px 6px; border-radius:4px; font-family:"Courier New",monospace; font-size:90%; }
+  pre { background:var(--code); color:var(--codetext); padding:12px; border-radius:8px; overflow-x:auto; font-size:85%; line-height:1.5; margin:12px 0; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D3 &middot; الطبقة 4: حيث يعيش الكود</p>
+<h1>مرشّح Kalman في البرنامج</h1>
+
+<div class="box"><p><b>جواب سؤال D3 L3:</b> عندما <span class='en'>R → 0</span> (قياس مثالي): <span class='en'>K → 1</span> و<span class='en'>P → 0</span> (نتبع القياس كلياً). عندما <span class='en'>P⁻ → 0</span> (تنبؤ مثالي): <span class='en'>K → 0</span> و<span class='en'>P → 0</span> (نبقى مع التنبؤ). عندما <span class='en'>P⁻ = R</span>: <span class='en'>K = 0.5</span> (نزن التنبؤ والقياس بالتساوي).</p></div>
+
+<div class="card"><h2>1. الملف</h2>
+<p>معادلات Kalman موجودة في <code>estimators/filters.py</code>. الفئة <span class='en'>EKF19</span> تطبقها بشكل كامل (مع الاحتكاك والجدران والمزيد). النسخة البسيطة <b>بدون احتكاك</b> تُسمى <span class='en'>cvkf</span> (constant-velocity Kalman filter):</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%"><code>cvkf = EKF19(c=0.0, E=0.0, L=1e9, policy="none")</code></p>
+<p>حيث <span class='en'>c=0</span> معناه لا احتكاك (ثابت سرعة)، و<span class='en'>policy="none"</span> معناه لا "gate" ولا إعادة تعيين عند الأخطاء.</p>
+</div>
+
+<div class="card"><h2>2. الأوزان: <span class='en'>R</span> و<span class='en'>P0</span></h2>
+<p>في <span class='en'>__init__</span>:</p>
+<pre>self.R = sigma ** 2                    # خطأ القياس (الكاميرا)
+self.P0 = np.diag([sigma ** 2, sigma ** 2, sigma_v0 ** 2, sigma_v0 ** 2])</pre>
+<p><span class='en'>R</span> = تباين خطأ القياس (واحد للموقع، لأن القياس 2D <span class='en'>xy</span>). القيمة الافتراضية <span class='en'>sigma = 0.005 m</span> (5 ملم)، إذاً <span class='en'>R = 2.5×10⁻⁵</span> (كما في مثال D3 L2).</p>
+<p><span class='en'>P0</span> = التباين الأولي (4×4 مصفوفة قطرية): <span class='en'>sigma²</span> لـ <span class='en'>x</span> و<span class='en'>y</span> (الموقع)، و<span class='en'>sigma_v0²</span> لـ <span class='en'>vx</span> و<span class='en'>vy</span> (السرعة). القيمة الافتراضية <span class='en'>sigma_v0 = 3.0 m/s</span> (عدم يقين كبير في السرعة الأولى).</p>
+</div>
+
+<div class="card"><h2>3. التنبؤ (Predict)</h2>
+<p>دالة <span class='en'>_predict(dt)</span> تغيّر الحالة والتباين عبر النموذج الديناميكي:</p>
+<pre>F = np.eye(4); F[0, 2] = F[1, 3] = h   # مصفوفة الانتقال: x += vx*dt
+P = F @ P @ F.T + Q                      # التباين بعد النموذج + ضجيج النموذج</pre>
+<p><span class='en'>F</span> = مصفوفة الانتقال (4×4): أعلى يسار هويّة (السرعة ثابتة)، أعلى يمين <span class='en'>dt</span> (الموقع يتغير). <span class='en'>Q</span> = ضجيج النموذج (<span class='en'>q=0.5</span> افتراضي).</p>
+</div>
+
+<div class="card"><h2>4. التصحيح (Correct)</h2>
+<p>في <span class='en'>update()</span> بعد التنبؤ:</p>
+<pre>y = z - self.s[:2]                     # التنبية (الفرق بين القياس والتنبؤ)
+S = self.P[:2, :2] + self.R * np.eye(2)  # تباين التنبية
+K = self.P[:, :2] @ np.linalg.inv(S)   # الكسب (P⁻ / S)
+self.s = self.s + K @ y                 # تحديث الحالة
+self.P = (np.eye(4) - K @ np.eye(4)[:2]) @ self.P  # تحديث التباين</pre>
+<p>لاحظ: <span class='en'>K</span> مصفوفة (4×2) لأن الحالة 4D (موقع + سرعة) والقياس 2D (موقع فقط).</p>
+</div>
+
+<div class="card"><h2>5. المقارنة مع المعادلات</h2>
+<table class="en" style="border-collapse:collapse;width:100%;font-size:90%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:5px"><b>D3 L2 (1D)</b></td><td><b>الكود (4D)</b></td></tr>
+<tr><td style="padding:5px">x̂⁻ = x̂ + u</td><td>self.s = F @ self.s (propagate)</td></tr>
+<tr><td style="padding:5px">P⁻ = P + Q</td><td>P = F @ P @ F.T + Q</td></tr>
+<tr><td style="padding:5px">S = P⁻ + R</td><td>S = self.P[:2, :2] + self.R * I</td></tr>
+<tr><td style="padding:5px">K = P⁻ / S</td><td>K = self.P[:, :2] @ inv(S)</td></tr>
+<tr><td style="padding:5px">x̂ = x̂⁻ + K*y</td><td>self.s = self.s + K @ y</td></tr>
+<tr><td style="padding:5px">P = (1 − K)*P⁻</td><td>P = (I − K @ H) @ P</td></tr>
+</table>
+<p>الصيغ <b>متطابقة</b>! الفرق الوحيد: D3 L2 متغير واحد (موقع)، الكود 4 متغيرات (موقع + سرعة). الكود يستخدم <span class='en'>H = [[1,0,0,0],[0,1,0,0]]</span> (نقيس الموقع فقط).</p>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في الكود، <span class='en'>self.P</span> مصفوفة 4×4 (موقع + سرعة)، لكن <span class='en'>self.R</span> عدد واحد (مقياس). لماذا تصير <span class='en'>S = self.P[:2, :2] + self.R * np.eye(2)</span>؟ (ما الذي تقيسه كل عبارة؟)</p>
+</div>
+<p class="tag">القادم: D3 الطبقة 5 (الافتراضات والحدود: متى ينجح Kalman، ما الذي يكسره).</p>
+</main></body></html>

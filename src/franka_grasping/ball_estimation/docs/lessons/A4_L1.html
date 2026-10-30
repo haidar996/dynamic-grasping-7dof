@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A4 L1 - قوانين حركة الكرة</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A4 &middot; الطبقة 1: الحدس</p>
+<h1>قانونان يحكمان حركة الكرة</h1>
+
+<div class="box"><p>انتقلنا إلى A4 كما طلبت. تركنا الطبقات 4 و5 و6 من A3 (الكود والحدود والتمارين)، ويمكن أن نعود إليها لاحقاً.</p></div>
+
+<div class="card"><h2>القانون 1: الاحتكاك يُبطئ الكرة بمعدل ثابت</h2>
+<p>الكرة تنزلق على الأرض، والاحتكاك يعاكس اتجاه حركتها دائماً. في نموذجنا يُنقص الاحتكاك السرعة <b>بمقدار ثابت كل ثانية</b>، اسمه <span class='en'>&mu;</span> (وحدته م/ث في الثانية، أي <span class='en'>m/s<sup>2</sup></span>).</p>
+<svg viewBox="0 0 460 220" style="width:100%;max-width:520px;height:auto;display:block;margin:auto;direction:ltr" font-family="Segoe UI,Arial,sans-serif" font-size="12">
+<line x1="50" y1="190" x2="440" y2="190" stroke="currentColor"/><line x1="50" y1="190" x2="50" y2="20" stroke="currentColor"/>
+<polyline points="50.0,50.0 393.9,190.0" fill="none" stroke="#1f5f8b" stroke-width="3"/>
+<circle cx="50" cy="50.0" r="4" fill="#1f5f8b"/><circle cx="393.9" cy="190" r="4" fill="#b03a3a"/>
+<text x="56" y="42.0" fill="currentColor">v0 = 2.0 m/s</text>
+<text x="363.9" y="180" fill="#b03a3a">stops at 2.35 s</text>
+<text x="390" y="206" fill="currentColor">time (s)</text><text x="54" y="16" fill="currentColor">speed (m/s)</text>
+<text x="140" y="81.5" fill="#1f5f8b">slope = -mu = -0.85 m/s per s</text>
+</svg>
+<p>مثال: <span class='en'>v<sub>0</sub> = 2.0 m/s</span> و<span class='en'>&mu; = 0.85</span>:</p>
+<ul>
+<li>بعد ثانية: <span class='en'>2.0 &minus; 0.85 = 1.15 m/s</span>.</li>
+<li>تتوقف عندما تصبح السرعة صفراً: <span class='en'>t = v<sub>0</sub>/&mu; = 2.0/0.85 = 2.35 s</span>.</li>
+<li>المسافة حتى التوقف: <span class='en'>v<sub>0</sub><sup>2</sup>/(2&mu;) = 4/1.7 = 2.35 m</span>.</li>
+</ul>
+<p>لاحظ أن الكرة السريعة والبطيئة تفقدان السرعة بنفس المعدل. فالكرة السريعة تقطع مسافة أطول بكثير قبل أن تتوقف.</p></div>
+
+<div class="card"><h2>القانون 2: الجدار يعكس السرعة العمودية ويُنقصها</h2>
+<p>عند الاصطدام بجدار يتغير شيئان فقط:</p>
+<ul>
+<li>السرعة <b>العمودية</b> على الجدار تنقلب إشارتها وتضرب في <span class='en'>E</span> (رقم بين 0 و1 اسمه معامل الارتداد، <span class='en'>restitution</span>).</li>
+<li>السرعة <b>الموازية</b> للجدار لا تتغير.</li>
+</ul>
+<p>مثال: <span class='en'>v<sub>x</sub> = 3.0</span> نحو جدار <span class='en'>x = +0.97</span>، و<span class='en'>E = 0.7</span>: بعد الاصطدام <span class='en'>v<sub>x</sub> = &minus;2.1</span>، وتبقى <span class='en'>v<sub>y</sub></span> كما هي. الكرة خسرت 30% من سرعتها العمودية.</p></div>
+
+<div class="card"><h2>ما الذي يحدد المستقبل؟</h2>
+<p>لكي نعرف أين ستذهب الكرة نحتاج:</p>
+<ol>
+<li>الـ state الآن: المكان والسرعة <span class='en'>(x, y, v<sub>x</sub>, v<sub>y</sub>)</span>.</li>
+<li>الثابتان <span class='en'>&mu;</span> و<span class='en'>E</span>.</li>
+<li>مكان الجدران (<span class='en'>&plusmn;0.97</span>).</li>
+</ol>
+<p>الـ state <b>يتغير</b> مع الزمن، أما <span class='en'>&mu;</span> و<span class='en'>E</span> فثابتان خلال الإطلاق الواحد، ويختلفان من إطلاق إلى آخر. والـ estimator لا يعرف <span class='en'>&mu;</span> و<span class='en'>E</span> الحقيقيين (إلا الـ oracle). هذا هو مصدر معظم خطأ الـ forecast الذي رأيناه في النتائج.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>كرة بسرعة <span class='en'>4 m/s</span> و<span class='en'>&mu; = 1.0</span>، بلا جدران. بعد كم ثانية تتوقف؟ وكم مسافة تقطع؟</p></div>
+<p class="tag">القادم: A4 الطبقة 2 (التعريفات الدقيقة: معادلات الحركة بالرموز).</p>
+</main></body></html>

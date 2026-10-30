@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 L6 - تمارين</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C4 &middot; الطبقة 6: تمارين</p><h1>تمارين تحلّها بنفسك</h1>
+<div class="box"><p>جواب السؤال السابق: أتوقع أن يتغير الحدّ رقم 1 (الضياع مستقل عن الذراع، فسيصبح مرتبطاً بوضعها) ورقم 5 (الحجب الجزئي ينتج قياساً منحازاً)، لأن الذراع تحجب الكرة بشكل منتظم وجزئي، لا عشوائي وكامل. هذا رأيي.</p></div>
+<p>احسب بالورقة ثم افتح الجواب.</p>
+<div class='card'><h2>تمرين 1</h2><p>ضياع <span class='en'>r = 2%</span> ومتوسط فجوة <span class='en'>g = 4</span> إطارات. احسب <span class='en'>q</span> و<span class='en'>p</span> ومتوسط الرؤية المتواصلة.</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>q = 1/4 = 0.25</span>. <span class='en'>p = 0.02 &times; 0.25 / 0.98 = 0.0051</span>. متوسط الرؤية <span class='en'>1/p = 196</span> إطاراً (3.3 ث).</p></details></div><div class='card'><h2>تمرين 2</h2><p>بـ <span class='en'>q = 1/6</span>: ما احتمال أن تكون الفجوة <span class='en'>&ge; 4</span> إطارات؟ وما احتمال أن تكون <span class='en'>= 1</span> بالضبط؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>P(n &ge; 4) = (1 &minus; q)<sup>3</sup> = (5/6)<sup>3</sup> = 0.58</span>. و<span class='en'>P(n = 1) = q = 0.167</span>. أي أن أكثر من نصف الفجوات يبلغ 4 إطارات فأكثر.</p></details></div><div class='card'><h2>تمرين 3</h2><p>فجوة بطول 20 إطاراً وكرة بسرعة <span class='en'>2 m/s</span>: كم ثانية؟ وكم متراً تقطعها الكرة؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><span class='en'>20/60 = 0.333 s</span>، والمسافة <span class='en'>2 &times; 0.333 = 0.67 m</span>. وفي الوضع الصامت يظن الـ estimator أنها لم تتحرك طوال ذلك.</p></details></div><div class='card'><h2>تمرين 4</h2><p>(الأصعب) في الـ fd الوضع الصامت: فجوة 0.5 ث وكرة بسرعة <span class='en'>3 m/s</span>. حين يعود القياس الحقيقي، فكم تقدّر السرعة في الوضع الصامت وفي الوضع المُعلَن؟ (تذكّر أن fd يحسب السرعة <span class='en'>(z<sub>new</sub> &minus; z<sub>last</sub>)/&Delta;t</span> بين آخر قياسين <b>صالحين</b> حسب علمه.)</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p><b>المُعلَن:</b> آخر قياس صالح هو قبل الفجوة بـ <span class='en'>0.5 + 0.0167 s</span>، فالسرعة <span class='en'>1.5 m / 0.517 s = 2.9 m/s</span>: صحيحة تقريباً.</p><p><b>الصامت:</b> القياسات المكرَّرة تبدو صالحة، فآخر قياس صالح قبل إطار واحد (<span class='en'>0.0167 s</span>) لكنه قيمة قديمة. الفرق <span class='en'>3 &times; 0.5 = 1.5 m</span>: السرعة <span class='en'>1.5 / 0.0167 = 90 m/s</span>! (وفي الفجوة نفسها كانت السرعة 0.) هذا هو سبب أن الصامت أسوأ من المُعلَن.</p></details></div><div class='card'><h2>تمرين 5</h2><p>لماذا يعمل حارس التكرار (+stale) في محاكاتنا حتى مع تشغيل الـ noise؟ ومتى يفشل في الواقع؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>في المحاكاة الوضع الصامت ينسخ <b>آخر قياس مُسلَّم بعد الـ noise</b> (<span class='en'>self.last = xy</span>)، فالتكرار تطابق بالبت حتى مع الـ noise، بينما القياسات الحقيقية المتتالية لا تتطابق أبداً. في الواقع يفشل إن كانت الكاميرا المجمّدة تعيد قيمة تتغير قليلاً، أو كان لدينا حساس يعطي قيمة متكررة مشروعة.</p></details></div><div class='card'><h2>تمرين 6</h2><p>لماذا نستعمل مولّداً عشوائياً مخصصاً لأماكن الفجوات؟</p><details><summary><b>الجواب</b> (حاول أولاً ثم افتح)</summary><p>لنقارن الشروط والـ estimators على <b>نفس الفجوات</b> (paired): تغيير قوة الـ noise لا يغيّر مكان الفجوات (C1 L4).</p></details></div>
+<div class="card"><h2>انتهى الدرس C4</h2><p>تعلمنا: الانقطاع المُعلَن والصامت، سلسلة ماركوف ومعادلاتها، قياساتها على بياناتنا، وحدود النموذج. <b>القادم: C5، مجموعة البيانات: كيف نخزّن الإطلاقات وكيف نطبّق الشروط الستة وما معنى «paired».</b></p></div>
+</main></body></html>

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D7 L3 - السياسات في البرنامج</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; --code:#1e1e1e; --codetext:#d4d4d4; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; --code:#1e1e1e; --codetext:#d4d4d4; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  code { background:var(--code); color:var(--codetext); padding:2px 6px; border-radius:4px; font-family:"Courier New",monospace; font-size:90%; }
+  pre { background:var(--code); color:var(--codetext); padding:12px; border-radius:8px; overflow-x:auto; font-size:82%; line-height:1.5; margin:12px 0; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D7 &middot; الطبقة 3: حيث تعيش السياسات</p>
+<h1>السياسات في <span class='en'>filters.py</span></h1>
+
+<div class="box"><p><b>جواب سؤال D7 L1:</b> إذا خفضنا <span class='en'>k_reset = 2</span> بدلاً من 3:
+<ul>
+<li><b>الإيجابي:</b> نعيد ضبط أسرع إذا كانت الكاميرا متجمدة (نتعافى بسرعة)</li>
+<li><b>السلبي:</b> قياسان سيئان متتاليان يسبب reset (قد يحدث بالصدفة)، نفقد التعلم بسرعة أكبر</li>
+<li><b>الحل الوسط:</b> 3 أفضل—يسمح بـ glitch واحد أو اثنين بدون reset فوري</li>
+</ul>
+</p></div>
+
+<div class="card"><h2>1. الملف والمعاملات</h2>
+<p>السياسات في <code>estimators/filters.py</code>، فئة <span class='en'>EKF19</span>:</p>
+<pre>def __init__(self, c=0.85, E=0.725, L=0.97, q=0.5, sigma=0.005,
+             gate_p=0.99, policy="hybrid", k_reset=3, ...):
+    self.policy = policy          # "none" | "skip" | "reset" | "hybrid"
+    self.k_reset = k_reset        # عدد الرفضات قبل reset
+    self.gate = chi2.ppf(gate_p, 2)  # عتبة chi-square</pre>
+<p><span class='en'>policy</span> افتراضي "hybrid"، <span class='en'>k_reset</span> افتراضي 3.</p>
+</div>
+
+<div class="card"><h2>2. مراحل المرشح في <span class='en'>update()</span></h2>
+<pre>def update(self, t, xy, valid):
+    if not valid:
+        return  # لا قياس، لا شيء
+
+    z = np.asarray(xy, float)
+
+    if not self.ready:
+        # أول قياس: ابدأ من هنا
+        self.s = np.array([z[0], z[1], 0.0, 0.0])
+        self.P = self.P0.copy()
+        self.t, self.ready = t, True
+        return
+
+    if t > self.t:
+        self._predict(t - self.t)  # تنبؤ
+
+    self.t = t
+
+    # ============ الـ Gate والسياسات ============
+    y = z - self.s[:2]  # التنبية
+    S = self.P[:2, :2] + self.R * np.eye(2)
+
+    # فحص الـ Gate
+    if self.policy != "none" and y @ np.linalg.solve(S, y) > self.gate:
+        # قياس مريب!
+        self.n_gate += 1
+        self.fails += 1  # زد عداد الرفضات
+
+        if self.policy == "reset":
+            # reset فوراً
+            self._reset_to(t, z)
+        elif self.policy == "hybrid" and self.fails >= self.k_reset:
+            # انتظر k_reset رفضات، ثم reset
+            self._reset_to(t, z)
+        # else: policy == "skip" أو hybrid لكن fails < k_reset
+        # تجاهل القياس، لا تحديث
+        return
+
+    # قياس جيد—تحديث عادي
+    self.fails = 0  # أعد عداد الرفضات
+    K = self.P[:, :2] @ np.linalg.inv(S)
+    self.s = self.s + K @ y
+    self.P = (np.eye(4) - K @ np.eye(4)[:2]) @ self.P</pre>
+</div>
+
+<div class="card"><h2>3. دالة <span class='en'>_reset_to</span></h2>
+<pre>def _reset_to(self, t, z):
+    self.s = np.array([z[0], z[1], 0.0, 0.0])  # موقع من القياس، سرعة صفر
+    self.P = np.eye(4)  # تباين أولي (الورقة: identity)
+    self.t, self.fails = t, 0
+    self.n_reset += 1  # عداد كم مرة reset</pre>
+<p>لاحظ:</p>
+<ul>
+<li>الموقع من <span class='en'>z</span> (القياس الجديد)</li>
+<li>السرعة <span class='en'>0, 0</span> (افتراض)</li>
+<li>التباين <span class='en'>identity</span> (عدم يقين عالي)</li>
+<li><span class='en'>self.n_reset</span> يتتبع عدد resets (للإحصائيات)</li>
+</ul>
+</div>
+
+<div class="card"><h2>4. مثال: كود ينشئ مرشحات بسياسات مختلفة</h2>
+<pre>from estimators.filters import make
+
+# Kalman خطي (بدون احتكاك، بدون gate)
+cvkf = make("cvkf")  # c=0, policy="none"
+
+# EKF مع احتكاك، بدون gate
+ekf19_none = make("ekf19-none")  # policy="none"
+
+# EKF مع احتكاك، skip على قياسات سيئة
+ekf19_skip = make("ekf19-skip")  # policy="skip"
+
+# EKF مع احتكاك، hybrid (افتراضي)
+ekf19_hybrid = make("ekf19-hybrid")  # policy="hybrid", k_reset=3
+
+# EKF مع احتكاك + تصحيح bounce، hybrid
+ekf19b_hybrid = make("ekf19b-hybrid")  # sigma_E=0.13, policy="hybrid"
+
+# مخصص: hybrid مع k_reset=5
+ekf19b_custom = make("ekf19b-hybrid", k_reset=5)</pre>
+</div>
+
+<div class="card"><h2>5. التتبع والإحصائيات</h2>
+<p>المرشح يحسب عدادات:</p>
+<ul>
+<li><span class='en'>self.n_gate</span>: كم مرة رفع الـ Gate قياس</li>
+<li><span class='en'>self.n_reset</span>: كم مرة reset المرشح</li>
+<li><span class='en'>self.fails</span>: عداد رفضات متتالية حالي (يُعاد للصفر عند قياس جيد)</li>
+</ul>
+<p>في النتائج النهائية، نتفقد: "في 500 launch، الـ gate رفع 35 مرة، reset 8 مرات".</p>
+</div>
+
+<div class="card"><h2>6. الخلط: <span class='en'>policy</span> مع <span class='en'>sigma_E</span></h2>
+<p><b>لا تخلط!</b> هذان مستقلان:</p>
+<ul>
+<li><span class='en'>sigma_E</span> = تصحيح bounce (يضيف تأكد في السرعة قبل الارتداد المتوقع)</li>
+<li><span class='en'>policy</span> = ماذا تفعل عند قياس سيء (skip/reset/hybrid)</li>
+</ul>
+<p>يمكنك استخدام <span class='en'>sigma_E=0.13, policy="hybrid"</span> معاً:</p>
+<ul>
+<li><span class='en'>sigma_E</span> يُقلل المفاجأة من الارتداد</li>
+<li><span class='en'>policy</span> يتعامل مع قياسات سيئة أخرى (تجمد، ضجيج)</li>
+</ul>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في دالة <span class='en'>_reset_to</span>، لماذا السرعة نُفترض صفر (<span class='en'>[0, 0]</span>) بدلاً من محاولة تخمين السرعة من القياس السابق؟</p>
+</div>
+<p class="tag">القادم: D8 الطبقة 1 (الـ Stale Guard والـ Oracle).</p>
+</main></body></html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L2 part1 - الـ state والـ measurement</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 2: التعريف والرموز &middot; الجزء 1</p>
+<h1>الـ state والـ measurement</h1>
+
+<div class="box"><p>أجبتَ 0.12 م/ث، وهذا صحيح: 0.002 &times; 60 = 0.12. كلما صغر الخطأ في المكان صغر الخطأ في السرعة بنفس النسبة، لأننا نضربه في 60.</p></div>
+
+<div class="card">
+<h2>1. الزمن</h2>
+<p>الكاميرا تلتقط صورة كل 1/60 ثانية. نرقّم الصور بـ <span class="en">k = 1, 2, 3, ...</span> ونسمّي زمن الصورة رقم k بالرمز <span class="en">t<sub>k</sub></span>. إذن <span class="en">t<sub>k</sub> = k / 60</span> ثانية تقريباً.</p>
+</div>
+
+<div class="card">
+<h2>2. الـ state (الحالة الحقيقية)</h2>
+<p>الـ <span class="en">state</span> هو القائمة الصغيرة من الأرقام التي تصف الكرة كاملةً في لحظة واحدة. في مشروعنا الكرة تتحرك على أرض مستوية، فالـ state أربعة أرقام:</p>
+<p class="en" style="text-align:center">s(t) = ( x, y, v<sub>x</sub>, v<sub>y</sub> )</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>x, y</b></td><td>position (m)</td></tr>
+<tr><td style="padding:4px 12px"><b>v<sub>x</sub>, v<sub>y</sub></b></td><td>velocity (m/s)</td></tr>
+</table>
+<p>مثال: عند <span class="en">t = 2.0 s</span> قد يكون <span class="en">s = (0.50, &minus;0.20, 1.2, 0.0)</span>. معناه: الكرة عند x = 0.5 م و y = &minus;0.2 م، وتتحرك بسرعة 1.2 م/ث في اتجاه x فقط.</p>
+<p><b>لماذا أربعة أرقام تكفي؟</b> لأن قوانين الحركة (الاحتكاك والاصطدام بالجدار) تحدد المستقبل بالكامل إذا عرفنا هذه الأربعة. لا نحتاج إلى معلومة أخرى. سنبرهن هذا في الدرس A4.</p>
+<p><b>مهم:</b> الـ state الحقيقي لا يعرفه إلا المحاكي. الذراع والـ estimator لا يرونه.</p>
+</div>
+
+<div class="card">
+<h2>3. الـ measurement (القياس)</h2>
+<p>من الصورة رقم k نحصل على رقمين فقط:</p>
+<p class="en" style="text-align:center">z<sub>k</sub> = ( x<sub>meas</sub>, y<sub>meas</sub> ) = p(t<sub>k</sub>) + n<sub>k</sub></p>
+<p>حيث <span class="en">p(t<sub>k</sub>) = (x, y)</span> هو المكان الحقيقي، و<span class="en">n<sub>k</sub></span> هو الخطأ العشوائي (<span class="en">noise</span>) في هذه الصورة.</p>
+<p>مثال: المكان الحقيقي <span class="en">(0.500, &minus;0.200)</span>، والـ noise <span class="en">(+0.012, +0.002)</span>، فالـ measurement هو <span class="en">(0.512, &minus;0.198)</span>.</p>
+<p>لاحظ ما ينقص: <b>z</b> فيه رقمان، لكن الـ <b>state</b> فيه أربعة. السرعة غير موجودة في القياس. هذا معنى كلمة <span class="en">partial</span> التي ذكرناها.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد</h2>
+<p>الـ state فيه 4 أرقام، والـ measurement فيه رقمان. ما هما الرقمان اللذان لا يظهران في القياس؟ وماذا يعني ذلك بالنسبة للـ estimator؟</p>
+</div>
+
+<p class="tag">القادم (A1 الطبقة 2 الجزء 2): تعريف الـ estimator والـ forecast كدالتين، ومعنى الخطأ.</p>
+</main></body></html>

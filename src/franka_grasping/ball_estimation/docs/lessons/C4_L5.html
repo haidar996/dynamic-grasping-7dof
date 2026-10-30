@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 L5 - حدود نموذج الانقطاع</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C4 &middot; الطبقة 5: الافتراضات والحدود</p>
+<h1>حدود نموذج الانقطاع</h1>
+<div class="box"><p>تخطّيتُ طبقتي C4 L3 (الرياضيات) وL4 (الكود). جواب السؤال السابق: <span class='en'>q = 1/10 = 0.1</span>، <span class='en'>p = 0.1 &times; 0.1/0.9 = 0.0111</span>، ومتوسط الرؤية المتواصلة <span class='en'>1/p = 90</span> إطاراً. وأهم ما كان في L3 هو أن الانقطاع الصامت يضرّ أكثر من المُعلَن، وقد رأيناه في جداول C4 L1 (أكثر من 39 مم مقابل 3.5 مم للـ EKF).</p></div>
+<div class='card'><h2>1. الضياع مستقل عن حالة الكرة والذراع</h2><p>السلسلة تضيّع الإطارات عشوائياً بنفس الاحتمال في كل مكان وفي كل وقت.</p><p><b>إذا لم يتحقق:</b> في الواقع يحدث الحجب عندما تكون الذراع في مكان معيّن، وتفشل الكاميرا أكثر عند حواف الصورة أو عند السرعة العالية. فالانقطاع يرتبط بمكان الكرة <b>وبوضع الذراع</b>، وهذا ما سنحاكيه حين نضيف الذراع. هذا أهم حدّ في رأيي.</p></div><div class='card'><h2>2. المعدل 5% ومتوسط الفجوة 6 إطارات قيمتان مؤقتتان</h2><p>اخترتُهما ولم نقسهما من نظام حقيقي.</p><p><b>إذا لم يتحقق:</b> لا نعرف معدل الضياع الحقيقي. سنختبر حساسية النتائج لقيم أخرى (مثلاً 1% و10% و20%، وفجوات أطول).</p></div><div class='card'><h2>3. طول الفجوة بلا ذاكرة (توزيع هندسي)</h2><p>احتمال انتهاء الفجوة ثابت <span class='en'>q</span> مهما طالت.</p><p><b>إذا لم يتحقق:</b> فجوات الحجب الحقيقية تتحدد بحركة الذراع (مثلاً 0.2 إلى 0.5 ث تقريباً)، فلا تتبع هذا التوزيع. الفجوة الأطول عندنا 39 إطاراً (0.65 ث) نادرة.</p></div><div class='card'><h2>4. الاحتفاظ الصامت يكرر القيمة السابقة بالضبط</h2><p>وحارس التكرار (<span class='en'>+stale</span>) يعتمد على هذا: قيمتان متطابقتان بالبت.</p><p><b>إذا لم يتحقق:</b> كاميرا مجمّدة قد تعيد الصورة نفسها (فتتكرر القيمة تماماً) وقد لا تفعل. لا ينفع الحارس مع قيمة تتغير قليلاً.</p></div><div class='card'><h2>5. الإطار الضائع بلا أي معلومة</h2><p>إما أن نرى الكرة كاملة وبدقة، أو لا نراها أبداً.</p><p><b>إذا لم يتحقق:</b> الحجب <b>الجزئي</b> يعطي قياساً منحازاً (حتى 12.7 مم عند إخفاء نصف الكرة، B2 L5) لا ضياعاً. وهذا النوع من الخطأ غير موجود في نموذجنا، وهو أخطر على المرشّح من الضياع الكامل.</p></div><div class='card'><h2>6. الكشف إما صحيح أو مُعلَن غائباً</h2><p>لا نموذج لقراءة خاطئة (كشف جسم آخر على أنه الكرة، أو قيمة شاذة).</p><p><b>إذا لم يتحقق:</b> القيم الشاذة (<span class='en'>outliers</span>) تحتاج الـ gate (D7) وهي غير مختبرة بجدية عندنا، لأن بيانات الاختبار لا تحتوي أيّاً منها.</p></div><div class='card'><h2>7. لم نقسّم النتائج بحسب طول الفجوة</h2><p>جداولنا تعطي خطأً كلياً، وليس خطأ الـ estimator كدالة في طول الفجوة.</p><p><b>إذا لم يتحقق:</b> نتيجة الـ EKF الجيدة في الانقطاع المُعلَن (3.5 مم) قد تخفي أن الفجوات الطويلة جداً مع ارتدادات وقيمة E خاطئة سيئة. لم نقسها.</p></div>
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>أي حدّ من السبعة تتوقع أن يتغير أكثر عندما نضيف الذراع إلى الساحة؟ ولماذا؟</p></div>
+<p class="tag">القادم: C4 الطبقة 6 (تمارين)، ثم C5: مجموعة البيانات (dataset).</p>
+</main></body></html>

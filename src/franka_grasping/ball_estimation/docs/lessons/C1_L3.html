@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C1 L3 - الرياضيات: مصفوفة التباين R</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C1 &middot; الطبقة 3: الرياضيات</p>
+<h1>الـ noise في بُعدين: مصفوفة التباين R</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>&radic;(1.2<sup>2</sup> + 2.17<sup>2</sup> + 1.1<sup>2</sup>) = &radic;(1.44 + 4.71 + 1.21) = 2.71 mm</span> لكل محور. وقسنا فعلاً 2.8 مم (شرط الـ noise)، فالاتفاق ممتاز.</p></div>
+
+<div class="card"><h2>1. التغاير (covariance) ومصفوفته</h2>
+<p>خطأ المكان له محوران <span class='en'>(&delta;x, &delta;y)</span>. لا يكفي أن نعطي انحرافاً لكل محور: نحتاج أيضاً أن نعرف هل يتحركان <b>معاً</b>. نعرّف مصفوفة التباين (<span class="en">covariance matrix</span>) <span class='en'>R</span>:</p>
+<p class="en" style="text-align:center">R = [ var(&delta;x) &nbsp; cov(&delta;x, &delta;y) ; cov(&delta;x, &delta;y) &nbsp; var(&delta;y) ]</p>
+<p>القطر هو التباينات (<span class='en'>&sigma;<sub>x</sub><sup>2</sup>, &sigma;<sub>y</sub><sup>2</sup></span>)، والعنصر الخارج عن القطر يقيس ارتباطهما. لو كان صفراً فالسحابة دائرية أو محاذية للمحاور. إن لم يكن صفراً فالسحابة مائلة، كما في رسم الـ noise (الخط).</p></div>
+
+<div class="card"><h2>2. قاعدة التحويل الخطي</h2>
+<p>إذا كان <span class='en'>&epsilon;</span> متجهاً عشوائياً تباينه <span class='en'>&Sigma;</span>، وكان <span class='en'>&delta; = A &epsilon;</span> فإن:</p>
+<p class="en" style="text-align:center">Cov(&delta;) = A &Sigma; A<sup>T</sup></p>
+<p>(هذه نفسها القاعدة التي سنراها في Kalman: <span class='en'>P = F P F<sup>T</sup> + Q</span>.)</p></div>
+
+<div class="card"><h2>3. R لمستشعرنا</h2>
+<p><b>اهتزاز المركز:</b> مستقل على المحورين بانحراف <span class='en'>s = 0.3 &times; Z<sub>c</sub>/f = 0.3 &times; 2.97/415.7 = 2.14 mm</span>: <span class='en'>R<sub>jitter</sub> = s<sup>2</sup> I</span> (مصفوفة قطرية).</p>
+<p><b>خطأ العمق:</b> من الاشتقاق السابق <span class='en'>(&delta;x, &delta;y) = (&delta;<sub>Z</sub>/Z<sub>c</sub>)(x, y)</span>، أي <span class='en'>&delta; = a &delta;<sub>Z</sub></span> بمتجه <span class='en'>a = p/Z<sub>c</sub></span> حيث <span class='en'>p = (x, y)</span>. بالقاعدة: <span class='en'>Cov = a a<sup>T</sup> &sigma;<sub>Z</sub><sup>2</sup> = (k Z<sub>c</sub>)<sup>2</sup> p p<sup>T</sup></span>.</p>
+<p>مستقلان، فنجمع المصفوفتين:</p>
+<p class="en" style="text-align:center">R(x, y) = s<sup>2</sup> I + (k Z<sub>c</sub>)<sup>2</sup> &middot; p p<sup>T</sup></p>
+<p><b>فحص بأرقامنا:</b> <span class='en'>k Z<sub>c</sub> = 2.435 mm/m</span>، <span class='en'>s<sup>2</sup> = 4.59 mm<sup>2</sup></span>. عند <span class='en'>p = (0.9, 0.5)</span>:</p>
+<p class="en" style="text-align:center">R = [ 9.40 &nbsp; 2.67 ; 2.67 &nbsp; 6.08 ] mm<sup>2</sup> &nbsp;&rArr;&nbsp; &sigma;<sub>x</sub> = 3.07, &sigma;<sub>y</sub> = 2.47 mm, corr = 0.35</p>
+<p>وقسنا في التجربة <span class='en'>3.07</span> و<span class='en'>2.44</span>: <b>تطابق</b>. والارتباط 0.35 هو ميل السحابة البيضاوية في الرسم.</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>position</b></td><td><b>&sigma;<sub>x</sub>, &sigma;<sub>y</sub> (mm)</b></td><td style="padding:4px 12px"><b>correlation</b></td></tr>
+<tr><td style="padding:4px 12px">(0, 0)</td><td>2.14, 2.14</td><td>0</td></tr>
+<tr><td style="padding:4px 12px">(0.6, 0.8)</td><td>2.59, 2.90</td><td>0.38</td></tr>
+<tr><td style="padding:4px 12px">(0.9, 0.5)</td><td>3.07, 2.47</td><td>0.35</td></tr>
+<tr><td style="padding:4px 12px">(0.97, 0.97)</td><td>3.19, 3.19</td><td>0.55</td></tr>
+</table></div>
+
+<div class="card"><h2>4. ماذا يفعل مرشّحنا؟ (ربط بنتيجة سابقة)</h2>
+<p>في الـ EKF نستعمل <span class='en'>R = &sigma;<sup>2</sup> I</span> بـ <span class='en'>&sigma; = 5 mm</span>، أي <span class='en'>25 mm<sup>2</sup></span> على كل محور، <b>ثابتة ودائرية في كل مكان</b>. الحقيقية بين <span class='en'>4.6</span> و<span class='en'>10</span> مم<sup>2</sup> وغير دائرية وتتغير مع المكان. فالمرشّح «يظن» الكاميرا أسوأ مما هي: هذا يفسّر ما وجدناه في التشخيص: أن اختبار الـ gate لا يفشل تقريباً أبداً (0% حتى عند 3 مم)، وأن المرشّح <b>غير واثق بقدر ما ينبغي</b> (underconfident).</p>
+<p>وحين جربنا شبكة <span class='en'>&sigma;</span> و<span class='en'>q</span> وجدنا أن الأداء قليل الحساسية. لم نجرّب <span class='en'>R</span> الصحيح الذي يعتمد على المكان. هذه فكرة لاختبار لاحق (ولم أختبرها).</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>عند <span class='en'>p = (0.6, 0.8)</span> احسب مصفوفة <span class='en'>R</span> بالصيغة <span class='en'>s<sup>2</sup> I + 2.435<sup>2</sup> p p<sup>T</sup></span> (<span class='en'>s<sup>2</sup> = 4.59</span>). (تلميح: <span class='en'>p p<sup>T</sup> = [0.36, 0.48; 0.48, 0.64]</span>.) وتحقق مع الجدول.</p></div>
+<p class="tag">القادم: C1 الطبقة 4 (الكود: Sensor.corrupt_depth وتطبيق الـ jitter).</p>
+</main></body></html>

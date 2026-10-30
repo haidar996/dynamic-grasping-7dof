@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 L1 - مرشّح Kalman: الحدس</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D3 &middot; الطبقة 1: الحدس</p>
+<h1>مرشّح Kalman: دمج معلومتين غير مؤكدتين</h1>
+
+<div class="box"><p><b>قفزتُ إلى D3.</b> الجزء C (عيوب المستشعر) اكتمل في معظمه، والدرس D1 (الـ state والتخمين والتنبؤ) كان في A1 الطبقة 2، والدرس D2 (الفرق المحدود fd) كان في A1 الطبقة 3. فنبدأ من أول شيء جديد: مرشّح Kalman. (إن أردتَ أن أعود إلى C5 L3 فقل.)</p>
+<p>جواب سؤال C5 الأخير: «paired» يضيّق المجال لأن الصعوبة المشتركة بين الطريقتين تُلغى عند أخذ الفرق على الإطلاق نفسه. والـ EKFان متشابهان جداً فأخطاؤهما شبه متطابقة ولا يبقى في الفرق إلا القليل، أما fd مقابل EKF فيختلفان كثيراً فيبقى الفرق متقلباً.</p></div>
+
+<div class="card"><h2>1. لدينا معلومتان عن مكان الكرة</h2>
+<ul>
+<li><b>التنبؤ:</b> من آخر تخمين ومن قوانين الحركة نتوقع أن الكرة الآن عند <span class='en'>600 mm</span>. لكننا لسنا واثقين تماماً: الخطأ النموذجي <span class='en'>10 mm</span>.</li>
+<li><b>الكاميرا:</b> قاست <span class='en'>612 mm</span>، وخطأ الكاميرا النموذجي <span class='en'>5 mm</span>.</li>
+</ul>
+<p>أيهما نصدّق؟ لا هذا ولا ذاك وحده. نريد دمجهما.</p></div>
+
+<div class="card"><h2>2. الدمج: الثقة بحسب الدقة</h2>
+<p>الأدق يأخذ وزناً أكبر. الكاميرا (5 مم) أدق من التنبؤ (10 مم)، فنقترب منها أكثر. النتيجة في الرسم: المنحنى الأزرق، حوالي <span class='en'>609.6 mm</span>، أقرب إلى الكاميرا، <b>وأضيق من الاثنين</b> (انحرافه <span class='en'>4.5 mm</span> أقل من 5 و10). أي أن الدمج أعطانا معلومة أفضل من كل واحدة منفردة.</p>
+<img src="img/D3_combine.png" alt="combine" style='width:100%;max-width:640px;display:block;margin:12px auto;border-radius:8px;border:1px solid var(--line)'></div>
+
+<div class="card"><h2>3. هذا هو مرشّح Kalman باختصار</h2>
+<p>في كل إطار يفعل المرشّح شيئين متكررين:</p>
+<ol>
+<li><b>التنبؤ (predict):</b> يحرّك التخمين إلى الأمام بالفيزياء. وكلما انتظرنا ازدادت <b>عدم الثقة</b> بالتنبؤ (لأن النموذج غير كامل).</li>
+<li><b>التصحيح (correct):</b> حين يصل قياس جديد، يدمجه مع التنبؤ بحسب الثقة. وبعد الدمج تنقص عدم الثقة.</li>
+</ol>
+<p>ثم يكرر. وفي الأجزاء القادمة سنرى لماذا الأوزان تأتي من الدقة، وكيف تُحسب، وكيف تظهر السرعة (التي لا نقيسها) من هذا الدمج.</p></div>
+
+<div class="card"><h2>4. الأرقام نفسها (سنبرهنها في الطبقة 3)</h2>
+<p>التباينان: التنبؤ <span class='en'>P = (10 mm)<sup>2</sup> = 1&times;10<sup>-4</sup> m<sup>2</sup></span>، الكاميرا <span class='en'>R = (5 mm)<sup>2</sup> = 2.5&times;10<sup>-5</sup></span>. الوزن (الكسب) <span class='en'>K = P/(P + R) = 0.8</span>. التخمين الجديد: <span class='en'>0.600 + 0.8 &times; (0.612 &minus; 0.600) = 0.6096</span>. والتباين الجديد <span class='en'>(1 &minus; K) P = 2&times;10<sup>-5</sup></span>، أي انحراف <span class='en'>4.47 mm</span>. وهذا المثال نفسه الذي رأيناه في أول محادثتنا عن الـ cvkf.</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>لو كانت الكاميرا أسوأ (<span class='en'>R = (20 mm)<sup>2</sup></span>) والتنبؤ نفسه (<span class='en'>10 mm</span>)، فهل تتوقع أن يقترب الناتج من التنبؤ أم من الكاميرا؟ ولماذا؟</p></div>
+<p class="tag">القادم: D3 الطبقة 2 (التعريفات الدقيقة: الـ state والتباين P وQ وR، وخطوتا predict وcorrect).</p>
+</main></body></html>

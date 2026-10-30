@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D5 L2 - EKF مع الاحتكاك: مثال رقمي</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; --code:#f5f5f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; --code:#2a2a2a; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:820px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .compare { display:flex; gap:12px; margin:12px 0; }
+  .col { flex:1; background:var(--code); padding:8px; border-radius:4px; font-size:85%; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس D5 &middot; الطبقة 2: مثال EKF كامل مع الاحتكاك</p>
+<h1>خطوة واحدة: التنبؤ والتصحيح بالاحتكاك</h1>
+
+<div class="box"><p><b>جواب سؤال D5 L1:</b> <span class='en'>v = 2 × (1 − 0.85×0.1)ⁿ = 2 × 0.915ⁿ</span>. نريد <span class='en'>0.915ⁿ = 0.01/2 = 0.005</span>، يعني <span class='en'>n = log(0.005)/log(0.915) ≈ 62 خطوة</span> (حوالي 6.2 ثوان).</p></div>
+
+<div class="card"><h2>1. الحالة الأولية</h2>
+<p>الكرة تبدأ بـ:</p>
+<p class="en" style="text-align:center">s₀ = [x=0.5, y=0.3, vx=1.0, vy=0.5]ᵀ</p>
+<p>نثق بالموقع (5 ملم)، لكن لا نثق بالسرعة (1 m/s):</p>
+<p class="en" style="text-align:center;font-size:85%">P₀ = diag([25e-6, 25e-6, 1, 1])</p>
+<p>المعاملات:</p>
+<p class="en" style="text-align:center">c = 0.85, Δt = 0.1 s, R = 25e-6 I₂, Q = diag([0, 0, 0.01, 0.01])</p>
+</div>
+
+<div class="card"><h2>2. خطوة التنبؤ (Predict)</h2>
+<p><b>الحالة الجديدة:</b> استخدم الدالة <span class='en'>f(s)</span> (غير الخطية مع احتكاك):</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:90%">
+f(s₀) = [<br>
+&nbsp;&nbsp;x + vx·Δt = 0.5 + 1.0×0.1 = <b>0.6</b>,<br>
+&nbsp;&nbsp;y + vy·Δt = 0.3 + 0.5×0.1 = <b>0.35</b>,<br>
+&nbsp;&nbsp;vx·(1 − c·Δt) = 1.0 × (1 − 0.085) = <b>0.915</b>,<br>
+&nbsp;&nbsp;vy·(1 − c·Δt) = 0.5 × 0.915 = <b>0.4575</b><br>
+]
+</p>
+<p class="en" style="text-align:center">s⁻ = [0.6, 0.35, 0.915, 0.4575]ᵀ</p>
+
+<p><b>التباين الجديد:</b> استخدم الـ Jacobian <span class='en'>F</span> (مشتقات f):</p>
+<p class="en" style="text-align:center;margin:8px 0;font-size:85%">
+F = <br>
+[1,  0,  0.1,   0]<br>
+[0,  1,  0,     0.1]<br>
+[0,  0,  0.915, 0]<br>
+[0,  0,  0,     0.915]
+</p>
+<p class="en" style="text-align:center">P⁻ = F·P₀·Fᵀ + Q</p>
+<p>(الحساب مملّ، النتيجة: عدم اليقين في الموقع انخفض قليلاً، وعدم اليقين في السرعة بقي عالي)</p>
+<p class="en" style="text-align:center;font-size:85%">P⁻ ≈ diag([2.5e-5, 2.5e-5, 0.84, 0.84])</p>
+<p>(لاحظ: تباين السرعة انخفض من 1 إلى 0.84 بسبب الـ Jacobian—السرعة تتغير بمعامل 0.915 كل خطوة)</p>
+</div>
+
+<div class="card"><h2>3. خطوة التصحيح (Correct)</h2>
+<p>الكاميرا تقيس موقع جديد:</p>
+<p class="en" style="text-align:center">z = [0.61, 0.352]ᵀ</p>
+<p><b>التنبية:</b></p>
+<p class="en" style="text-align:center">
+y = z − H·s⁻ = [0.61, 0.352]ᵀ − [0.6, 0.35]ᵀ = [0.01, 0.002]ᵀ
+</p>
+<p>(القياس 1 سم أفقياً و 2 ملم رأسياً بعيد عن التنبؤ)</p>
+
+<p><b>تباين التنبية وكسب:</b></p>
+<p class="en" style="text-align:center">
+S = H·P⁻·Hᵀ + R ≈ diag([5e-5, 5e-5])<br>
+K ≈ [[0.5, 0], [0, 0.5], [0, 0], [0, 0]]
+</p>
+
+<p><b>تحديث الحالة:</b></p>
+<p class="en" style="text-align:center">
+s = s⁻ + K·y = [0.6, 0.35, 0.915, 0.4575]ᵀ + [[0.5, 0], [0, 0.5], [0, 0], [0, 0]]·[0.01, 0.002]ᵀ
+</p>
+<p class="en" style="text-align:center">
+s = [0.605, 0.351, 0.915, 0.4575]ᵀ
+</p>
+<p>(الموقع عُدّل 5 ملم و 1 ملم نحو القياس. السرعة بقيت كما هي—لا قياس مباشر للسرعة)</p>
+</div>
+
+<div class="card"><h2>4. المقارنة: Kalman الخطي vs. EKF</h2>
+<div class="compare">
+<div class="col">
+<b>Kalman الخطي (D4)</b><br>
+بدون احتكاك<br><br>
+f(s) = F·s<br>
+الدالة خطية<br><br>
+s⁻ = F·s₀<br>
+F[2,2] = 1 (السرعة ثابتة)<br><br>
+التنبؤ:
+vx ← 1.0 m/s<br><br>
+الخطأ التراكمي يكبر مع الوقت!
+</div>
+<div class="col">
+<b>EKF (D5)</b><br>
+مع احتكاك<br><br>
+f(s) = غير خطية<br>
+دالة حقيقية<br><br>
+s⁻ = f(s₀)<br>
+F[2,2] = 0.915 (السرعة تنقص)<br><br>
+التنبؤ:
+vx ← 0.915 m/s<br><br>
+يتطابق مع الواقع!
+</div>
+</div>
+</div>
+
+<div class="card"><h2>5. لماذا هذا مهم؟</h2>
+<p><b>مثال سيناريو:</b> نرمي الكرة بـ <span class='en'>vx = 1 m/s</span>، ونريد توقعها بعد 10 خطوات (ثانية واحدة):</p>
+
+<p><b>Kalman الخطي:</b> يتنبأ <span class='en'>vx = 1.0 m/s</span> (ثابت)
+<p class="en" style="text-align:center">
+الموقع المتنبأ: x = 0.5 + 1.0 × 1.0 = 1.5 m
+</p>
+
+<p><b>EKF:</b> يعلم أن السرعة تتناقص
+<p class="en" style="text-align:center">
+vx بعد 10 خطوات ≈ 1.0 × (0.915)¹⁰ ≈ 0.42 m/s<br>
+الموقع المتنبأ: x ≈ 0.5 + (1.0 + 0.915 + 0.837 + ... + 0.42)·0.1 ≈ 0.8 m
+</p>
+
+<p>الفرق: <b>1.5 − 0.8 = 0.7 متر!</b> خطأ ضخم!</p>
+</div>
+
+<div class="card"><h2>6. متى يصبح الفرق واضحاً؟</h2>
+<ul>
+<li><b>توقعات قصيرة (خطوة واحدة أو اثنتين):</b> الفرق صغير (كلا النموذجين قريب من الصحيح)</li>
+<li><b>توقعات طويلة (ثوان أو أكثر):</b> الفرق ضخم (Kalman ينجرف، EKF صحيح)</li>
+<li><b>السرعات العالية:</b> الاحتكاك أكثر وضوحاً، الفرق أكبر</li>
+<li><b>في مشروعنا:</b> نتنبأ بـ 0.2 ثانية إلى ثانية واحدة—الفرق <b>حرج</b></li>
+</ul>
+</div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>في السيناريو أعلاه، Kalman الخطي توقع الموقع 1.5 م، EKF توقع 0.8 م، والحقيقة حوالي 0.85 م. أيهما أفضل؟ ولماذا لا يطابق EKF الحقيقة تماماً؟ (تلميح: هل احتكاك 0.85 بالضبط؟)</p>
+</div>
+<p class="tag">القادم: D5 الطبقة 3 (أين يعيش EKF في الكود).</p>
+</main></body></html>

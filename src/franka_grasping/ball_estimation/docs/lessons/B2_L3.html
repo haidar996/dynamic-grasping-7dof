@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B2 L3 - الرياضيات: دقة أقل من بكسل</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس B2 &middot; الطبقة 3: الرياضيات</p>
+<h1>لماذا المتوسط يعطي دقة أفضل من بكسل واحد؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>u<sub>c</sub> = (3+4+5+4)/4 = 4.0</span>، <span class='en'>v<sub>c</sub> = (2+2+2+3)/4 = 2.25</span>. نقرأ العمق عند <span class='en'>(u, v) = (4, 2)</span> (تقريب 2.25 إلى 2)، أي <span class='en'>D[2, 4]</span>.</p></div>
+
+<div class="card"><h2>1. خطأ التقريب لبكسل واحد</h2>
+<p>لو أردنا مكان الكرة بأقرب بكسل فقط (تقريب)، فالخطأ بين <span class='en'>&minus;0.5</span> و<span class='en'>+0.5</span> بكسل بتوزيع منتظم، وانحرافه المعياري (من A5):</p>
+<p class="en" style="text-align:center">(b &minus; a)/&radic;12 = 1/&radic;12 = 0.289 px &nbsp;=&nbsp; 0.289 &times; 7.22 = 2.08 mm</p></div>
+
+<div class="card"><h2>2. خطأ المركز لقرص من البكسلات</h2>
+<p>الكرة قرص نصف قطره <span class='en'>r &asymp; 4.15</span> بكسل. موقعه الحقيقي <span class='en'>(c<sub>u</sub>, c<sub>v</sub>)</span> عدد كسري. القناع يضم البكسلات التي مراكزها داخل القرص، ثم نأخذ متوسطها. الخطأ هو الفرق بين هذا المتوسط والمركز الحقيقي. لا توجد معادلة بسيطة، فجرّبتها بمحاكاة (5000 محاولة لكل نصف قطر، مركز عشوائي داخل البكسل):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 12px"><b>radius (px)</b></td><td style="padding:4px 12px"><b>pixels in disc</b></td><td style="padding:4px 12px"><b>std per axis (px)</b></td><td style="padding:4px 12px"><b>at 7.22 mm/px</b></td></tr>
+<tr><td style="padding:4px 12px">1.0</td><td>3</td><td>0.172</td><td>1.24 mm</td></tr>
+<tr><td style="padding:4px 12px">2.0</td><td>13</td><td>0.105</td><td>0.76 mm</td></tr>
+<tr><td style="padding:4px 12px">3.0</td><td>28</td><td>0.094</td><td>0.68 mm</td></tr>
+<tr><td style="padding:4px 12px"><b>4.15 (ours)</b></td><td><b>54</b></td><td><b>0.082</b></td><td><b>0.59 mm</b></td></tr>
+<tr><td style="padding:4px 12px">6.0</td><td>113</td><td>0.060</td><td>0.43 mm</td></tr>
+<tr><td style="padding:4px 12px">10.0</td><td>314</td><td>0.052</td><td>0.37 mm</td></tr>
+</table>
+<p><b>النتيجة:</b> لكرتنا يصبح الخطأ <span class='en'>0.082 px = 0.59 mm</span>، أي أفضل بحوالي <b>3.5 مرة</b> من تقريب بكسل واحد (2.08 مم). الفكرة: كل بكسل عند الحافة يدخل أو يخرج حسب موضع الكرة، وهذه «القفزات» الصغيرة تُلغي بعضها عند الحساب في المتوسط.</p>
+<p><b>ملاحظة:</b> الخطأ لا ينقص كالمعتاد <span class='en'>1/&radic;N</span> مع عدد البكسلات. بين نصف قطر 4.15 و10 (عدد البكسلات ×5.8) انخفض الخطأ فقط بنسبة 0.63. السبب على الأرجح أن الخطأ يأتي من بكسلات <b>الحافة</b> وعددها يتناسب مع <span class='en'>r</span> لا مع <span class='en'>r<sup>2</sup></span>، فالخطأ تقريباً <span class='en'>1/&radic;r</span> (أخذت الأس من الجدول: &minus;0.53). هذا استنتاج من المحاكاة فقط.</p></div>
+
+<div class="card"><h2>3. مقارنة بما قسناه في كاميرتنا المثالية</h2>
+<ul>
+<li>قسنا خطأ الكاميرا المثالية (بلا noise) على 30000 إطار: بالقرب من مركز الصورة <span class='en'>0.49 mm</span> لكل محور، وعند الأطراف <span class='en'>1.78 mm</span>.</li>
+<li>حسابنا للقرص الثنائي يعطي <span class='en'>0.59 mm</span>: يتفق مع قيمة المركز.</li>
+<li>الزيادة عند الأطراف (حتى 1.78) أكبر مما يفسّره القرص الثنائي. التفسير المرجّح، ولم أختبره: كلما ابتعدت الكرة عن مركز الصورة تحوّل ظلّها المرئي إلى شكل بيضاوي قليلاً ويزاح مركزه عن إسقاط مركز الكرة (ما ذكرناه في B1 L3 عن فرق 0.29 بكسل عند 40&deg;).</li>
+</ul>
+<p>إذن أرضية الدقة في الكاميرا المثالية (حوالي 1.2 إلى 1.8 مم RMS) ليست من البكسل نفسه فقط، بل من الشكل أيضاً.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو كان ارتفاع الكاميرا 2 م بدل 3 م بنفس الزاوية 60&deg;، فكم يكون خطأ تقريب البكسل الواحد بالمليمتر؟ ( <span class='en'>Z/f = 2/415.7</span> للبكسل، ثم اقسم على <span class='en'>&radic;12</span>.)</p></div>
+<p class="tag">القادم: B2 الطبقة 4 (الكود: measure_parts)، ثم 5 (الحدود).</p>
+</main></body></html>

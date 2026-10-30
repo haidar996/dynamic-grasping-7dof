@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1 L3 - السرعة من قياسين، ولماذا خطؤها كبير</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A1 &middot; الطبقة 3: الرياضيات</p>
+<h1>السرعة من قياسين، ولماذا خطؤها كبير</h1>
+
+<div class="box"><p>إجابتك 36.055 صحيحة: &radic;(0.02<sup>2</sup> + 0.03<sup>2</sup>) = &radic;0.0013 = 0.03606 م = 36.06 مم.</p></div>
+
+<div class="card">
+<h2>1. أبسط estimator للسرعة</h2>
+<p>لدينا قياسان متتاليان <span class="en">z<sub>k&minus;1</sub></span> و<span class="en">z<sub>k</sub></span> بينهما <span class="en">&Delta;t = 1/60 s</span>. السرعة هي المسافة على الزمن، فنعرّف:</p>
+<p class="en" style="text-align:center">v&#770;<sub>k</sub> = ( z<sub>k</sub> &minus; z<sub>k&minus;1</sub> ) / &Delta;t</p>
+<p>هذا هو الـ <span class="en">finite difference</span> (واسمه في مشروعنا <span class="en">fd</span>).</p>
+</div>
+
+<div class="card">
+<h2>2. لماذا الخطأ كبير؟ (الاشتقاق)</h2>
+<p>نكتب القياسين بدلالة الحقيقة والـ noise: <span class="en">z<sub>k</sub> = p<sub>k</sub> + n<sub>k</sub></span>. وإذا كانت السرعة الحقيقية ثابتة بين الصورتين فإن <span class="en">p<sub>k</sub> &minus; p<sub>k&minus;1</sub> = v &Delta;t</span>. نعوّض:</p>
+<p class="en" style="text-align:center">v&#770;<sub>k</sub> = ( v&Delta;t + n<sub>k</sub> &minus; n<sub>k&minus;1</sub> ) / &Delta;t = v + ( n<sub>k</sub> &minus; n<sub>k&minus;1</sub> ) / &Delta;t</p>
+<p>إذن <b>خطأ السرعة = (فرق الـ noise) مقسوماً على &Delta;t</b>. وقسمة على 1/60 تعني ضرباً في 60. فأي خطأ في المكان يتضخم 60 مرة.</p>
+<p><b>كم حجم الخطأ؟</b> افترض أن الـ noise على كل محور مستقل بين الصورتين وانحرافه المعياري (<span class="en">standard deviation</span>) هو <span class="en">&sigma;</span>. تباين الفرق هو مجموع التباينين، <span class="en">2&sigma;<sup>2</sup></span>، فانحرافه المعياري <span class="en">&radic;2 &sigma;</span>. إذن:</p>
+<p class="en" style="text-align:center">std( v&#770; error, one axis ) = &radic;2 &middot; &sigma; / &Delta;t = &radic;2 &middot; &sigma; &middot; 60</p>
+</div>
+
+<div class="card">
+<h2>3. فحص بأرقام حقيقية من مشروعنا</h2>
+<p>قِسنا في مشروعنا (شرط الـ noise) انحرافاً معيارياً للخطأ في المكان قدره <span class="en">&sigma; = 2.8 mm</span> لكل محور. نعوّض:</p>
+<p class="en" style="text-align:center">&radic;2 &times; 0.0028 &times; 60 = 0.238 m/s per axis</p>
+<p>ولطول المتجه (محوران) نضرب في <span class="en">&radic;2</span>: حوالي <b>0.34 م/ث</b>. المقاس فعلاً في تجاربنا لـ <span class="en">fd</span> هو <b>0.39 م/ث</b> (جدول الـ noise). التقريب جيد، والفرق الصغير (0.05) سببه على الأرجح أشياء لم نضعها في المعادلة، مثل أن الكرة تبطأ وترتد عن الجدران. لم أختبر هذا السبب.</p>
+</div>
+
+<div class="card">
+<h2>4. المقايضة: الضجيج مقابل التأخر (<span class="en">noise vs lag</span>)</h2>
+<p>هل نستطيع تقليل الخطأ؟ نعم: نأخذ قياسين بينهما <span class="en">m</span> صورة بدل صورة واحدة: <span class="en">v&#770; = (z<sub>k</sub> &minus; z<sub>k&minus;m</sub>) / (m &Delta;t)</span>. الخطأ العشوائي يصبح <span class="en">&radic;2 &sigma; / (m &Delta;t)</span>، أي يصغر m مرة.</p>
+<p>لكن الكرة تبطأ بسبب الاحتكاك. السرعة التي نحسبها هي <i>متوسط</i> السرعة عبر النافذة، وليست السرعة الحالية. الفرق (التأخر) تقريباً <span class="en">a &middot; m&Delta;t / 2</span> حيث <span class="en">a</span> هو التباطؤ. بأخذ <span class="en">a = 0.85 m/s<sup>2</sup></span> (قيمة افتراضية في مشروعنا):</p>
+<table class="en" style="margin:auto;border-collapse:collapse">
+<tr><td style="padding:4px 14px"><b>m</b></td><td style="padding:4px 14px"><b>random error (one axis)</b></td><td style="padding:4px 14px"><b>lag error</b></td></tr>
+<tr><td style="padding:4px 14px">1</td><td style="padding:4px 14px">0.238 m/s</td><td style="padding:4px 14px">0.007 m/s</td></tr>
+<tr><td style="padding:4px 14px">5</td><td style="padding:4px 14px">0.048 m/s</td><td style="padding:4px 14px">0.035 m/s</td></tr>
+</table>
+<p>كلما كبرت النافذة قلّ الـ noise وزاد الـ lag. هذه المقايضة هي لُبّ كل الـ filters التي سندرسها. الـ Kalman filter يختار النافذة المناسبة تلقائياً، ويستعمل الفيزياء ليقلل الـ lag.</p>
+</div>
+
+<div class="card">
+<h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>إذا كان <span class="en">&sigma; = 1 mm</span> و<span class="en">&Delta;t = 1/60 s</span> و<span class="en">m = 1</span>، كم يساوي الانحراف المعياري لخطأ السرعة على محور واحد؟</p>
+</div>
+
+<p class="tag">القادم: A1 الطبقة 4 (أين هذا في كودنا وبياناتنا)، ثم الطبقة 5 (الافتراضات والحدود).</p>
+</main></body></html>

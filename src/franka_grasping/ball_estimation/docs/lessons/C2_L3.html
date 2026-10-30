@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C2 L3 - أثر التكميم على (x, y)</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس C2 &middot; الطبقة 3: الرياضيات والقياس</p>
+<h1>أثر التكميم على (x, y): نتيجة مفاجئة</h1>
+
+<div class="box"><p>جواب السؤال السابق: <span class='en'>Z = 2</span>: <span class='en'>d = 15.588</span>، أقرب علامة <span class='en'>15.625</span> (<span class='en'>&epsilon; = +0.037</span>)، العمق المقيس <span class='en'>1.9953 m</span>، الخطأ <span class='en'>&minus;4.68 mm</span>، والصيغة <span class='en'>&minus;(4/31.18) &times; 0.037 = &minus;4.69 mm</span>.</p></div>
+
+<div class="card"><h2>1. التوقع النظري (نموذج عشوائي)</h2>
+<p>خطأ العمق يؤثر على المكان بنفس الصيغة الشعاعية (C1): <span class='en'>&delta;x = x &delta; / Z<sub>c</sub></span>. فإذا كان خطأ التكميم عشوائياً بانحراف <span class='en'>&sigma;<sub>quant</sub> = (Z<sup>2</sup>/fB)&Delta;/&radic;12</span>:</p>
+<p class="en" style="text-align:center">&sigma;<sub>x</sub> = |x| &middot; Z &Delta; / ( f B &radic;12 ) &asymp; |x| &times; 3.44 mm per metre</p>
+<p>أكبر من أثر الـ noise العشوائي للعمق (2.44 مم لكل متر). هذا هو التوقع.</p></div>
+
+<div class="card"><h2>2. ما يحدث فعلاً في عالمنا</h2>
+<p>جرّبتُ التكميم على قياسات حقيقية: 12000 إطار من 20 إطلاقاً. النتيجة مفاجئة:</p>
+<ul>
+<li>عمق قمة الكرة (المخزن في الملفات) يتراوح بين <span class='en'>2.9400</span> و<span class='en'>2.9435</span> م فقط، لأن الكرة <b>دائماً على الأرض</b>.</li>
+<li>بعد التكميم: <b>قيمة واحدة فقط</b> لجميع الإطارات: <span class='en'>2.9343 m</span>!</li>
+<li>خطأ العمق: متوسطه <span class='en'>&minus;6.7 mm</span>، وانحرافه المعياري <span class='en'>0.7 mm</span> فقط.</li>
+</ul>
+<p>السبب: الخطوة عند 2.94 م حوالي 35 مم، أي أكبر بكثير من التغيّر الصغير في عمق الكرة (3.5 مم). فكل العمق الحقيقي يقع بين علامتين فيُقرَّب كله إلى الأقرب.</p>
+<p><b>النتيجة:</b> نموذج «الخطأ العشوائي المنتظم» الذي اشتققناه في الطبقة 2 <b>لا ينطبق على عالمنا</b>. التكميم هنا ليس noise بل <b>انحياز ثابت</b> في العمق (&minus;6.7 مم).</p></div>
+
+<div class="card"><h2>3. أثره على المكان: خطأ مقياس ثابت</h2>
+<p>الانحياز الثابت <span class='en'>&delta; = &minus;6.0 mm</span> (نسبة إلى 2.94 م) يعطي <span class='en'>&delta;x = x &delta;/Z<sub>c</sub> = &minus;0.0020 &times; x</span>: كل الأماكن تنكمش بنسبة 0.2%. عند <span class='en'>x = 0.9 m</span>: <span class='en'>&minus;1.8 mm</span>. خطأ منتظم يشبه خطأ في معايرة ارتفاع الكاميرا.</p>
+<p>قسته على بياناتنا: ميل الخطأ مقابل المكان (خطأ المقياس) للكاميرا المثالية <span class='en'>+0.188%</span> على <span class='en'>x</span> و<span class='en'>+0.178%</span> على <span class='en'>y</span>؛ ومع التكميم <span class='en'>&minus;0.048%</span> و<span class='en'>&minus;0.057%</span>. التحوّل <span class='en'>&asymp; &minus;0.23%</span>، قريب من المتوقع <span class='en'>&minus;0.19%</span>.</p>
+<p>خطأ المكان RMS: الكاميرا المثالية <span class='en'>1.84 mm</span>، ومع التكميم <span class='en'>1.12 mm</span>: <b>أفضل</b>! لأن الكاميرا المثالية نفسها فيها خطأ مقياس موجب (+0.18%)، والتكميم يعطي خطأ سالباً مقارباً فيتلاشيان تقريباً. صدفة وليست فائدة حقيقية.</p></div>
+
+<div class="card"><h2>4. اكتشاف جانبي مهم (لم أحل لغزه بعد)</h2>
+<p>خطأ المقياس +0.18% في الكاميرا <b>المثالية</b> هو ما يفسّر على الأرجح أن خطأها ينمو من 0.5 مم عند المركز إلى 1.8 مم عند الأطراف (C: <span class='en'>0.0018 &times; 1.25 m = 2.2 mm</span>). هذا يُضعف الفرضية التي ذكرتها في B2 L3 (أن السبب شكل الظل البيضاوي للكرة)، ويرجّح وجود <b>ثابت صغير في الإسقاط العكسي أو في تعريف العمق</b>. السبب لم يُحدَّد بعد، وسأتتبعه في وقت لاحق لأنه يرفع أرضية دقة الكاميرا المثالية 1.8 مم بلا داعٍ.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p>لو كان الانحياز ثابتاً <span class='en'>&minus;0.19%</span> على المقياس، فكم يكون خطأ المكان لكرة عند <span class='en'>x = 0.5 m</span>؟ وعند الزاوية <span class='en'>r = 1.37 m</span>؟</p></div>
+<p class="tag">القادم: C2 الطبقة 4 (الكود) ثم 5 (الحدود). وقد نحتاج لاحقاً إلى فحص خطأ المقياس +0.18%.</p>
+</main></body></html>

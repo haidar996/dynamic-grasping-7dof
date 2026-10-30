@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2 L3 - لماذا الخطأ يساوي &minus;a&middot;h&middot;t/2 بالضبط؟</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A2 &middot; الطبقة 3: الرياضيات</p>
+<h1>لماذا الخطأ يساوي &minus;a&middot;h&middot;t/2 بالضبط؟</h1>
+
+<div class="box"><p>جواب السؤال السابق: الخطأ يتناسب مع <span class='en'>h</span>، فإذا ضاعفنا الخطوة إلى 0.004 ضاعفنا الخطأ: <b>&minus;1.7 مم</b>.</p></div>
+
+<div class="card"><h2>1. نكتب الخطوات</h2>
+<p>نبدأ بـ <span class='en'>x<sub>0</sub> = 0, v<sub>0</sub></span>. في كل خطوة: <span class='en'>v<sub>n</sub> = v<sub>n&minus;1</sub> &minus; a h</span> ثم <span class='en'>x<sub>n</sub> = x<sub>n&minus;1</sub> + v<sub>n</sub> h</span>.</p>
+<p><b>السرعة:</b> بعد <span class='en'>n</span> خطوة <span class='en'>v<sub>n</sub> = v<sub>0</sub> &minus; a n h</span>. وهي تساوي السرعة الدقيقة تماماً عند <span class='en'>t = n h</span>. إذن لا يوجد خطأ في السرعة.</p></div>
+
+<div class="card"><h2>2. المكان: نجمع المسافات</h2>
+<p>المكان هو مجموع المسافات في الخطوات: <span class='en'>x<sub>n</sub> = h (v<sub>1</sub> + v<sub>2</sub> + ... + v<sub>n</sub>)</span>. نعوّض <span class='en'>v<sub>j</sub> = v<sub>0</sub> &minus; a j h</span>:</p>
+<p class="en" style="text-align:center">x<sub>n</sub> = h &sum;<sub>j=1..n</sub> ( v<sub>0</sub> &minus; a j h ) = v<sub>0</sub> n h &minus; a h<sup>2</sup> &middot; n(n+1)/2</p>
+<p>استعملنا المجموع المعروف <span class='en'>1 + 2 + ... + n = n(n+1)/2</span>. الآن نضع <span class='en'>t = n h</span>، أي <span class='en'>n h = t</span> و<span class='en'>n(n+1) h<sup>2</sup> = t<sup>2</sup> + h t</span>:</p>
+<p class="en" style="text-align:center">x(t) = v<sub>0</sub> t &minus; a (t<sup>2</sup> + h t)/2 = [ v<sub>0</sub> t &minus; a t<sup>2</sup>/2 ] &minus; a h t / 2</p>
+<p>القوس هو الحل الدقيق. والباقي هو الخطأ:</p>
+<p class="en" style="text-align:center"><b>error = &minus; a h t / 2</b></p></div>
+
+<div class="card"><h2>3. فحص بالأرقام</h2>
+<p><span class='en'>a = 0.85, t = 1</span>:</p>
+<ul class="en" style="direction:ltr;text-align:left">
+<li>h = 0.1: &minus;0.85 &times; 0.1 &times; 1 / 2 = &minus;0.0425 m = &minus;42.5 mm</li>
+<li>h = 0.01: &minus;4.25 mm</li>
+<li>h = 0.002: &minus;0.85 mm</li>
+</ul>
+<p>وهي الأرقام التي رأيناها في الجدول بالضبط. كما أنني فحصت دالة <span class='en'>forecast</span> في كودنا (تستعمل نفس الخطوة: الاحتكاك أولاً ثم الحركة) فخرجت <span class='en'>&minus;4.25, &minus;2.125, &minus;0.85 mm</span> لـ <span class='en'>h = 0.01, 0.005, 0.002</span>، مطابقة للصيغة.</p></div>
+
+<div class="card"><h2>4. لماذا الإشارة سالبة؟ (الحدس)</h2>
+<p>في كل خطوة نستعمل سرعة <b>نهاية</b> الخطوة (الأصغر) لكل الخطوة، بينما السرعة الحقيقية خلال الخطوة أكبر. فنقطع مسافة أقل قليلاً من الحقيقية في كل خطوة: النقص في الخطوة الواحدة <span class='en'>a h<sup>2</sup>/2</span>. نجمعه عبر <span class='en'>t/h</span> خطوة فنحصل على <span class='en'>a h t / 2</span>.</p></div>
+
+<div class="card"><h2>5. ما علاقة هذا بمشروعنا؟</h2>
+<p>الـ estimator يتنبأ بالمستقبل بخطوات هي الأخرى من هذا النوع، لكن بخطوة أكبر: دالة <span class='en'>forecast</span> تستعمل خطوة حتى <span class='en'>0.01 s</span>، بينما العالم مُحاكى بخطوة <span class='en'>0.002 s</span>. فالانحياز مختلف قليلاً: <span class='en'>a (0.01 &minus; 0.002) t / 2</span>. لـ <span class='en'>a = 0.85, t = 1 s</span> يساوي حوالي <b>3.4 مم</b>. هذا تقدير نظري لم أختبره على نتائج الـ oracle، لكنه يعطي فكرة: جزء صغير من خطأ الـ oracle (17.8 مم عند ثانية) قد يكون من هذا التفاوت في الخطوات، وليس من جهلنا بالفيزياء. سنعود إليه إذا احتجنا لتحسين الـ oracle.</p><p style='border-inline-start:4px solid #b03a3a;padding-inline-start:12px'><b>تصحيح (الدرس A4، الطبقة 4):</b> قِستُ لاحقاً الفرق الفعلي بين نموذج الـ estimator والعالم عندما يعرف الـ estimator الحالة والقيمتين الحقيقيتين تماماً: كان صغيراً جداً (حوالي 2 مم عند ثانية، لا 3.4 مم، وأقل بعد ثانية بخطوة 2 ms). فالتقدير النظري أعلاه كان <b>أكبر من الواقع</b>، لأن الكرة تتوقف أحياناً قبل ثانية ولأن متوسط μ أقل من 0.85.</p></div>
+
+<div class="card"><h2>سؤال للتأكد (احسب بنفسك)</h2>
+<p><span class='en'>a = 1.2, h = 0.002, t = 0.5 s</span>، والكرة ما زالت تتحرك (لم تتوقف). كم خطأ المكان بالملليمتر؟</p></div>
+<p class="tag">القادم: A2 الطبقة 4 (أين هذا في الكود: الدالة arena_sim.step).</p>
+</main></body></html>

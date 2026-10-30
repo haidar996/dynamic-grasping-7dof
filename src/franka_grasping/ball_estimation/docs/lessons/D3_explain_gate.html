@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D3 شرح إضافي - الـ Gate</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:800px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+  .important { color:#dc2626; font-weight:bold; }
+</style>
+</head>
+<body><main>
+<p class="tag">شرح إضافي &middot; الـ Gate والمفاجأة الإحصائية</p>
+<h1>كيف يرفض الـ Gate القياسات المريبة؟</h1>
+
+<div class="card"><h2>1. المشكلة</h2>
+<p>تخيل أن التنبؤ يقول: "الكرة عند 0.55 متر"، لكن الكاميرا تقول: "الكرة عند 0.80 متر" (بعيدة جداً!). هل نصدق القياس؟</p>
+<p>لو كان القياس حقيقي، يعني الكرة قفزت 25 سم في ميلّي ثانية واحدة—مستحيل! الأرجح: الكاميرا أخطأت (التقطت بكسل خطأ، أو جزء من البيئة).</p>
+<p>المرشح يحتاج طريقة <b>إحصائية</b> تقول: "هذا القياس يتناقض مع ما نعرفه، بدرجة عالية جداً".</p>
+</div>
+
+<div class="card"><h2>2. التنبية (Innovation)</h2>
+<p>الفرق بين القياس والتنبؤ:</p>
+<p class="en" style="text-align:center">y = z − x̂⁻</p>
+<p>في مثالنا: <span class='en'>y = 0.80 − 0.55 = 0.25 m</span>.</p>
+<p>لكن هل 0.25 م "بعيد جداً"؟ يعتمد! إذا كانت الكاميرا تخطئ بـ ±1 متر دائماً، فـ 0.25 عادي. لكن إذا كانت الكاميرا تخطئ بـ ±5 ملم عادة، فـ 0.25 م مريب جداً.</p>
+<p>نحتاج قياس يأخذ في الحسبان <b>عدم اليقين</b> في الفرق نفسه.</p>
+</div>
+
+<div class="card"><h2>3. تباين التنبية (Innovation Covariance)</h2>
+<p>تباين الفرق <span class='en'>y</span> هو:</p>
+<p class="en" style="text-align:center">S = P⁻ + R</p>
+<p>(من الدرس D3 L2: تباين التنبؤ + تباين القياس)</p>
+<p>الانحراف المعياري للتنبية: <span class='en'>σ_y = √S</span>.</p>
+<p>الآن يمكنك قياس: كم عدد انحرافات معيارية بعيد الفرق؟</p>
+<p class="en" style="text-align:center">z-score = y / σ_y = y / √S</p>
+<p>في مثالنا: إذا كان <span class='en'>S = (10 mm)² = 10⁻⁴</span>، فـ <span class='en'>σ_y = 10 mm</span>، و <span class='en'>z-score = 250 mm / 10 mm = 25</span> انحراف معياري—<b>مريب جداً!</b></p>
+</div>
+
+<div class="card"><h2>4. المسافة المهالانوبيس (Mahalanobis Distance)</h2>
+<p>في 2D (موقع <span class='en'>x</span> و<span class='en'>y</span>)، الفكرة أعقد قليلاً. التنبية الآن متجه:</p>
+<p class="en" style="text-align:center">y = [z_x − x̂⁻_x, z_y − x̂⁻_y]ᵀ</p>
+<p>وتباينها مصفوفة 2×2:</p>
+<p class="en" style="text-align:center">S = P⁻_xy + R·I</p>
+<p>حيث <span class='en'>P⁻_xy</span> هي الزاوية العلوية اليسرى من <span class='en'>P⁻</span> (تباين الموقع فقط).</p>
+<p>المسافة المهالانوبيس هي:</p>
+<p class="en" style="text-align:center"><b>D² = y ᵀ S⁻¹ y</b></p>
+<p>هذا يأخذ في الحسبان:</p>
+<ul>
+<li>كم بعيد الفرق من الصفر</li>
+<li>توزيع عدم اليقين (إذا كان عدم اليقين في <span class='en'>x</span> أكبر من <span class='en'>y</span>، قيمة كبيرة في <span class='en'>x</span> تُقبل أكثر)</li>
+</ul>
+</div>
+
+<div class="card"><h2>5. توزيع Chi-Square</h2>
+<p>إذا كان كل شيء متوقع (لا outliers)، و<span class='en'>y</span> غاوسي، فإن <span class='en'>D² = y ᵀ S⁻¹ y</span> يتبع <b>توزيع Chi-Square</b> بـ <span class='en'>ν = 2</span> درجات حرية (عدد الأبعاد: <span class='en'>x</span> و<span class='en'>y</span>).</p>
+<p>توزيع Chi-Square يخبرنا: ما احتمال أن تكون <span class='en'>D²</span> بهذا القدر أو أكبر <b>بالصدفة</b>؟</p>
+<ul>
+<li><span class='en'>D² = 2</span>: متوقع (50% احتمال أن يكون أكبر)</li>
+<li><span class='en'>D² = 6</span>: مريب (5% احتمال بالصدفة)</li>
+<li><span class='en'>D² = 10</span>: مريب جداً (0.01% احتمال بالصدفة)</li>
+</ul>
+<p>في الكود، نختار عتبة مثل <span class='en'>gate = chi2.ppf(0.99, 2)</span> (99% ثقة) = حوالي 9.2. إذا تجاوزت <span class='en'>D²</span> هذا، نقول: "هذا القياس مريب جداً، رفضه!"</p>
+</div>
+
+<div class="card"><h2>6. الصيغة في الكود</h2>
+<p class="en" style="background:#eee;padding:8px;border-radius:4px;margin:8px 0">y = z − self.s[:2]</p>
+<p class="en" style="background:#eee;padding:8px;border-radius:4px;margin:8px 0">S = self.P[:2, :2] + self.R * np.eye(2)</p>
+<p class="en" style="background:#eee;padding:8px;border-radius:4px;margin:8px 0">test_statistic = y @ np.linalg.solve(S, y)</p>
+<p class="en" style="background:#eee;padding:8px;border-radius:4px;margin:8px 0">if test_statistic > gate:  reject this measurement</p>
+<p><span class='en'>np.linalg.solve(S, y)</span> يحسب <span class='en'>S⁻¹ y</span> بكفاءة (بدلاً من عكس المصفوفة مباشرة).</p>
+</div>
+
+<div class="card"><h2>7. مثال بأرقام من D3 L2</h2>
+<p>الخطوة 3، القياس الجديد هو <span class='en'>z = 0.5560</span> والتنبؤ <span class='en'>x̂⁻ = 0.5512</span>:</p>
+<p class="en" style="text-align:center;margin:8px 0">
+y = 0.5560 − 0.5512 = 0.0048<br>
+S = 1.43×10⁻⁵ + 2.5×10⁻⁵ = 3.93×10⁻⁵<br>
+D² = (0.0048)² / (3.93×10⁻⁵) = 2.3×10⁻⁵ / 3.93×10⁻⁵ = 0.585
+</p>
+<p>هذا <b>قليل جداً</b> (أقل من 1)، يعني القياس متوقع تماماً. الـ gate يقبله.</p>
+<p>الآن تخيل قياس سيء: <span class='en'>z = 0.7</span> (بعيد 15 سم من التنبؤ!):</p>
+<p class="en" style="text-align:center;margin:8px 0">
+y = 0.7 − 0.5512 = 0.1488<br>
+D² = (0.1488)² / (3.93×10⁻⁵) = 564
+</p>
+<p>هذا <span class='important'>ضخم جداً</span>! حتى عتبة 9.2 سيُرفض بسهولة.</p>
+</div>
+
+<div class="card"><h2>8. لماذا يعمل هذا؟</h2>
+<p>الـ Gate يحمي من:</p>
+<ul>
+<li><b>Outliers:</b> قياس خاطئ واحد فقط (مثل انعكاس من الجدار) يُرفض، لا يفسد التقدير.</li>
+<li><b>Freeze كاملة:</b> لو الكاميرا متجمدة وتعطي نفس القراءة، التنبؤ سيتحرك (الكرة تتحرك)، فالفرق سيكبر، والـ gate سيرفضها.</li>
+<li><b>تأخير مفاجئ:</b> لو حصل تأخير، التنبؤ قدم كثيراً، والقياس القديم سيكون بعيداً جداً.</li>
+</ul>
+<p class="important">الميزة الكبرى:</p> نحن <b>لا نرفق بالقياس الخاطئ يدوياً</b> (مثل "تجاهل كل قراءة فوق 0.7 متر"). بدلاً من ذلك، نقول: "أي قياس يتناقض بشكل إحصائي مع ما نتوقعه، رفضه". هذا يعمل تلقائياً لأي حالة!
+</p>
+</div>
+
+<div class="card"><h2>9. الحد الأدنى الذي تحتاج تعرفه</h2>
+<p><span class='en'>D² = y ᵀ S⁻¹ y</span> هو "مقياس المفاجأة" الذي:</p>
+<ul>
+<li>= 0 إذا كان القياس مساوياً للتنبؤ تماماً</li>
+<li>كبر كلما كان الفرق أبعد عن المتوقع</li>
+<li>يأخذ في الحسبان عدم اليقين (إذا كنت غير متأكد جداً، تقبل فرق أكبر)</li>
+</ul>
+<p>نختار عتبة (مثل 9.2 لـ 99%)، وأي قياس يتجاوزها = مريب = نرفضه.</p>
+</div>
+</main></body></html>

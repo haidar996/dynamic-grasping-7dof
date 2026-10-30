@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A5 L2 - التعريفات: التوزيعات والبذور</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#5b5b55; --card:#fff; --line:#e3e1d8; --accent:#1f5f8b; --box:#eef4f8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181a; --fg:#ececea; --muted:#a2a29b; --card:#1f2225; --line:#33373b; --accent:#7fb7de; --box:#1b2630; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Noto Naskh Arabic","Amiri","Segoe UI",Tahoma,sans-serif; font-size:20px; line-height:2; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:22px; color:var(--accent); margin-top:32px; }
+  .tag { color:var(--muted); font-size:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 20px; margin:16px 0; }
+  .box { background:var(--box); border-radius:10px; padding:8px 18px; margin:16px 0; }
+  .en { direction:ltr; unicode-bidi:isolate; font-family:"Segoe UI",Arial,sans-serif; font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body><main>
+<p class="tag">الدرس A5 &middot; الطبقة 2: التعريفات الدقيقة</p>
+<h1>التوزيعات، والبذور، وترقيم الإطلاقات</h1>
+
+<div class="box"><p>جواب السؤال السابق: عشرة إطلاقات لكل سرعة. إطلاق واحد لا يكفي لأن نتيجته تتأثر بنقطة البداية والاتجاه و<span class='en'>&mu;</span> و<span class='en'>E</span> والـ noise، فقد يكون محظوظاً أو سيئاً. العشرة تعطي بعض الاستقرار (وليس كله).</p></div>
+
+<div class="card"><h2>1. التوزيع المنتظم (<span class="en">uniform</span>)</h2>
+<p>المتغير العشوائي <span class='en'>X ~ U(a, b)</span> يعني أن أي قيمة بين <span class='en'>a</span> و<span class='en'>b</span> متساوية الاحتمال. له:</p>
+<p class="en" style="text-align:center">mean = (a + b) / 2, &nbsp;&nbsp; std = (b &minus; a) / &radic;12</p></div>
+
+<div class="card"><h2>2. ما الذي يُسحب في كل إطلاق؟</h2>
+<table class="en" style="border-collapse:collapse;width:100%">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px"><b>quantity</b></td><td><b>distribution</b></td><td><b>mean</b></td><td><b>std</b></td></tr>
+<tr><td style="padding:6px">start x, start y</td><td>U(&minus;0.87, 0.87) m</td><td>0</td><td>0.50 m</td></tr>
+<tr><td style="padding:6px">direction angle</td><td>U(0, 2&pi;)</td><td>&pi;</td><td>1.81 rad</td></tr>
+<tr><td style="padding:6px">&mu;</td><td>U(0.2, 1.5) m/s<sup>2</sup></td><td>0.85</td><td>0.375</td></tr>
+<tr><td style="padding:6px">E</td><td>U(0.5, 0.95)</td><td>0.725</td><td>0.130</td></tr>
+<tr><td style="padding:6px">speed</td><td>fixed grid 0.1, 0.2, ..., 5.0</td><td>-</td><td>-</td></tr>
+</table>
+<p>انتبه: السرعة <b>ليست</b> عشوائية، بل من قائمة ثابتة. وكل المتغيرات الأخرى مستقلة عن بعضها.</p>
+<p><b>رابط مهم:</b> القيمتان الاسميتان اللتان يستعملهما الـ EKF (<span class='en'>c = 0.85</span> و<span class='en'>E = 0.725</span>) هما <b>متوسطا</b> هذين التوزيعين. أي أن الـ EKF يعرف المتوسط ولا يعرف قيمة الإطلاق الحالي. وانحرافاها المعياريان (0.375 و0.13) هما اللذان استعملناهما في A4 لتقدير حساسية الـ forecast.</p></div>
+
+<div class="card"><h2>3. الأرقام «العشوائية» في الحاسوب والبذرة (<span class="en">seed</span>)</h2>
+<p>الحاسوب لا يرمي نرداً. يستعمل خوارزمية حتمية (<span class="en">pseudo-random generator</span>) تُنتج سلسلة تبدو عشوائية. إذا بدأنا من نفس الرقم الأول، وهو البذرة، حصلنا على نفس السلسلة بالضبط. فوائد هذا لنا:</p>
+<ul>
+<li>الإطلاقات الخمسمئة تُولَّد من بذرة واحدة: <span class='en'>np.random.default_rng(0)</span>. إعادة التوليد تعطي نفس الإطلاقات تماماً.</li>
+<li>الـ noise والـ dropout لكل إطلاق يُولَّد من بذرة <span class='en'>= base + launch index</span>، فكل الـ estimators ترى نفس الـ noise ونفس فجوات الـ dropout في كل إطلاق. هذا ما نسميه <b>paired</b> وهو يجعل المقارنة عادلة.</li>
+<li>لو غيّرنا البذرة تتغير الأرقام قليلاً (رأينا فرقاً حوالي 1 مم بين تشغيلين لنفس الـ estimator).</li>
+</ul></div>
+
+<div class="card"><h2>4. ترقيم الإطلاقات</h2>
+<p>الإطلاق رقم <span class='en'>i</span> (من 0 إلى 499) سرعته <span class='en'>0.1 &times; (&lfloor;i/10&rfloor; + 1)</span>، لأن العشرة الأولى عند 0.1، والعشرة التالية عند 0.2، وهكذا. تحقق: الإطلاقات التي ظهرت في تشخيص الـ gate (441 و476 و484) سرعاتها <span class='en'>4.5, 4.8, 4.9</span>، وهي فعلاً ما قلناه حينها.</p>
+<p>والمقصود بـ <span class='en'>K = 10</span> هو عدد المكررات لكل سرعة. وتحليل «حسب فئة السرعة» في جداولنا يجمع 100 إطلاق في كل فئة (مثلاً 1 إلى 2 م/ث).</p></div>
+
+<div class="card"><h2>سؤال للتأكد</h2>
+<p>ما أرقام الإطلاقات التي سرعتها <span class='en'>3.0 m/s</span>؟ وما متوسط وانحراف <span class='en'>E</span> المعياري؟ (الثاني للمراجعة.)</p></div>
+<p class="tag">القادم: A5 الطبقة 3 (الرياضيات: متوسط ما نحصل عليه، وكم إطلاقاً نحتاج).</p>
+</main></body></html>
