@@ -266,5 +266,51 @@
   `experiments/step_0l_check_mismatch_physics.py`: 12/12 closed-form checks PASS (5/7 rule, roll time, a0(1+kv),
   5/7 g sinα tilt, e(v_n), tangential, wall friction removes 2.5·μ_w(1+e) of top spin, re-roll speed −(5e−2(1−f))/7).
   Key physics fact: rolling ball hitting a wall with e = 0.8 comes back at 0.29–0.47 of its speed (constant model: 0.8).
-- TODO after the chain: run step_0l full (500 truth-only, energy/position checks, matched vs mismatch stats), then render
+- Commit 8e98f22 pushed to `backup` (private). TODO after the chain: run step_0l full (500 truth-only, energy/position checks, matched vs mismatch stats), then render
   mismatch (`python3 experiments/step_0c_generate_500_with_arm.py --physics mismatch`, ~90 min), then step_0c checks.
+- 19:30 user: "if it takes too much time we can do it after some hours and instead do some work now". Told: the chain runs
+  in background (still on step_0k fit at 19:28, ~1.5–2 h left + 90 min mismatch render); light work can run in parallel.
+  Offered: design ekf-μ (recommended) / read paper 18 / write thesis Methods+limitations / stop run. User wants to clarify
+  first — waiting for their question.
+- 19:30 user: stop the run now, rerun later, do other work now → **chain STOPPED** (was in step_0k, nothing finished, no
+  result file overwritten: ekf_tuning_val.json is still the Phase-0 one). **To rerun later:** from ball_estimation/:
+  `bash outputs/run_audit_chain.sh` (~2 h), then `python3 experiments/step_0l_check_mismatch_physics.py 3`, then
+  `python3 experiments/step_0c_generate_500_with_arm.py --physics mismatch` (~90 min).
+- User: "i have finished paper 03 reading, time to implement — what is your plan". Wrote **`docs/phase1_step12_ekf_mu_plan.md`**
+  (state (x,y,vx,vy,ℓ=log μ); bounce Jacobian −E (B5) + finite-difference unit test; ML on train per condition with a
+  batch numpy filter (all 350 launches in lockstep, 600 equal frame times) + scipy L-BFGS-B; variants ekf-μ hand /
+  learned / learned-h05; evaluation on matched + mismatch, CIs, μ recovery, NIS/NEES, runtime). No torch/numba installed.
+  **Waiting for 4 decisions:** (1) log μ vs a²+ε vs raw; (2) scipy+batch numpy vs PyTorch; (3) likelihood + h0.5 ablation;
+  (4) learn E with the noise or keep train-fitted E. Audit chain still paused (rerun commands above).
+- User asked for a detailed explanation of the step-1.2 plan → **`docs/phase1_step12_explained.md`** (why μ matters
+  ½Δμt², how μ is learned from position via correlation, log μ, bounce Jacobian, the 7 numbers, likelihood with numeric
+  example, batch trick, L-BFGS-B, comparisons, evaluation incl. NIS/NEES). Still waiting for the 4 decisions.
+- **User decided step 1.2 (all recommended):** (1) log μ in the state; (2) scipy L-BFGS-B + batch numpy filter;
+  (3) likelihood main + h0.5-trained ablation; (4) E learned with the other 6 numbers. Implementation started.
+- **1.2a DONE:** `estimators/ekf_mu.py` (EKFMu: state x,y,vx,vy,log μ; propagate_jac = model.propagate op-by-op + Jacobian
+  rows incl. wall/arm mirror −E and push-out; predicts at every frame tick; Joseph update; accumulates NLL).
+  `experiments/step_1b_test_ekf_mu.py`: T1 mean identical 5000/5000; T2 Jacobian vs central FD max err ≤ 7e-9 for free,
+  stop, wall bounce, arm bounce, push-out (all PASS). Diagnostic (14 train launches, ideal): |μ̂−μ| median at 0.5 s:
+  q=2 → 0.23, q=0.1 → 0.09, q=0.01 → 0.03 (prior 0.29) → μ only observable when q small ⇒ learning matters.
+- Next: 1.2b batch filter `estimators/ekf_mu_batch.py` + equality test vs single filter + evaluate().
+- **1.2b DONE:** `estimators/ekf_mu_batch.py` (all launches in lockstep; masks for init/dropout/stale/stop/bounces;
+  NLL + optional h-errors exactly like metrics.evaluate). `experiments/step_1b_test_ekf_mu_batch.py`: 6 conditions × 2
+  random parameter sets × 30 launches: counts identical, NLL rel. diff 1.6e-13, h0.5 diff 3e-13 m → PASS.
+  **350 train launches: 2.2 s per NLL evaluation** (3.4 s with h0.5 forecasts).
+  Finding (document): forecast sub-step count ceil(dt/0.01) depends on the last bit of dt (0.5 vs 0.4999999 → 50/51
+  steps) → up to 5 mm difference near bounces; batch now uses the same float expression as metrics.evaluate.
+- Next: 1.2c learning script `experiments/step_1c_learn_ekf_mu.py` (L-BFGS-B, central-difference gradients in a pool of 3).
+- **1.2c script written:** `experiments/step_1c_learn_ekf_mu.py nll|h05 [conds] [workers] [--quick]` (L-BFGS-B, central
+  differences in pool of 3, 2 starts, saves after each condition, scores on val). Quick smoke test (ideal, 35 launches,
+  3 iterations) OK: NLL −18.9 → −26.9, val launch-mean h0.5 38 mm; "low process noise" start better; σ hit lower bound
+  0.5 mm → widened to 0.1 mm. Expected full run ~15–30 min per condition per criterion (heavy → overnight with chain).
+- **1.2d/e written + smoke-tested:** make("ekfmu_<variant>+stale", **params); EKF19/EKFMu record NIS;
+  `experiments/step_1d_tune_ekf_mu_grid.py` (val grid q × q_mu × s_l, σ from ekf_fit tuning, μ0/E = train fit; q tuned
+  too, else strawman); `experiments/step_1e_eval_ekf_mu.py` (ekf19b, ekf19b_fit, ekfmu_grid/nll/h05, oracle; val + test(dev);
+  stats + paired vs ekf19b_fit; μ recovery at 0.1–2 s; NIS (exp. 2), NEES (exp. 4); ms/update).
+  Smoke (5 val launches, ideal, stand-in settings): h0.5 ekf19b 59 → ekfmu 32 mm, oracle 8; NIS of the h0.5-tuned
+  filters 0.02–0.04 (≪ 2: σ 5 mm vs true ~1 mm → far too cautious; watch: NLL learning should fix); 0.15 ms/update.
+- **ONE COMMAND for all heavy work (~11 h, 3 workers):** `bash experiments/run_overnight.sh` (from ball_estimation/):
+  fit → tune → baselines → paired → μ-vs-E → ekf-μ grid → learn nll → learn h05 → eval → mismatch check → mismatch render.
+  Progress: `outputs/overnight_progress.log`; finished steps skipped on restart (markers in outputs/.overnight_done/).
+  NOT started yet — waiting for user to say when (laptop must stay on + plugged in).

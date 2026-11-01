@@ -48,6 +48,7 @@ class EKF19:
     def reset(self):
         self.ready, self.t, self.s, self.P, self.fails = False, None, None, None, 0
         self.n_reset = self.n_gate = 0
+        self.nis = []                                     # normalised innovation squared per accepted update
 
     # ---- prediction: mean through the model, covariance through the Jacobian -----------
     def _predict(self, dt):
@@ -95,6 +96,7 @@ class EKF19:
                 self._reset_to(t, z)
             return                                  # otherwise: skip this measurement
         self.fails = 0
+        self.nis.append(float(y @ np.linalg.solve(S, y)))
         K = self.P[:, :2] @ np.linalg.inv(S)
         self.s = self.s + K @ y
         self.P = (np.eye(4) - K @ np.eye(4)[:2]) @ self.P
@@ -128,12 +130,15 @@ class StaleGuard:
 
 def make(name, rec=None, **kw):
     """fd | cvkf | ekf19[-none|-skip|-reset|-hybrid] | ekf19b[...] | ekf19b_fit[...] | ekf19_oracle[...] | ekf19b_oracle[...]
-    (oracle needs rec['mu'], rec['e']; ekf19b_fit needs c, E in kw).
+    (oracle needs rec['mu'], rec['e']; ekf19b_fit needs c, E in kw) | ekfmu_<variant> (EKFMu, all params in kw).
     The EKFs need the scene geometry in kw: L=..., obs=... (Arena.estimator_geometry())."""
     if name.endswith("+stale"):                            # e.g. "ekf19b-none+stale"
         return StaleGuard(make(name[:-len("+stale")], rec, **kw))
     if name == "fd":
         return FiniteDifference()
+    if name.startswith("ekfmu"):                           # Phase 1.2: mu in the state (estimators/ekf_mu.py); the
+        from .ekf_mu import EKFMu                          # variant name (ekfmu_grid / _nll / _h05) only selects params
+        return EKFMu(**kw)
     if name == "cvkf":                                     # no model: ignores walls and arm
         kw = {k: v for k, v in kw.items() if k not in ("L", "obs")}
         return EKF19(L=1e9, c=0.0, E=0.0, policy="none", **kw)
