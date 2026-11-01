@@ -7,7 +7,10 @@
 
 ---
 
-## Current state (updated 2026-10-30, end of turn)
+## Current state (updated 2026-11-01, end of turn)
+
+- **2026-11-01: research audit done → `docs/research_audit_2026-11-01.md`. Waiting for user to choose which fixes
+  (A1 mismatch physics, A2 fresh test set, A3 CIs, B1–B5, D push/backup) before step 1.2.**
 
 - **Plan:** `PLAN_2026-10-29.md` (replaces FINAL_PLAN_2026-10-28.md). We restart Phase 0 from **step 0.2 = pick the FOV properly**.
 - Step 0.1 (arena + static arm + bounces) done; quick test 10/10.
@@ -25,10 +28,12 @@
   `outputs/baselines_h3_f49_sq480_with_arm_stride1.json`, log `outputs/baselines_full_stride1.log` (8 conditions, ALL + TEST,
   RMS/median/p95). These are the official Phase-0 baselines (Phase 1 reports on TEST).
 - **Step 0.7 DONE 2026-10-30:** README rewritten (current setup, scripts, legacy list), legacy GUI generator now exits,
-  `ball_estimation/` STAGED on branch `ball-estimation` (155 files, 2 MB; outputs/ and PDFs excluded) but the COMMIT FAILED:
-  git has no user.name/email on this machine. Waiting for user to say which author identity to use, then commit.
-- **PHASE 0 COMPLETE. Next = Phase 1 (gray-box learning: papers 03, 18, 01, 05)** — start with 1.1 = read + explain
-  guides, step by step, decisions before code.
+  `ball_estimation/` committed on branch `ball-estimation` as **a711784** (155 files, 2 MB; outputs/ and PDFs excluded).
+  Git has no user.name/email on this laptop: user chose author Haidar Saad, passed with `git -c` per commit (no config change). Not pushed.
+- **PHASE 0 COMPLETE. Phase 1 started 2026-10-31.** 1.1 paper 03 read (pdftotext) + explained → `docs/phase1_paper03_takeaways.md`
+  (old guide `papers/explained/03_achterhold_explained.tex` checked: accurate). Proposed step 1.2 = ekf-μ (μ in the state,
+  learned noise by max likelihood on train). **Waiting for user decisions** (optimiser scipy vs PyTorch, μ only first, criterion).
+  Papers 18, 01, 05 still to read.
 
 ## Open decisions (waiting for user)
 
@@ -190,3 +195,34 @@
   TEST vs ALL: medians/p95 match; RMS higher on test (oracle h0.5 40 vs 23, now_pos 6.8 vs 3.8) because test holds launch 303
   (corner hit) and a blind-spot launch → report median/p95 with RMS.
 - 0.7: README rewritten, step_0c_generate_with_gui.py exits (legacy), committed (user: 'yes do 0.7 and commit'). Phase 0 complete.
+- Commit a711784 (author Haidar Saad, chosen by user; git identity not configured on this laptop). Not pushed.
+
+### 2026-10-31 — Phase 1.1, paper 03
+- Read paper 03 + supplement via pdftotext; old guide accurate (incl. 29/30 = 96.7% not 97.7%). Wrote
+  `docs/phase1_paper03_takeaways.md` (summary, mapping, proposed 1.2 = μ in the state + max-likelihood learning).
+- Gap check (`experiments/step_1a_mu_vs_e_gap.py`): h0.5 ideal RMS/median: nominal 73/47, true μ only 50/6, true E only 55/43,
+  both 23/5 (all_real 99/69, 64/20, 81/64, 36/16) → μ = typical error, E = bounce tail. μ first, then E.
+- User asked for a full detailed PDF of paper 03 → `papers/explained/03_achterhold_explained_full.pdf` (21 pages, .tex beside it):
+  every section + supplement (S.1–S.4: horizons, 26/30 without launch info, initial/learned values translated, learned C,
+  full Jacobian incl. impact timing), derivations checked, critique (new slips found: Table S.2 header, ε missing in S.3/S.4,
+  likelihood notation), corrected old guide (S.4 DOES treat bounce linearisation), project section with gap check + ekf-μ equations.
+  Old short guide kept. Step 1.2 decisions still open (scipy vs PyTorch, μ first, likelihood criterion) / or read 18, 01, 05 first.
+
+### 2026-11-01 — research audit (user: "deep thinking as a researcher about any bug ... anything that prevents publishing")
+- Re-read all core code + ran 4 data checks. Full report: **`docs/research_audit_2026-11-01.md`** (no code changed).
+- A (rejection risks): **A1 inverse crime** — sim physics (arena_sim) = estimator model exactly (MuJoCo contacts off;
+  constant μ/E per launch) → oracle per-launch median 9.5 mm at h0.5; gray-box will look perfect, gray-vs-learned decided
+  by generator → need a "mismatch" dataset (slide→roll friction, speed-dependent E, tangential loss, wall≠arm E, tilt).
+  **A2** test set already looked at / used in decisions (step_1a, ALL-500) → decisions on train/val only + fresh larger
+  final test set. **A3** no CIs: TEST h0.5 ekf19b 77 mm CI [58, 96], oracle 41 [17, 66]; top-5 launches = 54 % / 87 % of
+  squared error; 69 % of frames from launches ≥2.5 m/s → per-launch metrics + bootstrap + paired tests.
+- B: B1 ray–floor-plane intersection would remove depth noise (reviewer will ask); B2 "ideal" has outward radial bias
+  +0.6/+1.6/+3.0 mm (0.5–0.9/0.9–1.3/1.3–1.8 m) and occlusion outliers up to 72 mm; B3 baselines use generator midpoints
+  (μ 0.85, E 0.725, sigma_E 0.13 = std of U) → add train-fitted ekf19b; cvkf q on grid edge 5/8; oracle not tuned itself;
+  B4 silent dropout + StaleGuard circular (61.5 = 61.5); B5 EKF P ignores bounce (Liu baseline; fix in our filters).
+- C: thesis statements (μ is m/s² deceleration, sensor idealisations incl. no motion blur, scope, clamp vs mirror,
+  reproducibility: publish raw data, novelty framing vs paper 03). D: branch never pushed + outputs/ not backed up.
+- Checked OK: no double physics, sim arm bounces consistent, camera convention, metric timing, seeds, split, no
+  stale false positives.
+- **Waiting for user:** which fixes to do and in which order (proposed: D push/backup → A3 stats.py → B1+B3 → A1 mismatch
+  data → A2 fresh test set → step 1.2). Step 1.2 decisions (scipy / μ first / likelihood) still open too.
