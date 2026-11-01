@@ -326,3 +326,17 @@
   comparisons); Steps 1–7 each with purpose/procedure/math/outputs; mismatch physics derivations (7/2 μg slip decay,
   5/7 rule, 5/7 tilt, impact + wall friction, re-roll −(5e−2(1−f))/7); restart instructions; glossary.
   Run still NOT started (user: start later).
+- **23:08 user: "run the part1 test" → Part 1 STARTED:** `bash experiments/run_overnight.sh part1` (script reordered: mismatch
+  check + render now right after step 5; `part1` arg exits after them; Part 2 later = same command without arg, finished
+  steps skipped). Expected ~3.5 h → ~02:40. Progress: outputs/overnight_progress.log. If interrupted: rerun same command.
+- 00:52 progress: step 1 done (18.9 min, outputs/fit_constants_train.json); step 2 tuning at 675/825 (~95 min total); Part 1 ETA ~03:00.
+- 01:05 user: do NOT start the mismatch render automatically after steps 3–6 → created skip marker
+  `outputs/.overnight_done/render_mismatch_data` (running script not edited: bash reads scripts while running).
+  The progress log will say "skip render mismatch data (done)" — it was NOT rendered. **To render later:**
+  `rm outputs/.overnight_done/render_mismatch_data` then `bash experiments/run_overnight.sh part1` (or run step_0c
+  `--physics mismatch` directly).
+- **01:29 PART 1 DONE** (render skipped as asked). Full results: **`docs/part1_results_2026-11-02.md`**. Key: fit c,E ≈
+  midpoints (no gain, p ≥ 0.3); gate hurts; plane −10 mm vs depth (p 4e-11); silent_noisy +36.5 mm; μ-first confirmed on
+  train+val (true μ −21 mm vs true E −11 mm); mismatch physics 12/12 + 500-launch checks PASS, similar difficulty.
+  **PROBLEM: tuning optima on grid edges** (ekf σ = 2 mm lower edge in 6 conds; oracle σ = 30 mm / q = 0.03 edges everywhere;
+  cvkf q = 1000) → proposed: widen grids, re-tune (~2.5 h), re-run baselines + paired (~20 min). Waiting for user.
