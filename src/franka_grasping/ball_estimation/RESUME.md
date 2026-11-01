@@ -314,3 +314,15 @@
   fit → tune → baselines → paired → μ-vs-E → ekf-μ grid → learn nll → learn h05 → eval → mismatch check → mismatch render.
   Progress: `outputs/overnight_progress.log`; finished steps skipped on restart (markers in outputs/.overnight_done/).
   NOT started yet — waiting for user to say when (laptop must stay on + plugged in).
+- User: do NOT run now; asked how many hours (old paused run vs new). Answer: the ~11 h pipeline INCLUDES the old paused
+  run. Old part ≈ 3.5 h (fit 15 min, tuning 75 min, baselines+paired+μE 10 min, mismatch check 5 min, render 90 min);
+  new ekf-μ part ≈ 7.5 h typical (grid 10 min, learn nll ~2.5–3 h, learn h05 ~4 h, eval 20 min); worst case if the
+  optimiser uses all 100 iterations: nll ~7 h, h05 ~10 h. Offered: run in two parts, or trim the h05 ablation.
+- User asked for a full detailed PDF of Part 1 (math + processes) before running → **`papers/explained/part1_run_explained.pdf`**
+  (17 pages, .tex beside it): world + matched physics; camera (f = 526.6 px, 5.6 mm/px), detection, ray correction
+  derivation, plane method; sensor model (σZ = kZ², jitter, Markov loss p = rq/(1−r), loss modes, delay), 11 conditions;
+  estimators (fd, model, EKF predict/update, Q derivation, gain example, χ² gate 9.21, hybrid, ekf19b σE = 0.13, fit,
+  oracle, StaleGuard); metrics; statistics (per-launch RMS, bootstrap, paired, Wilcoxon worked example, multiple
+  comparisons); Steps 1–7 each with purpose/procedure/math/outputs; mismatch physics derivations (7/2 μg slip decay,
+  5/7 rule, 5/7 tilt, impact + wall friction, re-roll −(5e−2(1−f))/7); restart instructions; glossary.
+  Run still NOT started (user: start later).
