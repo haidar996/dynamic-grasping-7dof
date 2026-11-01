@@ -226,3 +226,45 @@
   stale false positives.
 - **Waiting for user:** which fixes to do and in which order (proposed: D push/backup → A3 stats.py → B1+B3 → A1 mismatch
   data → A2 fresh test set → step 1.2). Step 1.2 decisions (scipy / μ first / likelihood) still open too.
+
+### 2026-11-01 (later) — user: "i am ok with everything, and from u treat every detail as a research"
+- All audit fixes approved. Memory `feedback-research-rigor.md` saved.
+- **D DONE:** public repo → NOT used for chapter 2 (user chose private). Created **private repo
+  github.com/haidar996/ball-estimation-private** (remote name `backup`), pushed `ball-estimation` (b1cc2cc) + `main`.
+  Outputs backup = private release `outputs-2026-11-01` (21 MB zip: dataset, tuning, baselines, fov_grid, split, camera yaml),
+  local copy `~/backups/ball_estimation_outputs_2026-11-01.zip` (sha256 5d0a09e2…). **Push to `backup`, never `origin`.**
+- Next in this turn: A3 stats.py, B1 plane measurement, B2 depth ray correction, B3 (fit c,E on train, oracle + cvkf own
+  tuning), B4 silent_noisy condition, A2 final-test seed, then re-run tuning + baselines (val+test), then A1 design (needs user).
+- **Code changes 2026-11-01 (audit fixes, all approved):**
+  - B2 `sensing/camera.py back_project`: surface→centre along the ray (zc = z_s + r·cosθ); outward bias +3.0 → +1.6 mm at
+    1.3–1.8 m. Rest = pure 0.08 % scale from the pixel centroid (same in plane method), < 1/3 px → documented, left in.
+  - B1 `back_project_plane` + SensorParams `xy_method` ("depth"/"plane"), `plane_dz`; conditions `plane`, `all_plane`
+    (same jitter draws as noise_real/all_real → paired). Ideal plane: median 0.9 mm, max 28 mm (depth: 67 mm, arm occlusion).
+  - B4 loss_mode `silent_noisy` (lost frame = last detection with fresh noise) + condition `dropout_silent_noisy`.
+  - A3 `estimators/stats.py`: per-launch RMS, launch-mean/median + bootstrap CI, paired (bootstrap diff, Wilcoxon, win %).
+  - B3 `ekf19b_fit` in make(); `experiments/step_0k_fit_constants_train.py` (c × E grid on TRAIN, ideal; all_real check);
+    step_0i rewritten: families ekf / ekf_fit / oracle / cvkf (own wider grid), criterion launch-mean h0.5 on val.
+  - step_0d rewritten: VAL + TEST(dev) only, per-family noise, stats tables, saves `outputs/baselines_v3_errors.pkl.gz`.
+  - `experiments/step_0j_paired_tests.py` (paired comparisons); step_1a now train+val only with CIs.
+  - A2 `final_test_plan.json`: final test seed 20261101 (500 launches), render only when methods frozen.
+  - Archived Phase-0: `outputs/ekf_tuning_val_v2_phase0.json/.log`, `baselines_full_stride1_v2_phase0.log`.
+- **RUNNING (started 19:16):** `bash outputs/run_audit_chain.sh` (fit → tune → baselines → paired → step_1a), ~1.5–2 h.
+  Logs: outputs/fit_constants_train.log, ekf_tuning_val.log, baselines_v3_val_test.log, paired_tests_v3.log,
+  mu_vs_e_gap_trainval.log. If the laptop dies: rerun the same command (each step overwrites its own outputs).
+- Next: A1 mismatch-physics design (literature) → present to user before coding.
+- **A1 design written:** `docs/A1_mismatch_physics_design.md` (slide→roll with spin, speed-dependent rolling resistance,
+  launch slip ratio, e(v_n) falling with speed, wall ≠ arm e₀, Coulomb wall friction μ_w (Mathavan 2010: 0.14), re-sliding
+  after bounces, exact mirror bounce, floor tilt 0–0.15°; paired launches = same p0/v0 (seed 42), extra params seed 43).
+  **Waiting for user on 3 ⚠ decisions:** (1) rolling resistance a₀ realistic 0.1–0.8 m/s² (A, recommended) vs stretched
+  0.2–1.5 (B); (2) arm e₀ 0.40–0.90; (3) tilt range; plus oracle on mismatch data = hindsight best-constant (recommended).
+- **User decided A1 (all recommended):** rolling resistance 0.1–0.8 m/s², arm e₀ 0.40–0.90, tilt 0–0.15°, oracle on
+  mismatch = hindsight best-fit constant (c, E) per launch (to implement when evaluating on mismatch data).
+- **A1 implemented:** `arena_sim.py` MismatchPhysics + MismatchArena (step_mismatch, _impact, exact bounces);
+  `launches.py` MismatchRanges + with_mismatch (seed 43, p0/v0 identical to seed-42 dataset — verified 0.0 diff);
+  `dataset.record_raw` handles launch.phys (stores phys_* keys; mu/e = NaN so the matched oracle fails loudly);
+  `step_0c_generate_500_with_arm.py --physics mismatch` (default workers now 3, was 8!).
+  `experiments/step_0l_check_mismatch_physics.py`: 12/12 closed-form checks PASS (5/7 rule, roll time, a0(1+kv),
+  5/7 g sinα tilt, e(v_n), tangential, wall friction removes 2.5·μ_w(1+e) of top spin, re-roll speed −(5e−2(1−f))/7).
+  Key physics fact: rolling ball hitting a wall with e = 0.8 comes back at 0.29–0.47 of its speed (constant model: 0.8).
+- TODO after the chain: run step_0l full (500 truth-only, energy/position checks, matched vs mismatch stats), then render
+  mismatch (`python3 experiments/step_0c_generate_500_with_arm.py --physics mismatch`, ~90 min), then step_0c checks.

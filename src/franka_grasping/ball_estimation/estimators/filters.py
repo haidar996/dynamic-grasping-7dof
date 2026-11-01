@@ -127,7 +127,8 @@ class StaleGuard:
 
 
 def make(name, rec=None, **kw):
-    """fd | cvkf | ekf19[-none|-skip|-reset|-hybrid] | ekf19b[...] | ekf19_oracle[...] | ekf19b_oracle[...]  (oracle needs rec['mu'], rec['e']).
+    """fd | cvkf | ekf19[-none|-skip|-reset|-hybrid] | ekf19b[...] | ekf19b_fit[...] | ekf19_oracle[...] | ekf19b_oracle[...]
+    (oracle needs rec['mu'], rec['e']; ekf19b_fit needs c, E in kw).
     The EKFs need the scene geometry in kw: L=..., obs=... (Arena.estimator_geometry())."""
     if name.endswith("+stale"):                            # e.g. "ekf19b-none+stale"
         return StaleGuard(make(name[:-len("+stale")], rec, **kw))
@@ -140,6 +141,9 @@ def make(name, rec=None, **kw):
     if base == "ekf19":
         return EKF19(policy=pol or "hybrid", **kw)
     if base == "ekf19b":                                   # + extra uncertainty at wall bounces
+        return EKF19(policy=pol or "hybrid", sigma_E=0.13, **kw)
+    if base == "ekf19b_fit":                               # c, E fitted on the train launches: must be given in kw
+        assert "c" in kw and "E" in kw, "ekf19b_fit needs c=..., E=... (outputs/fit_constants_train.json)"
         return EKF19(policy=pol or "hybrid", sigma_E=0.13, **kw)
     if base == "ekf19_oracle":
         return EKF19(c=rec["mu"], E=rec["e"], policy=pol or "hybrid", **kw)

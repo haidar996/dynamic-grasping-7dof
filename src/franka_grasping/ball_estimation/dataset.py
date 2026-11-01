@@ -18,19 +18,31 @@ CONDITIONS = {
     "noise_real":      SensorParams(k_depth=K_REAL, jitter_px=0.3),
     "all_real":        SensorParams(k_depth=K_REAL, jitter_px=0.3, loss_rate=0.05,
                                     mean_gap=6, loss_mode="flagged", delay=0.04),
+    # added 2026-11-01 (research audit).  B1: same as noise_real / all_real but (x, y) from the ray meeting the known
+    # plane of the ball centre instead of the noisy depth (same jitter values: paired).  B4: silent loss that is NOT
+    # bit-identical (repeated detection with fresh noise), so the repeat detector cannot remove it.
+    "plane":           SensorParams(k_depth=K_REAL, jitter_px=0.3, xy_method="plane"),
+    "all_plane":       SensorParams(k_depth=K_REAL, jitter_px=0.3, loss_rate=0.05,
+                                    mean_gap=6, loss_mode="flagged", delay=0.04, xy_method="plane"),
+    "dropout_silent_noisy": SensorParams(k_depth=8.2e-4, jitter_px=0.3, loss_rate=0.05, mean_gap=6,
+                                         loss_mode="silent_noisy"),
 }
 
 
 def record_raw(model, arena, camera, launch, T=10.0, fps=60.0):
     """Truth at the physics rate + ideal detections (u, v, z) at `fps`."""
     data = mujoco.MjData(model)
-    arena.reset(data, launch.p0, launch.v0)
+    ph = launch.phys                                   # None: matched physics (mu, e); else MismatchArena physics
+    if ph is None:
+        arena.reset(data, launch.p0, launch.v0)
+    else:
+        arena.reset(data, launch.p0, launch.v0, ph)
     n = int(T / model.opt.timestep)
     t = np.zeros(n); pos = np.zeros((n, 2)); vel = np.zeros((n, 2)); bounces = []
     fr = {k: [] for k in ("t", "uvz", "true_xy", "true_v")}
     next_t = 0.0
     for i in range(n):
-        hits = arena.step(data, launch.mu, launch.e)
+        hits = arena.step(data, launch.mu, launch.e) if ph is None else arena.step_mismatch(data, ph)
         t[i], pos[i], vel[i] = data.time, data.qpos[:2], data.qvel[:2]
         bounces += [(data.time, *h) for h in hits]
         if data.time >= next_t:
@@ -46,7 +58,8 @@ def record_raw(model, arena, camera, launch, T=10.0, fps=60.0):
                 frame_t=np.array(fr["t"]), uvz=np.array(fr["uvz"]),
                 true_xy=np.array(fr["true_xy"]), true_v=np.array(fr["true_v"]),
                 p0=launch.p0, v0=launch.v0, mu=launch.mu, e=launch.e,
-                fps=fps, T=T, cam_height=camera.H, cam_fovy=camera.fovy, cam_w=camera.W, cam_rows=camera.R)
+                fps=fps, T=T, cam_height=camera.H, cam_fovy=camera.fovy, cam_w=camera.W, cam_rows=camera.R,
+                **({} if ph is None else {f"phys_{k}": np.asarray(v) for k, v in ph.__dict__.items()}))
 
 
 def generate_raw(model, arena, camera, launches, out_dir, T=10.0, fps=60.0):

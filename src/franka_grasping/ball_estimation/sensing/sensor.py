@@ -16,7 +16,9 @@ class SensorParams:
     jitter_px: float = 0.0         # std of the pixel-centroid jitter       (0 = off)
     loss_rate: float = 0.0         # long-run fraction of lost frames       (0 = off)
     mean_gap: float = 6.0          # mean length of one loss, in frames
-    loss_mode: str = "flagged"     # "flagged" or "silent_hold"
+    loss_mode: str = "flagged"     # "flagged", "silent_hold" (bit-identical repeat) or "silent_noisy"
+    xy_method: str = "depth"       # "depth": back-project with the measured depth; "plane": ray meets the known plane
+    plane_dz: float = 0.0          # m, error of the assumed camera-to-plane distance ("plane" only)
     seed: int = 0
 
 
@@ -28,6 +30,7 @@ class Sensor:
         self.rng_noise = np.random.default_rng([params.seed, 1])
         self.lost = False          # state of the two-state loss chain
         self.last = None           # last delivered position (for silent hold)
+        self.last_parts = None     # last detection (u, v, z) before noise (for silent_noisy)
 
     # ---- the effects ------------------------------------------------------
     def corrupt_depth(self, z):
@@ -58,21 +61,34 @@ class Sensor:
 
     def apply(self, get_parts):
         """Returns (xy or None, valid, was_lost).  get_parts() -> (u, v, z) or None.
-        valid=False means 'no measurement' (flagged).  was_lost is the hidden label."""
+        valid=False means 'no measurement' (flagged).  was_lost is the hidden label.
+        silent_noisy (audit B4): a lost frame repeats the last detection with FRESH noise, so it is not bit-identical
+        and a repeat detector (StaleGuard) cannot see it."""
         lost = self._step_loss()
-        if lost and (self.p.loss_mode == "flagged" or self.last is None):
+        mode = self.p.loss_mode
+        if lost and (mode == "flagged" or self.last is None):
             return None, False, True
-        if lost:                                            # silent hold: stale value, looks valid
+        if lost and mode == "silent_hold":                  # stale value, looks valid
             return self.last.copy(), True, True
+        if lost:                                            # silent_noisy
+            return self._to_xy(*self.last_parts), True, True
         parts = get_parts()
         if parts is None:                                   # detector found nothing
             return None, False, False
-        u, v, z = parts
-        if self.p.jitter_px > 0:
-            u, v = np.array([u, v]) + self.rng_noise.normal(0.0, self.p.jitter_px, 2)
-        xy = self.cam.back_project(u, v, self.corrupt_depth(z))
+        self.last_parts = parts
+        xy = self._to_xy(*parts)
         self.last = xy
         return xy, True, False
+
+    def _to_xy(self, u, v, z):
+        """Noisy detection -> world (x, y).  The depth noise is drawn in both methods, so "plane" gets the SAME pixel
+        jitter values as "depth" with the same seed (paired comparison)."""
+        if self.p.jitter_px > 0:
+            u, v = np.array([u, v]) + self.rng_noise.normal(0.0, self.p.jitter_px, 2)
+        z = self.corrupt_depth(z)
+        if self.p.xy_method == "plane":
+            return self.cam.back_project_plane(u, v, self.p.plane_dz)
+        return self.cam.back_project(u, v, z)
 
 
 def record_launch(model, arena, launch, sensor, T=10.0):

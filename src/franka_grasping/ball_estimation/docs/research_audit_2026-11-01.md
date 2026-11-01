@@ -208,3 +208,20 @@ Severity: **A = would likely get the paper rejected**, B = reviewer will demand 
 4. A1 (mismatch physics dataset): design with the user first, then ~2 h code + 90 min rendering.
 5. A2 (fresh, larger final test set, rendered once the methods are frozen; seed fixed now and written down).
 6. Then step 1.2 (ekf-μ) with the B5 bounce Jacobian, evaluated on matched and mismatch data with CIs.
+
+---
+
+## Status of the fixes (user approved all, 2026-11-01)
+
+| Item | Status |
+|---|---|
+| D | DONE: private repo `haidar996/ball-estimation-private` (remote `backup`), branch pushed; outputs zip as a private release + `~/backups/` |
+| A3 | DONE: `estimators/stats.py`. step_0d / step_0i / step_1a now report per-launch statistics with CIs; paired tests in `step_0j` |
+| B1 | DONE: `Pinhole.back_project_plane`, conditions `plane`, `all_plane` (paired with noise_real / all_real) |
+| B2 | DONE: ray-corrected back-projection (bias +3.0 → +1.6 mm at the corners); the rest is a 0.08 % centroid scale, < 1/3 px, documented |
+| B3 | DONE: `ekf19b_fit` (c, E fitted on train, step_0k); oracle and cvkf tuned as their own families (cvkf wider grid) |
+| B4 | DONE: `silent_noisy` loss mode + condition `dropout_silent_noisy` |
+| B5 | Planned for the proposed filters (ekf-μ): bounce Jacobian |
+| A2 | Seed fixed: `final_test_plan.json` (seed 20261101). step_1a now uses train + val only; headline numbers on val + test (dev) |
+| A1 | Designed (`docs/A1_mismatch_physics_design.md`, user decisions taken), implemented (`MismatchArena`), 12/12 closed-form checks pass; rendering pending |
+| C | To be written into the thesis text (list above) |

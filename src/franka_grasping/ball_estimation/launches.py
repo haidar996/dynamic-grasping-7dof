@@ -20,6 +20,35 @@ class Launch:
     v0: np.ndarray                 # start velocity (m/s)
     mu: float
     e: float
+    phys: object = None            # MismatchPhysics (arena_sim) -> "mismatch" physics; None -> mu, e physics
+
+
+@dataclass
+class MismatchRanges:
+    """Per-launch ranges of the mismatch physics (docs/A1_mismatch_physics_design.md, user decisions 2026-11-01)."""
+    mu_s: tuple = (0.15, 0.40)
+    a0: tuple = (0.10, 0.80)       # m/s^2, realistic rolling resistance (c_rr ~ 0.01-0.08)
+    k: tuple = (0.0, 0.1)          # s/m
+    slip0: tuple = (0.0, 1.0)
+    e_wall: tuple = (0.55, 0.95)
+    e_arm: tuple = (0.40, 0.90)
+    beta: tuple = (0.0, 0.04)      # s/m
+    mu_w: tuple = (0.10, 0.30)
+    tilt_deg: tuple = (0.0, 0.15)
+
+
+def with_mismatch(launches, rng, r=MismatchRanges()):
+    """Same launches (p0, v0 unchanged: paired with the matched data) + mismatch physics drawn from a separate stream."""
+    from arena_sim import MismatchPhysics, G
+    out = []
+    for L in launches:
+        u = lambda a: float(rng.uniform(*a))
+        alpha, phi = np.radians(u(r.tilt_deg)), u((0.0, 2 * np.pi))
+        ph = MismatchPhysics(mu_s=u(r.mu_s), a0=u(r.a0), k=u(r.k), slip0=u(r.slip0), e_wall=u(r.e_wall),
+                             e_arm=u(r.e_arm), beta=u(r.beta), mu_w=u(r.mu_w),
+                             tilt=(G * np.sin(alpha) * np.cos(phi), G * np.sin(alpha) * np.sin(phi)))
+        out.append(Launch(L.p0, L.v0, float("nan"), float("nan"), ph))
+    return out
 
 
 def sample_launch(rng, arena, speed, r=LaunchRanges()):

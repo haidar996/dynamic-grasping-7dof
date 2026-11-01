@@ -1,0 +1,10 @@
+{
+ "written": "2026-11-01 (research audit A2), BEFORE any method of Phase 1 exists",
+ "seed": 20261101,
+ "launches": "launches.sample_launches(np.random.default_rng(20261101), arena, k=10): 50 speeds x 10 = 500",
+ "camera": "camera_settings_locked.yaml (3 m, 49 deg, 480x480, 60 Hz), same scene XML",
+ "physics": "every physics variant used for the final results (matched, and the mismatch variant if adopted, audit A1)",
+ "noise_seeds": "apply_condition seed = 1000 + launch index (same rule as the development data)",
+ "rule": "render only when all methods, hyper-parameters and the evaluation protocol are frozen and committed; run the final evaluation ONCE; report every number it gives; never tune, select or debug on it",
+ "why": "split_500.json test launches were inspected during Phase 0 (launch 303, blind-spot launches) and used in the mu-vs-E decision, so they are only a development test set now"
+}

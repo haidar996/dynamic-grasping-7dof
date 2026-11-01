@@ -17,10 +17,19 @@ class Pinhole:
         self.f = (self.R / 2) / np.tan(np.radians(fovy) / 2)    # focal length, pixels
 
     def back_project(self, u, v, z_surface):
-        """Pixel + surface depth -> world (x, y) of the ball centre."""
-        zc = z_surface + self.radius                 # surface -> centre
-        return np.array([(u - self.cx) * zc / self.f,
-                         -(v - self.cy) * zc / self.f])      # image rows grow downward
+        """Pixel + surface depth -> world (x, y) of the ball centre.
+        The pixel ray through the centroid meets the sphere r before the centre, so along the optical axis the centre
+        is r*cos(theta) deeper than the surface point (theta = ray angle).  Adding the full r (the old rule, exact only
+        straight below the camera) biased the position outward by up to 3 mm near the walls (audit B2, 2026-11-01)."""
+        a, b = (u - self.cx) / self.f, (v - self.cy) / self.f
+        zc = z_surface + self.radius / np.sqrt(1.0 + a * a + b * b)
+        return np.array([a * zc, -b * zc])                    # image rows grow downward
+
+    def back_project_plane(self, u, v, dz=0.0):
+        """Pixel -> world (x, y) by intersecting the ray with the plane of the ball centre (z = radius); no depth used.
+        dz: error of the assumed camera-to-plane distance (m), for calibration-error tests (audit B1)."""
+        zc = self.H - self.radius + dz
+        return np.array([(u - self.cx) * zc / self.f, -(v - self.cy) * zc / self.f])
 
 
 class DepthCamera(Pinhole):
