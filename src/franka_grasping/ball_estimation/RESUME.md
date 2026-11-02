@@ -340,3 +340,11 @@
   train+val (true μ −21 mm vs true E −11 mm); mismatch physics 12/12 + 500-launch checks PASS, similar difficulty.
   **PROBLEM: tuning optima on grid edges** (ekf σ = 2 mm lower edge in 6 conds; oracle σ = 30 mm / q = 0.03 edges everywhere;
   cvkf q = 1000) → proposed: widen grids, re-tune (~2.5 h), re-run baselines + paired (~20 min). Waiting for user.
+- 2026-11-02: user: re-run of tuning later. Asked for the Part-1 PDF rebuilt in **Arabic** with expanded explanation of
+  the new methods → **`papers/explained/part1_run_explained_ar.pdf`** (20 pages, XeLaTeX + polyglossia + Amiri; .tex beside).
+  Expanded "new method" sections #1–#8: ray correction (with figure + cosθ derivation), plane intersection (+ error
+  analysis, camera-height sensitivity), silent_noisy (B4), per-launch stats (numeric example), bootstrap (worked
+  example), paired test (Var(A−B) derivation) + Wilcoxon, fair fitted baseline + coordinate descent, grid-edge concept,
+  inverse crime + mismatch physics; plus a section with the actual Part-1 results and the grid-edge problem.
+  Arabic typesetting rules learned: numbers in math mode, ranges as "A إلى B", dates in \LR{}, quotes « », hyperref
+  before polyglossia, no tcolorbox env named "code".
