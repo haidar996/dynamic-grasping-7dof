@@ -58,3 +58,23 @@ mu_vs_e_gap_trainval, check_mismatch_physics. TEST = test (dev), 75 launches (73
   rolling resistance).
 
 ## Step 7: render: skipped (user request); rerun instructions in RESUME.md.
+
+## Re-tune with wider grids (2026-11-02 11:56 → 14:58, `outputs/run_retune.sh`)
+Grids: ekf/ekf_fit σ 0.5–30 mm × q 0.001–20 (81); oracle σ 1–120 mm × q {0, 1e-5 … 0.1} (49); cvkf σ 1–20 mm ×
+q 2–20000 (56). Narrow-grid outputs kept as `outputs/*_narrowgrid.*`.
+
+- **ekf / ekf_fit: no optimum on an edge any more.** Every setting picked on the narrow grid is still picked
+  (21/22; it was a real interior optimum: σ 2 mm × q 0.5/0.03 for clean data, 12 mm × 0.1 for real noise, 3 mm × 0.1
+  for plane). Only change: ekf dropout_silent_noisy 20 mm/0.03 → 12 mm/0.01 (95.4 → 95.0 mm on test (dev)).
+  → All ekf19b / ekf19b_fit baseline numbers and all μ-vs-E numbers are unchanged to the digit.
+- **oracle:** prefers σ 30–60 mm (≫ true noise: with an exact model, large σ = long averaging window). q = 0 chosen only
+  in noise_real; in clean conditions q = 0.1 (upper edge) is "best", but the q direction is flat there
+  (ideal: 4.0 mm at q 0.1 vs 4.3 mm at q 0): a ≤0.3 mm effect, consistent with a tiny model/integrator mismatch
+  (2 ms MuJoCo step vs. the filter's propagation). Not worth widening further; report as flat.
+  Test (dev) oracle changes ≤0.4 mm except all_real 20.2 → 22.5 mm (CI 11–39) and silent_noisy 42.4 → 38.4:
+  selection noise on a flat surface (val improved, test didn't).
+- **cvkf:** h0.5 ≈ 410–510 mm (no walls, no friction: a constant-velocity model is not a 0.5 s predictor). Edges remain
+  (q = 2 lower edge for noise_real/all_real; σ = 20 mm for dropout_silent(_noisy)), but the surface is flat (a few mm out
+  of ~500) and cvkf is only the "no physics" floor. Test numbers changed ≤0.2 mm.
+- **Paired conclusions unchanged:** fit vs midpoints +0.1…+1.5 mm (p ≥ 0.2); oracle gap −45 to −57 mm (p ≤ 4e-10);
+  plane vs depth −9.8 [−11.7, −7.6] mm; silent_noisy vs noise +36.1 mm; gate hurts (+8…+14 mm, +62 mm dropout_silent).

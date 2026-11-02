@@ -31,14 +31,18 @@ SPLIT = json.loads((root / "split_500.json").read_text())
 GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).estimator_geometry()
 FIT = json.loads((root / "outputs" / "fit_constants_train.json").read_text())
 cam = Pinhole(3.0, 49.0, 480, 480)
-SIG = [0.002, 0.003, 0.005, 0.008, 0.012, 0.02, 0.03]
-Q = [0.03, 0.1, 0.5, 2.0, 5.0, 20.0]
-SIG_CV = [0.001, 0.002, 0.003, 0.005, 0.008, 0.012]
-Q_CV = [2.0, 5.0, 20.0, 50.0, 200.0, 1000.0]
+# grids widened 2026-11-02: the first run (outputs/ekf_tuning_val_narrowgrid.json) had optima on the grid edges
+# (ekf sigma 2 mm / q 0.03 lowest; oracle sigma 30 mm highest and q 0.03 lowest; cvkf q 1000 highest)
+SIG = [0.0005, 0.001, 0.002, 0.003, 0.005, 0.008, 0.012, 0.02, 0.03]
+Q = [0.001, 0.003, 0.01, 0.03, 0.1, 0.5, 2.0, 5.0, 20.0]
+SIG_OR = [0.001, 0.002, 0.005, 0.012, 0.03, 0.06, 0.12]
+Q_OR = [0.0, 1e-5, 1e-4, 1e-3, 0.01, 0.03, 0.1]      # q = 0 is the physical lower limit (perfect model), not a grid edge
+SIG_CV = [0.001, 0.002, 0.003, 0.005, 0.008, 0.012, 0.02]
+Q_CV = [2.0, 5.0, 20.0, 50.0, 200.0, 1000.0, 5000.0, 20000.0]
 FAMILIES = {   # name, sigma grid, q grid, extra kw
     "ekf":     ("ekf19b-none+stale", SIG, Q, {}),
     "ekf_fit": ("ekf19b_fit-none+stale", SIG, Q, dict(c=FIT["c"], E=FIT["E"])),
-    "oracle":  ("ekf19b_oracle-none+stale", SIG, Q, {}),
+    "oracle":  ("ekf19b_oracle-none+stale", SIG_OR, Q_OR, {}),
     "cvkf":    ("cvkf", SIG_CV, Q_CV, {}),
 }
 KEY = "h0.5"
@@ -77,7 +81,7 @@ def main():
         for c in conds:
             grid = {(s, q): score(c, (fam, s, q), KEY) for s, q in itertools.product(sig, qs)}
             sq = min(grid, key=grid.get)
-            edge = sq[0] in (sig[0], sig[-1]) or sq[1] in (qs[0], qs[-1])
+            edge = sq[0] in (sig[0], sig[-1]) or sq[1] == qs[-1] or (sq[1] == qs[0] and qs[0] > 0)
             best[fam][c] = dict(sigma=sq[0], q=sq[1], h05_launch_mean_mm=grid[sq],
                                 now_pos_launch_mean_mm=score(c, (fam, *sq), "now_pos"), on_grid_edge=edge, **kw)
             print(f"\n[{fam}] {c}:  sigma(mm) \\ q  " + "  ".join(f"{q:>7}" for q in qs))

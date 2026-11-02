@@ -348,3 +348,14 @@
   inverse crime + mismatch physics; plus a section with the actual Part-1 results and the grid-edge problem.
   Arabic typesetting rules learned: numbers in math mode, ranges as "A إلى B", dates in \LR{}, quotes « », hyperref
   before polyglossia, no tcolorbox env named "code".
+- **11:56 user: run re-tuning with wider grids → RUNNING** (`bash outputs/run_retune.sh`: step_0i → 0d → 0j → 1a, ~3 h,
+  ETA ~15:00; progress outputs/retune_progress.log). New grids: ekf/ekf_fit σ 0.5–30 mm (9) × q 0.001–20 (9);
+  oracle σ 1–120 mm (7) × q {0, 1e-5 … 0.1} (7; q = 0 = physical limit, not flagged as edge); cvkf σ 1–20 mm (7) ×
+  q 2–20000 (8); 267 settings. Narrow-grid results kept as outputs/*_narrowgrid.* (tuning, baselines, paired, μE).
+  If interrupted: rerun `bash outputs/run_retune.sh` (whole chain again).
+- 14:22 check: tuning 750/825 jobs (143 min); then baselines (~17 min) + paired + muE → ETA ~15:05. User asked to be told when ready.
+- **14:58 RETUNE DONE.** ekf/ekf_fit: no edges; 21/22 optima identical to narrow grid → baselines + μE unchanged.
+  oracle flat in q (≤0.3 mm), σ 30–60 mm; cvkf edges but flat and irrelevant (~450 mm). Paired conclusions unchanged.
+  Written to docs/part1_results_2026-11-02.md ("Re-tune with wider grids"). Next (only with user OK): render mismatch
+  data (rm outputs/.overnight_done/render_mismatch_data; bash experiments/run_overnight.sh part1) or Part 2 (ekf-μ).
+
