@@ -359,3 +359,5 @@
   Written to docs/part1_results_2026-11-02.md ("Re-tune with wider grids"). Next (only with user OK): render mismatch
   data (rm outputs/.overnight_done/render_mismatch_data; bash experiments/run_overnight.sh part1) or Part 2 (ekf-μ).
 
+- **2026-11-03 02:15 user: run the render → RUNNING** (bash experiments/run_overnight.sh part1; render marker removed; ETA ~03:45). Output outputs/raw_60hz_h3_f49_sq480_with_arm_mismatch/, log outputs/raw_mismatch_render.log. First files OK (phys_* keys present, mu/e NaN, same p0 as matched). If interrupted: rerun the same command (resumes per launch).
+- **03:47 RENDER DONE** (92 min): 500/500 files, 26 MB, no tmp left. Checks: p0/v0 identical to matched (paired), no |pos|>1.22, ~21% fewer bounces than matched, median moving time 2.5 vs 2.3 s, missing detections 0.6% of frames. Next (needs user OK): hindsight best-constant oracle + baselines on mismatch data (--data option), then Part 2 (bash experiments/run_overnight.sh).
