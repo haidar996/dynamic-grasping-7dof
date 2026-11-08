@@ -29,9 +29,11 @@ GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).es
 TUNED = json.loads((root / "outputs" / "ekf_tuning_val.json").read_text())["best"]["ekf_fit"]
 FIT = json.loads((root / "outputs" / "fit_constants_train.json").read_text())
 cam = Pinhole(3.0, 49.0, 480, 480)
-Q = [0.003, 0.01, 0.03, 0.1, 0.5, 2.0]
+# 2026-11-07: widened after the first run had every optimum on an edge (q at 0.003, s_l at 0.2 / 1.0; old results in
+# outputs/ekf_mu_grid_val_narrowgrid.json).  q = 2.0 dropped (worst everywhere: 42-116 mm).
+Q = [1e-4, 3e-4, 0.001, 0.003, 0.01, 0.03, 0.1, 0.5]
 Q_MU = [1e-6, 1e-4, 1e-2]
-S_L = [0.2, 0.5, 1.0]
+S_L = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 3.0]
 
 
 def main():
@@ -47,13 +49,19 @@ def main():
             _, _, errs = eb.run(data, p, GEO["L"], GEO["obs"], horizon=0.5)
             grid[(q, qm, sl)] = 1000 * float(np.nanmean(per_launch([{"h": e} for e in errs], "h")))
         k = min(grid, key=grid.get)
-        edge = k[0] in (Q[0], Q[-1]) or k[1] in (Q_MU[0], Q_MU[-1]) or k[2] in (S_L[0], S_L[-1])
+        axes = (("q", Q), ("q_mu", Q_MU), ("s_l", S_L))
+        edge_axes = [n for a, (n, vals) in enumerate(axes) if k[a] in (vals[0], vals[-1])]
+        edge = bool(edge_axes)
+        # profile along each axis (min over the other two): shows whether an edge optimum is flat or still falling
+        prof = {n: [min(v for kk, v in grid.items() if kk[a] == x) for x in vals] for a, (n, vals) in enumerate(axes)}
         out[cond] = dict(params=dict(sigma=TUNED[cond]["sigma"], q=k[0], q_mu=k[1], mu0=FIT["c"], s_l=k[2], sigma_v0=3.0,
                                      E=FIT["E"], sigma_E=0.13),
-                         val_h05_launch_mean_mm=grid[k], on_grid_edge=edge,
+                         val_h05_launch_mean_mm=grid[k], on_grid_edge=edge, edge_axes=edge_axes, profiles=prof,
                          grid={f"{a}|{b}|{c}": v for (a, b, c), v in grid.items()})
         print(f"{cond:22s} q {k[0]:<6} q_mu {k[1]:<7} s_l {k[2]:<4} -> val launch-mean h0.5 {grid[k]:6.1f} mm"
-              + ("  ON GRID EDGE" if edge else "") + f"  ({time.time() - t0:.0f} s)", flush=True)
+              + (f"  ON GRID EDGE {edge_axes}" if edge else "") + f"  ({time.time() - t0:.0f} s)", flush=True)
+        for n, vals in axes:
+            print(f"      profile {n:5s}: " + "  ".join(f"{x:g}:{v:.1f}" for x, v in zip(vals, prof[n])), flush=True)
     path = root / "outputs" / "ekf_mu_grid_val.json"
     old = json.loads(path.read_text()) if path.exists() else {}
     path.write_text(json.dumps({**old, **out}, indent=1))

@@ -10,7 +10,7 @@ Estimators (all with StaleGuard, no gate):
 Reported (estimators/stats.py): per-launch RMS -> launch mean / median with 95 % bootstrap CI; paired tests vs ekf19b_fit;
 mu recovery |mu_hat - mu| at fixed times after the first frame (moving balls); consistency: mean NIS (expected 2) and
 mean NEES of (x, y, vx, vy) (expected 4); run time per update.
-Output: outputs/ekf_mu_eval.json, outputs/ekf_mu_eval_errors.pkl.gz
+Output: outputs/ekf_mu_eval.json, outputs/ekf_mu_eval_errors.pkl.gz (merged: only the conditions run now are replaced)
 Usage: python3 experiments/step_1e_eval_ekf_mu.py [conds|all_conds] [workers=3]"""
 import os
 for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -148,20 +148,27 @@ def main():
     workers = int(sys.argv[2]) if len(sys.argv) > 2 else 3
     val, test = SPLIT["val"], SPLIT["test"]
     ids = sorted(val + test)
-    summ, errors = {}, {}
+    # 2026-11-08: MERGE into existing outputs (run per condition / section): only the conditions run now are replaced
+    jpath, ppath = OUT / "ekf_mu_eval.json", OUT / "ekf_mu_eval_errors.pkl.gz"
+    summ = json.loads(jpath.read_text()) if jpath.exists() else {}
+    errors = pickle.load(gzip.open(ppath, "rb"))["errors"] if ppath.exists() else {}
     with Pool(workers) as pool:
         for cond in conds:
+            missing = [lab for lab, d in MU_PARAMS.items() if cond not in d]
+            if missing:
+                print(f"WARNING {cond}: no parameters yet for {missing} -> evaluated without them", flush=True)
             t0 = time.time()
             out = pool.map(task, [(i, cond) for i in ids], chunksize=1)
             res = {i: o for i, o, _ in out}; mu_true = {i: m for i, _, m in out}
             labs = list(estimators(cond))
             print(f"\n{'=' * 140}\nCondition {cond}  ({time.time() - t0:.0f} s)  estimators: {', '.join(labs)}\n{'=' * 140}")
-            summ[cond] = dict(test=report(res, test, mu_true, labs, "TEST (dev)"), val=report(res, val, mu_true, labs, "VAL"))
+            summ[cond] = dict(test=report(res, test, mu_true, labs, "TEST (dev)"), val=report(res, val, mu_true, labs, "VAL"),
+                              evaluated=time.strftime("%Y-%m-%d %H:%M"), missing=missing)
             errors[cond] = {i: {lab: {k: res[i][lab][k] for k in KEYS} for lab in labs} for i in ids}
-    (OUT / "ekf_mu_eval.json").write_text(json.dumps(summ, indent=1, default=float))
-    with gzip.open(OUT / "ekf_mu_eval_errors.pkl.gz", "wb") as f:
-        pickle.dump(dict(split=dict(val=val, test=test), errors=errors), f)
-    print("\nsaved outputs/ekf_mu_eval.json, ekf_mu_eval_errors.pkl.gz")
+            jpath.write_text(json.dumps(summ, indent=1, default=float))          # saved after every condition
+            with gzip.open(ppath, "wb") as f:
+                pickle.dump(dict(split=dict(val=val, test=test), errors=errors), f)
+            print(f"saved {cond} -> {jpath.name}, {ppath.name} (conditions in file: {list(summ)})", flush=True)
 
 
 if __name__ == "__main__":

@@ -361,3 +361,75 @@
 
 - **2026-11-03 02:15 user: run the render → RUNNING** (bash experiments/run_overnight.sh part1; render marker removed; ETA ~03:45). Output outputs/raw_60hz_h3_f49_sq480_with_arm_mismatch/, log outputs/raw_mismatch_render.log. First files OK (phys_* keys present, mu/e NaN, same p0 as matched). If interrupted: rerun the same command (resumes per launch).
 - **03:47 RENDER DONE** (92 min): 500/500 files, 26 MB, no tmp left. Checks: p0/v0 identical to matched (paired), no |pos|>1.22, ~21% fewer bounces than matched, median moving time 2.5 vs 2.3 s, missing detections 0.6% of frames. Next (needs user OK): hindsight best-constant oracle + baselines on mismatch data (--data option), then Part 2 (bash experiments/run_overnight.sh).
+- 2026-11-06 user asked hours: nothing running. Done so far ~7 h compute (Part 1 2.4 h, retune 3 h, render 1.5 h). Remaining: mismatch baselines + hindsight oracle ~1–1.5 h (+ ~1 h coding), Part 2 ekf-mu ~7.5 h typical (worst ~17 h). Total ~9 h typical.
+- 2026-11-06 user plan: TODAY finish A (hindsight oracle + baselines on mismatch data); TONIGHT ekf-mu grid + learn nll — each run only when user says "run". Proposed A design (waiting yes): (1) oracle = per-launch grid mu 0.1–1.5 x E 0.3–0.95 (~150 pairs) minimising h0.5 with ekf19b_oracle; (2) pick pair on ideal, reuse in all conds; (3) keep matched-val sigma/q; (4) all 11 conds val+test(dev), paired mismatch-vs-matched, hindsight gap, mu-first check (best mu only / best E only). ~1 h code + ~40 min run. Explained in simple words on request.
+- 2026-11-06 new chat: user "let us continue". Nothing running. Re-stated status + design A; still waiting for yes/changes before coding A.
+- 2026-11-06 user asked which runs remain: listed A (mismatch, not coded, ~40 min) + Part 2 four steps (grid 10 min, nll ~2.5–3 h, h05 ~4 h, eval 20 min; ~7.5 h typical, worst ~17 h). 7 overnight markers done.
+- **2026-11-07 user: "run those, one after the other" (A + run 1) → RUNNING** `bash experiments/run_A_then_grid.sh` (A ~30–40 min, then ekf-mu grid ~10 min).
+  NEW `experiments/step_0m_mismatch_baselines.py` (design A approved by "run"): hindsight grid mu 0.05–1.50 (30) × E 0.30–1.00 (+0.725, 16)
+  = 480 pairs per launch on ideal, twice (oracle noise → ekf19b_oracle; ekf noise → mu-first filter of step_1a); ties → closest to
+  nominal; then 13 baselines × 11 conds val+test (MATCHED val-tuned noise + train fit; oracle names = hindsight pair) + mu-first
+  (nominal / best mu only / best E only / best both) on ideal + all_real; paired mismatch-vs-matched, hindsight gap, fit, gate.
+  Smoke test (--quick 3) OK in 80 s. Logs outputs/mismatch_baselines.log, outputs/ekf_mu_grid_val.log; progress outputs/overnight_progress.log.
+  Markers shared with run_overnight.sh. If interrupted: rerun the same command. Runs 2–4 (learn nll, learn h05, eval) NOT started.
+- **01:52 A + GRID DONE.** Results → `docs/stepA_mismatch_results_2026-11-07.md`. Key: on mismatch, ekf19b 45→67 mm (val ideal),
+  hindsight-best constants 4→~36–39 mm (oracle gap was mostly inverse crime); fd/cvkf improve; μ-first holds but weaker
+  (val μ-only −17 vs E-only −10 mm, p 0.002; test diff n.s.); fit −3 mm; gate hurts. Hindsight grid: 15/147 at E=0.30 edge.
+  ekf-μ grid (val, matched): ideal 26.6 mm, all_real 47.7 — BUT ALL 11 optima on grid edges (q low edge 0.003, s_l 1.0 high,
+  dsn s_l 0.2 low; q_mu flat). Proposed: widen q to 1e-4 and s_l 0.05–3 (~50 min) before learn/eval. Waiting for user.
+  Not committed yet.
+- **2026-11-07 user: "ok both modify then run" → widened both grids + bug fix, FULL PART 2 RUNNING:** `bash experiments/run_overnight.sh`
+  (Part 1 markers skip) = ekf-mu grid (~1 h) → A mismatch (~1.2 h) → learn nll (~2.5–3 h) → learn h05 (~4 h) → eval (~20 min); ~9 h typical.
+  Changes: step_1d grid q 1e-4…0.5 (8) × q_mu (3) × s_l 0.05…3 (7), per-axis edge + profiles printed; step_0m μ 0.05–2.0 × E 0.05–1.0
+  (+0.725), E = 1.0 not an edge (physical limit), reuses first-run cells (verified identical to fresh); A added to run_overnight.sh
+  after the grid; run_A_then_grid.sh deleted. **BUG FIXED step_1c:** start values read ekf_tuning_val_v2_phase0.json (pre-audit, no
+  plane/all_plane/dropout_silent_noisy → would have crashed) → now ekf_tuning_val.json; smoke test plane OK.
+  First-run outputs kept as outputs/*_narrowgrid.* (ekf_mu_grid_val, mismatch_*). If interrupted: rerun the same command.
+- 2026-11-07 ~06:0x user: "do 1 and 2" = only ekf-mu grid + step A now. Created SKIP markers (NOT run!) outputs/.overnight_done/
+  ekf-mu_learn_nll, ekf-mu_learn_h05, ekf-mu_evaluation (files contain "SKIPPED"). Chain ends after A (~08:10).
+  **To run learning later:** `rm outputs/.overnight_done/ekf-mu_learn_* outputs/.overnight_done/ekf-mu_evaluation` then
+  `bash experiments/run_overnight.sh`.
+- **08:07 GRID + A DONE** (learn/eval skipped as asked). Appended to docs/stepA_mismatch_results_2026-11-07.md. Step A: wider grid
+  changes ≤ 0.8 mm, hindsight bound ~35.5 mm (val ideal), oracle-pair edges 16 → 0, all findings stand. ekf-μ grid val h0.5:
+  ideal 26.6, noise 31.3, all_real 47.7, dsn 94.7 mm; remaining edges flat (≤ 0.1 mm) except dsn s_l → 0 (= μ estimation off).
+  Next (needs user): learn nll / h05 / eval (rm the 3 SKIPPED markers, bash experiments/run_overnight.sh, ~7 h). Not committed.
+- 2026-11-07 user asked to split the ~7 h learn/eval into 3.5 h + 3.5 h. Proposed: `run_overnight.sh --hours 3.5` budget; step_1c checks before each condition (elapsed + mean condition time ≤ budget) else exits code 3 (no marker), rerun resumes. Session 1 ≈ nll all + 1–2 h05 conds; session 2 ≈ rest h05 + eval. Waiting for yes; then rm 3 SKIPPED markers.
+- **2026-11-07 21:44 user "yes" → SESSION 1 RUNNING:** `bash experiments/run_overnight.sh --hours 3.5` (learn nll → h05 …, ends by ~01:15).
+  New: run_overnight.sh `--hours H` (RUN_DEADLINE env; step starts only if EST fits; eval EST=25 min); step_1c checks before each
+  condition (1.1 × mean minutes of learned conds, default nll 15 / h05 22) → exit 3 = clean budget stop (no marker); learn logs
+  now appended (>>). Tested: 3-min budget → clean stop, no marker/json; 20-min budget quick → continues. All SKIPPED markers removed.
+  **SESSION 2 later: same command** `bash experiments/run_overnight.sh --hours 3.5` (resumes at the next condition).
+- **21:46 user: "stop it now, rerun when I tell you" → STOPPED** (session 1 killed 2 min in, during nll ideal; no condition finished,
+  no json, no learn markers → nothing lost but those 2 min). **When user says run:** `bash experiments/run_overnight.sh --hours 3.5`
+  (learn nll → h05 → eval). Note: `pkill -f run_overnight.sh` also kills the calling shell — kill by PID instead.
+- **2026-11-08 04:56 user "run it now" → SESSION 1 RUNNING** `bash experiments/run_overnight.sh --hours 3.5` (ends by ~08:26). Session 2 later = same command.
+- 06:19 status: nll ideal DONE (71.5 min!, val h0.5 31.1 mm vs grid 26.6; both starts ABNORMAL_TERMINATION_IN_LNSRCH), nll noise
+  running. ~70 min/condition vs 15 estimated → as is: nll ~13 h, h05 ~15–25 h (old 7 h estimate WRONG). Session 1 will stop
+  after noise (~07:20–07:30; budget check). Cause: objective converged by ~20–40 gradient evals (change < 0.01), then 60–100 evals
+  wasted in failing line searches (noisy central-difference gradients). Proposed fix (waiting user): early stop (no gain > 1e-3
+  over 10 evals) → ~25–30 min/cond; options: 1 start only, drop/trim h05 ablation.
+- **2026-11-08 06:23 user: stop, fix 1+2, rerun → done.** step_1c: early stop (best gain < TOL over PATIENCE=10 gradient evals;
+  TOL nll 1e-3, h05 1e-5 m; returns best point seen) + N_STARTS=1 ("from ekf19b tuning"). First nll/ideal (2 starts, 71 min,
+  val h0.5 31.1 mm) kept as outputs/ekf_mu_learned_nll_v1_2starts.json/.log; ideal is RE-LEARNED with the new procedure (consistency).
+  Smoke test (PATIENCE 3, quick data) OK. **SESSION 1 (again) RUNNING** ~06:3x `bash experiments/run_overnight.sh --hours 3.5`.
+  Expected ~10–15 min/condition → nll ~2–2.5 h, h05 maybe ~3 h, eval 20 min → ~2 sessions.
+- **2026-11-08 user: "stop everything now" → ALL STOPPED** (session killed during nll ideal; see next line for what was saved).
+  Nothing running. To resume when user says: `bash experiments/run_overnight.sh --hours 3.5` (finished conditions are skipped).
+- 2026-11-08 user wants many parts instead of 2 sessions. Proposed: 11 sections = 1 condition each (learn nll → learn h05 → eval, ~30–45 min), report after each; needs step_1e to MERGE into ekf_mu_eval.json/pkl (now overwrites) + experiments/run_section.sh <cond>. Suggested order: ideal, noise, all_real, dropout_silent_noisy first. Waiting for yes.
+- **2026-11-08 user: yes, make the change and wait → DONE, NOTHING RUNNING.** Part 2 now runs per SECTION (= 1 condition):
+  `bash experiments/run_section.sh <cond>` = learn nll → learn h05 → eval (~30–45 min), marker outputs/.sections_done/<cond>,
+  refuses if another step_1c/1e is running, checks the condition name. step_1e now MERGES into ekf_mu_eval.json/_errors.pkl.gz
+  (saved after each condition; records `missing` estimators + time). Tested: merge (2 conds in scratch) OK, bad name rejected.
+  Suggested order: ideal, noise, all_real, dropout_silent_noisy, then the rest. WAIT for the user to name the section.
+  (run_overnight.sh Part 2 still works but is no longer the plan.)
+- 2026-11-08 06:31 user: run ideal → SECTION ideal RUNNING (bash experiments/run_section.sh ideal).
+- 06:32 user: when ideal finishes as expected → immediately run section noise, then report.
+- 06:59 SECTION ideal DONE (28 min) → results in docs/part2_sections_results.md (h05 best: test 30 mm vs fit 55, grid 39 with NIS 39 on test). Section noise STARTED 06:59 as instructed.
+- 07:02 user: after noise run all_real then dropout_silent_noisy → queued (background chain waits for noise marker; stops if a section fails).
+- 07:29 SECTION noise DONE (h05 34 / nll 35 / grid 36 vs fit 59 mm test; nll NIS 1.96). all_real STARTED 07:29 (chain), then dsn. Outliers: grid diverges on test 461/480 (fast, high μ, arm hits); launch 235 bad for all filters — TODO.
+- 08:13 SECTIONS all_real + dropout_silent_noisy DONE (4/11 done: ideal, noise, all_real, dsn). all_real: h05 51 / grid 55 / nll 58 vs fit 76 (test). dsn: NO gain; nll COLLAPSES (σ 0.1 mm, q 78, bounds; 312 mm) = ML fooled by undetectable stale frames. Remaining 7: dropout_flagged, dropout_silent, delay, all, noise_real, plane, all_plane. Nothing running. TODO: launch 235 (bad for all filters), grid divergence 461/480.
+- 08:55 user: run remaining sections one by one, each ONLY after user allows. Started dropout_flagged now; then WAIT for permission. Order: dropout_flagged, dropout_silent, delay, all, noise_real, plane, all_plane.
+- 09:35 SECTION dropout_flagged DONE (40 min): test h05 30 / grid 32 / nll 37 vs fit 55; no bounds. 5/11 done. WAITING for user permission before dropout_silent.
+- 09:36 user: run dropout_silent → RUNNING. After it: report and WAIT for permission.
+- 10:09 user: stop everything → STOPPED during dropout_silent learn h05 (nll saved; h05 partial lost; no eval, no marker). Nothing running. To finish it: bash experiments/run_section.sh dropout_silent (nll skipped). Stop by PID with pgrep -f "[s]tep_1c" (bracket avoids killing own shell). Wait for user.
+- 2026-11-08 12:53 new chat, user: "continue". Checked: nothing running, charging 48 %. 5/11 sections done; dropout_silent nll saved, h05 lost at eval 31 when stopped (restarts from scratch). NOT started: rule = each section only after explicit permission → asked. Flagged: (1) step_1c/1e read only the matched data, so ekf-mu has NO mismatch-physics result although the plan requires it (A1) → needs code + run; (2) results + code since 741c74f uncommitted, learned outputs not in the 2026-11-01 backup → offered commit + push to `backup`.

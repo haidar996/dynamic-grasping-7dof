@@ -5,11 +5,14 @@
   criterion "nll": mean negative log-likelihood of the innovations per update (main method, paper 03)
   criterion "h05": launch-mean h0.5 RMS (ablation: train directly on the forecast we report)
 Optimiser: scipy L-BFGS-B; gradient by central differences, the 15 evaluations of one gradient run in a pool of workers
-(each holds the condition's 350 launches; estimators/ekf_mu_batch.py, 2-3 s per evaluation).  Two starts per condition
-(from the val-tuned ekf19b noise, and a low-process-noise start); the better train objective is kept, both are logged.
+(each holds the condition's 350 launches; estimators/ekf_mu_batch.py, 2-3 s per evaluation).  One start per condition
+(from the val-tuned ekf19b noise; N_STARTS = 2 adds a low-process-noise start) + early stop (TOL, PATIENCE below).
+First version (2 starts, no early stop, 71 min for nll/ideal) kept: outputs/ekf_mu_learned_nll_v1_2starts.json.
 Afterwards the learned filter is scored on VAL (NLL and launch-mean h0.5) — val is not used for learning.
 Output: outputs/ekf_mu_learned_<criterion>.json
-Usage: python3 experiments/step_1c_learn_ekf_mu.py nll|h05 [conds|all_conds] [workers=3] [--quick] [--redo]"""
+Usage: python3 experiments/step_1c_learn_ekf_mu.py nll|h05 [conds|all_conds] [workers=3] [--quick] [--redo]
+Time budget: env RUN_DEADLINE (unix time): a condition starts only if it is expected to finish before it (estimate = 1.1 x
+mean minutes of the conditions already learned); otherwise exit code 3, nothing lost, rerun resumes."""
 import os
 for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(v, "1")
@@ -31,13 +34,25 @@ from estimators.stats import per_launch
 RAW = root / "outputs" / "raw_60hz_h3_f49_sq480_with_arm"
 SPLIT = json.loads((root / "split_500.json").read_text())
 GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).estimator_geometry()
-BASE = json.loads((root / "outputs" / "ekf_tuning_val_v2_phase0.json").read_text())["best"]["ekf"]
+# start values = current val tuning (2026-11-07 fix: was ekf_tuning_val_v2_phase0.json = pre-audit, no plane/all_plane/
+# dropout_silent_noisy -> KeyError on those conditions, outdated sigma/q on the others)
+BASE = json.loads((root / "outputs" / "ekf_tuning_val.json").read_text())["best"]["ekf"]
 cam = Pinhole(3.0, 49.0, 480, 480)
 NAMES = ["sigma", "q", "q_mu", "mu0", "s_l", "sigma_v0", "E"]
 LOG = [True, True, True, True, True, True, False]
 BOUNDS = [(1e-4, 0.1), (1e-4, 100.0), (1e-9, 1.0), (0.1, 2.0), (0.01, 3.0), (0.05, 10.0), (0.3, 0.99)]
 SIGMA_E = 0.13                                     # extra velocity variance at a hit, as ekf19b (not learned)
 EPS = {"nll": 1e-3, "h05": 2e-2}                   # finite-difference step in theta space (h05 is less smooth)
+DEADLINE = float(os.environ.get("RUN_DEADLINE", "0"))  # unix time; 0 = no budget.  Set by run_overnight.sh --hours H
+EST_MIN = {"nll": 15.0, "h05": 22.0}               # minutes per condition before any is finished (estimate)
+# Early stop (2026-11-08): the first full run (nll, ideal) reached its final objective within ~20-40 gradient evaluations
+# (change < 0.01 afterwards) and then spent 60-100 more in failing line searches (noisy central differences ->
+# ABNORMAL_TERMINATION_IN_LNSRCH): 71 min for one condition.  Rule: stop when the best objective improved by less than
+# TOL over the last PATIENCE gradient evaluations; the best point seen is returned.
+#   nll: TOL 1e-3 (mean NLL per update, values ~ -20 .. -27);  h05: TOL 1e-5 m (= 0.01 mm of launch-mean h0.5)
+TOL = {"nll": 1e-3, "h05": 1e-5}
+PATIENCE = 10
+N_STARTS = 1          # 2026-11-08: one start (the two ended within 0.06 on nll/ideal); the 2nd stays defined in learn()
 _w = {}
 
 
@@ -79,6 +94,10 @@ def _eval(args):
     return objective(_w["data"], np.asarray(th), crit)
 
 
+class _EarlyStop(Exception):
+    pass
+
+
 def learn(cond, crit, workers, ids, maxiter):
     bnd = theta_bounds()
     lo, hi = np.array([b[0] for b in bnd]), np.array([b[1] for b in bnd])
@@ -86,10 +105,12 @@ def learn(cond, crit, workers, ids, maxiter):
     b = BASE[cond]
     starts = {"from ekf19b tuning": dict(sigma=b["sigma"], q=b["q"], q_mu=1e-3, mu0=0.85, s_l=0.5, sigma_v0=3.0, E=0.725),
               "low process noise": dict(sigma=b["sigma"], q=0.01, q_mu=1e-4, mu0=0.85, s_l=0.7, sigma_v0=3.0, E=0.725)}
+    starts = dict(list(starts.items())[:N_STARTS])
     results = {}
     with Pool(workers, initializer=_init, initargs=(cond, ids)) as pool:
         for sname, p0 in starts.items():
             hist, t0 = [], time.time()
+            best_pt = {"f": np.inf, "th": None}
 
             def fg(th):
                 pts = [th]
@@ -100,19 +121,29 @@ def learn(cond, crit, workers, ids, maxiter):
                 g = np.array([(vals[1 + 2 * i] - vals[2 + 2 * i]) / max(pts[1 + 2 * i][i] - pts[2 + 2 * i][i], 1e-12)
                               for i in range(len(th))])
                 hist.append(vals[0])
+                if vals[0] < best_pt["f"]:
+                    best_pt["f"], best_pt["th"] = vals[0], np.array(th, float)
                 print(f"    [{cond} | {crit} | {sname}] eval {len(hist):3d}: objective {vals[0]:.5f}  "
                       + " ".join(f"{n}={v:.4g}" for n, v in to_params(th).items() if n != "sigma_E"), flush=True)
+                if len(hist) > PATIENCE and min(hist[:-PATIENCE]) - min(hist) < TOL[crit]:
+                    raise _EarlyStop()
                 return vals[0], g
 
             th0 = np.clip(to_theta(p0), lo, hi)
-            r = minimize(fg, th0, jac=True, method="L-BFGS-B", bounds=bnd, options=dict(maxiter=maxiter))
-            p = to_params(r.x)
-            at_bound = [n for n, v, a, z in zip(NAMES, r.x, lo, hi) if min(v - a, z - v) < 1e-6]
-            results[sname] = dict(params=p, objective=float(r.fun), start=p0, success=bool(r.success),
-                                  message=str(r.message), n_iter=int(r.nit), n_grad=len(hist), history=hist,
-                                  at_bound=at_bound, minutes=(time.time() - t0) / 60)
-            print(f"  -> {sname}: objective {r.fun:.5f} after {r.nit} iterations ({results[sname]['minutes']:.1f} min), "
-                  f"{r.message}" + (f"  AT BOUND: {at_bound}" if at_bound else ""), flush=True)
+            try:
+                r = minimize(fg, th0, jac=True, method="L-BFGS-B", bounds=bnd, options=dict(maxiter=maxiter))
+                msg, nit, ok = str(r.message), int(r.nit), bool(r.success)
+            except _EarlyStop:
+                msg, nit, ok = (f"EARLY STOP: best improved < {TOL[crit]:g} over the last {PATIENCE} gradient "
+                                f"evaluations", -1, True)
+            x, fx = best_pt["th"], float(best_pt["f"])    # best point seen (= r.x unless a line search ended worse)
+            p = to_params(x)
+            at_bound = [n for n, v, a, z in zip(NAMES, x, lo, hi) if min(v - a, z - v) < 1e-6]
+            results[sname] = dict(params=p, objective=fx, start=p0, success=ok, message=msg, n_iter=nit,
+                                  n_grad=len(hist), history=hist, at_bound=at_bound, minutes=(time.time() - t0) / 60)
+            print(f"  -> {sname}: objective {fx:.5f} after {len(hist)} gradient evaluations "
+                  f"({results[sname]['minutes']:.1f} min), {msg}" + (f"  AT BOUND: {at_bound}" if at_bound else ""),
+                  flush=True)
     best = min(results, key=lambda k: results[k]["objective"])
     return best, results
 
@@ -133,6 +164,14 @@ def main():
         if cond in out and "--redo" not in sys.argv:                # resume after a crash / shutdown
             print(f"{cond}: already learned (use --redo to learn again)", flush=True)
             continue
+        if DEADLINE:                                                   # time budget (run_overnight.sh --hours H)
+            done_min = [v["minutes"] for v in out.values() if "minutes" in v]
+            est = 1.1 * (float(np.mean(done_min)) if done_min else EST_MIN[crit])
+            if time.time() + 60 * est > DEADLINE:
+                left = (DEADLINE - time.time()) / 60
+                print(f"BUDGET: {cond} needs ~{est:.0f} min, {left:.0f} min left -> stop here; rerun to resume "
+                      f"(learned so far: {[c for c in conds if c in out]})", flush=True)
+                sys.exit(3)
         t0 = time.time()
         best, results = learn(cond, crit, workers, ids, maxiter)
         p = results[best]["params"]
