@@ -87,7 +87,136 @@ Paired vs fit: val grid −20.8, nll −17.3, h05 −20.6; test −23.4 / −18.
 μ error at 1 s (test): grid 0.030, nll 0.047, h05 0.014. Flagged dropouts cost almost nothing (≈ ideal). Grid stable here
 (test NEES 3.4, unlike ideal).
 
-## Summary (sections done so far) (h0.5 test (dev), mm)
+## Section 6 — dropout_silent (nll 09:36 → 09:49, h05 + eval 12:55 → 13:22) — IDENTICAL to dropout_flagged, not an independent result
+Numbers equal Section 5: test fit 55, grid 32, nll 37, h05 30; val 48, 27, 31, 27. Direct comparison with dropout_flagged:
+learned parameters and train objectives (nll −25.061957269129547, h05 0.03164147147773303) are bit-identical, and all
+4500 per-launch error arrays (75 test + 75 val launches × 6 estimators × 5 metrics) differ by exactly 0.
+Cause = audit B4, not a new bug: silent_hold repeats the bit-identical last value (sensing/sensor.py) and StaleGuard drops
+bit-identical values (estimators/filters.py), so silent loss becomes flagged loss by construction.
+How to report: merge with dropout_flagged, do NOT count as a separate condition or a separate test in any multiple-comparison
+count. Limitation to state: the guard relies on exact repeats. The hard, realistic version of silent loss is
+dropout_silent_noisy (Section 4), where ekf-μ gains nothing.
+
+## Section 7 — delay (13:28 → 14:05, 37 min)
+Learning: nll 9.2 min, h05 25.6 min (53 grads), both early stop, no bound. nll is BIT-IDENTICAL to ideal (objective
+−25.140794562392315, same parameters, same μ recovery at 1 s 0.070): a frame's data is unchanged, only its arrival time moves,
+so the likelihood carries no delay information. h05 differs slightly: σ 4.3 mm, q 0.019, μ0 0.68, s_l 1.63, E 0.73.
+
+| h0.5 | ekf19b | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 52 | 54 [47,60] | 30 [24,36] | 35 [29,41] | 30 [24,36] | 4 |
+| test (dev) | 62 | 62 [54,71] | 41 [29,55] | 43 [35,51] | 33 [26,41] | 8 |
+
+Paired vs ekf19b_fit: val grid −24.2, nll −18.9, h05 −23.9; test −20.7 / −19.1 / −28.6 mm (p ≤ 2e-9, 82–90 % of launches).
+Cost of the 40 ms delay vs ideal (launch means, not a paired test): test fit +7, grid +2, nll +5, h05 +3; val fit +7, grid +3, nll +4, h05 +3 mm.
+μ error at 1 s (test): grid 0.019, nll 0.070, h05 0.014. NIS (expected 2): test grid 0.29, nll 1.34, h05 0.08. NEES (expected 4):
+test grid 16.9, nll 20.5, h05 1.2. Grid fragile on test again: mean 41 vs median 22 mm, wide CI, val NEES 1.6.
+Limitation: the delay is exactly known and fixed (40 ms); a real, varying or unknown delay would cost more.
+
+## Section 8 — all (14:06 → 14:57, 51 min, slowest so far)
+Learning: nll 22.8 min (66 grads), h05 25.4 min (47 grads), both early stop, no bound. nll σ 2.5 mm, q 0.00018, μ0 0.40, s_l 0.88,
+E 0.74 | h05 σ 6.6 mm, q 0.00069, μ0 0.84, s_l 1.00, E 0.73.
+
+| h0.5 | ekf19b | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 59 | 61 [54,67] | 36 [30,42] | 42 [36,48] | 34 [29,40] | 6 |
+| test (dev) | 67 | 67 [59,76] | 41 [34,47] | 45 [38,52] | 39 [33,46] | 10 |
+
+Paired vs ekf19b_fit: val grid −24.6, nll −18.4, h05 −26.4; test −26.9 / −22.3 / −28.5 mm (p ≤ 2e-7, 75–89 % of launches).
+Cost of realistic depth noise (all_real − all, launch means, not a paired test): test fit +9, grid +14, nll +13, h05 +12 mm.
+μ error (test): at 0.1 s grid 0.31, nll 0.32, h05 0.33; at 1 s 0.018 / 0.020 / 0.016. On val nll starts worse (0.44 at 0.1 s,
+μ0 = 0.40 vs prior 0.85) but catches up by 1 s (0.013). The low μ0 appears to cost only the early flight (not tested separately).
+NIS (expected 2), test: grid 3.00, nll 2.01, h05 0.29. NEES (expected 4), test: grid 676, nll 396, h05 1.5; val: 40.8 / 25.3 / 4.8.
+TODO: find what drives NEES 396–676 on test while now_pos stays 3–4 mm (per-launch NEES is not in the errors file).
+
+## Section 9 — noise_real (22:18 → 22:47, 29 min) — NLL gain nearly vanishes
+Learning: nll 5.7 min (19 grads, fewest so far), h05 20.8 min (46 grads), both early stop, no bound. nll σ 7.9 mm, q 0.093,
+μ0 0.85, s_l 0.48, E 0.83 | h05 σ 14 mm, q 0.0015, μ0 0.93, s_l 0.72, σ_v0 1.18, E 0.73.
+
+| h0.5 | ekf19b | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 58 | 61 [55,67] | 40 [35,45] | 55 [50,62] | 38 [33,43] | 9 |
+| test (dev) | 67 | 68 [60,75] | 48 [41,56] | 62 [55,69] | 45 [39,53] | 18 |
+
+Paired vs ekf19b_fit: val grid −20.7, nll −5.4 (p 0.046, 56 %), h05 −22.8; test −19.8, nll −5.8 [−11.6, −0.5] (p 0.055, 59 %), h05 −22.3 mm.
+μ error at 1 s (test): grid 0.039, nll 0.184, h05 0.047. NIS (expected 2), test: grid 0.90, nll 1.98, h05 0.68.
+NEES (expected 4), test: grid 112, nll 7.1, h05 35.3; val: 27.8 / 3.3 / 2.9.
+
+NLL question (all_real, same depth noise, gained −18.5 on test with q 1e-4; here q 0.093): objective at other parameters, noise_real
+(scratchpad check, single evaluations, reproduces the eval table for learned nll 55 and h05 38):
+| parameters | train NLL | val h0.5 (mm) |
+|---|---|---|
+| nll noise_real (learned) | −17.069 | 55.3 |
+| nll all_real | −17.014 | 43.8 |
+| h05 noise_real | −16.312 | 37.9 |
+→ The hypothesis "a clearly better likelihood exists at the all_real parameters" is NOT supported: learned is better by 0.055. But the
+NLL is nearly flat while forecast error changes by 11.5 mm: on this data NLL hardly distinguishes good from poor forecasting
+parameters. STILL OPEN whether the optimiser stopped early: gain over the last 10 evals was 0.00098 (TOL 0.001) with E still moving
+(0.73 → 0.83 in 3 evals). Test = continue from the learned point with a tighter TOL (not run yet).
+
+## Section 10 — plane (nll 2026-11-08 22:58 → 23:13; h05 + eval 2026-11-09 00:15 → 00:35; first h05 attempt stopped by user)
+Learning: nll 14.3 min (48 grads), h05 17.5 min (39 grads), both early stop, no bound. nll σ 1.75 mm, q 0.00015, μ0 0.65, s_l 0.40,
+E 0.65 | h05 σ 6.5 mm, q 0.012, μ0 0.74, s_l 1.43, E 0.72.
+
+| h0.5 | ekf19b | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 49 | 51 [45,56] | 30 [25,35] | 35 [29,42] | 29 [24,35] | 5 |
+| test (dev) | 57 | 58 [50,65] | 33 [28,40] | 37 [31,44] | 33 [27,39] | 8 |
+
+Paired vs ekf19b_fit: val grid −20.7, nll −15.3, h05 −21.1; test −24.1 / −20.3 / −24.9 mm (p ≤ 3e-5, 74–90 % of launches).
+Paired plane − noise_real (same jitter draws; 73 of 75 launches have valid h0.5 in each set), mm:
+| | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|
+| test | −10.1 [−12.1,−7.8] | −14.4 [−20.9,−9.8] | −24.6 [−31.2,−17.8] | −12.7 [−20.1,−5.4] | −10.5 [−19.2,−4.5] |
+| val | −10.2 [−11.6,−8.8] | −10.2 [−13.1,−7.7] | −20.0 [−28.0,−11.9] | −8.5 [−11.0,−6.0] | −4.2 [−4.7,−3.6] |
+All p ≤ 2e-5 (Wilcoxon). The fixed-μ gain matches Part 1 (−10 mm). The NLL gain is inflated by the weak noise_real NLL fit (Section 9).
+μ error at 1 s (test): grid 0.013, nll 0.015, h05 0.016 (noise_real: 0.039 / 0.184 / 0.047). NIS (expected 2), test: grid 0.68, nll 2.00,
+h05 0.15. NEES (expected 4), test: grid 4.4, nll 14.8, h05 0.9; val: 3.0 / 10.4 / 0.6. Much calmer than all (396–676) and noise_real.
+Plane assumes the floor is flat and at a known height; tilt or height error is not in this condition.
+
+Early-stop evidence (open question from Section 9): nll in plane, all_real and noise_real all START at q = 0.1. plane (48 grads, q 1.5e-4)
+and all_real (31 grads, q at the 1e-4 bound) travel far down; noise_real stops at q 0.093 after 19 grads. Same start, so noise_real looks like the outlier.
+Not proof: the all_real parameters did not beat the learned noise_real NLL (Section 9). Continuation test still not run.
+
+## Section 11 — all_plane (2026-11-09 00:47 → 01:31, 44 min)
+Learning: nll 9.2 min (31 grads), h05 31.9 min (67 grads, longest), both early stop, no bound. nll σ 1.7 mm, q 0.002, μ0 0.77, s_l 0.39,
+E 0.69 | h05 σ 5.5 mm, q 0.0042, μ0 0.83, s_l 1.05, E 0.73.
+
+| h0.5 | ekf19b | ekf19b_fit | ekfmu_grid | ekfmu_nll | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 57 | 59 [52,66] | 34 [29,40] | 36 [30,42] | 33 [28,39] | 5 |
+| test (dev) | 65 | 65 [57,74] | 38 [32,45] | 40 [33,47] | 37 [31,44] | 9 |
+
+Paired vs ekf19b_fit: val grid −24.6, nll −22.8, h05 −25.8; test −27.6 / −25.7 / −28.6 mm (p ≤ 3e-8, 82–90 % of launches).
+Paired all_plane − all_real (72–73 launches): test fit −10.7, grid −16.9, nll −17.9, h05 −14.7, oracle −13.1; val −11.8 / −13.3 / −16.0 /
+−11.8 / −6.1 mm (all CIs exclude 0, p ≤ 1e-5).
+μ error at 1 s (test): grid 0.016, nll 0.021, h05 0.014. NIS (expected 2), test: grid 0.68, nll 1.97, h05 0.20. NEES (expected 4), test: grid 4.3,
+nll 9.6, h05 1.3; val: 3.0 / 6.3 / 1.0.
+
+## Overall reading after 11/11 sections (matched physics; 10 distinct conditions, dropout_silent = dropout_flagged)
+Paired h05 comparisons (bootstrap CI + Wilcoxon, raw p, NOT corrected for the 44 comparisons; test (dev) has been inspected repeatedly):
+| cond | h05 − grid, test | h05 − grid, val | h05 − nll, test | h05 − nll, val |
+|---|---|---|---|---|
+| ideal | −8.8 [−21.5,−0.3] (p 0.53) | +0.1 [−1.2,+1.6] | −8.5 [−11.9,−5.7] | −4.3 [−7.1,−1.8] |
+| noise | −1.1 [−2.3,+0.1] | −1.4 [−3.1,+0.3] | −1.0 [−2.1,+0.1] | −1.0 [−2.4,+0.2] |
+| all_real | −3.3 [−8.6,+0.1] | −2.7 [−4.1,−1.4] | −6.1 [−12.3,−1.0] | −7.2 [−9.9,−4.5] |
+| dropout_silent_noisy | −0.1 [−21.5,+25.3] | +27.2 [−2.0,+61.7] | −213 [−282,−164] | −164 [−199,−124] |
+| dropout_flagged | −1.9 [−3.3,−0.7] | +0.2 [−0.9,+1.2] | −7.1 [−10.6,−4.0] | −3.4 [−6.3,−0.7] |
+| delay | −7.9 [−18.8,−0.2] (p 0.36) | +0.3 [−1.1,+1.7] | −9.5 [−13.1,−6.3] | −5.0 [−8.2,−1.9] |
+| all | −1.6 [−3.0,−0.1] | −1.8 [−3.5,−0.2] | −6.2 [−9.3,−3.2] | −8.0 [−11.4,−4.8] |
+| noise_real | −2.5 [−7.5,+0.7] | −2.1 [−3.5,−0.8] | −16.6 [−24.4,−8.7] | −17.4 [−21.9,−12.6] |
+| plane | −0.8 [−1.6,+0.0] | −0.4 [−1.2,+0.4] | −4.6 [−8.0,−1.2] | −5.8 [−9.5,−2.1] |
+| all_plane | −1.0 [−1.7,−0.3] | −1.2 [−2.1,−0.3] | −2.9 [−5.4,−0.5] | −3.0 [−5.6,−0.5] |
+
+1. ekf-μ beats the fixed-μ filter by about 20–29 mm for h05 and grid in 9 of 10 conditions. In dropout_silent_noisy it gains nothing.
+2. h05 vs grid: usually ≤ 3 mm. The two larger test gaps (ideal, delay) are means pulled by grid outliers (Wilcoxon not significant, val tied).
+   Fair summary: tied on typical launches, h05 more robust on the test (dev) launches; h05 worse on val in dropout_silent_noisy.
+3. h05 vs nll: h05 is better or level everywhere; the size is uncertain for noise_real (open early-stop question).
+4. Consistency: nll has NIS near 2; h05 NIS 0.08–0.7 (too cautious), so h05 covariances are not honest uncertainties.
+Still required before any claim: ekf-μ on mismatch physics (A1), noise_real continuation test, NEES on all (grid 676, nll 396), grid outliers
+461/480, launch 235, final test set (A2, render only when methods are frozen).
+
+## Summary (all 11 sections) (h0.5 test (dev), mm)
 | cond | fit | grid | nll | h05 |
 |---|---|---|---|---|
 | ideal | 55 | 39 | 38 | 30 |
@@ -95,3 +224,9 @@ Paired vs fit: val grid −20.8, nll −17.3, h05 −20.6; test −23.4 / −18.
 | all_real | 76 | 55 | 58 | 51 |
 | dropout_silent_noisy | 96 | 99 | 312 | 99 |
 | dropout_flagged | 55 | 32 | 37 | 30 |
+| dropout_silent (= flagged, audit B4) | 55 | 32 | 37 | 30 |
+| delay | 62 | 41 | 43 | 33 |
+| all | 67 | 41 | 45 | 39 |
+| noise_real | 68 | 48 | 62 | 45 |
+| plane | 58 | 33 | 37 | 33 |
+| all_plane | 65 | 38 | 40 | 37 |
