@@ -5,8 +5,10 @@
   criterion "nll": mean negative log-likelihood of the innovations per update (main method, paper 03)
   criterion "h05": launch-mean h0.5 RMS (ablation: train directly on the forecast we report)
 Optimiser: scipy L-BFGS-B; gradient by central differences, the 15 evaluations of one gradient run in a pool of workers
-(each holds the condition's 350 launches; estimators/ekf_mu_batch.py, 2-3 s per evaluation).  One start per condition
-(from the val-tuned ekf19b noise; N_STARTS = 2 adds a low-process-noise start) + early stop (TOL, PATIENCE below).
+(each holds the condition's 350 launches; estimators/ekf_mu_batch.py, 2-3 s per evaluation).  Early stop (TOL, PATIENCE below).
+h05: one start (from the val-tuned ekf19b noise), one L-BFGS run.  nll (2026-11-09): two starts (+ the low-process-noise start)
+and restart on stall: a round ends at early stop or when L-BFGS ends; the next round restarts from the best point with fresh
+memory; a start ends after 2 rounds in a row gain < TOL, or at NLL_MAXG gradient evaluations.  The best train NLL wins.
 First version (2 starts, no early stop, 71 min for nll/ideal) kept: outputs/ekf_mu_learned_nll_v1_2starts.json.
 Afterwards the learned filter is scored on VAL (NLL and launch-mean h0.5) — val is not used for learning.
 Output: outputs/ekf_mu_learned_<criterion>.json
@@ -40,7 +42,9 @@ BASE = json.loads((root / "outputs" / "ekf_tuning_val.json").read_text())["best"
 cam = Pinhole(3.0, 49.0, 480, 480)
 NAMES = ["sigma", "q", "q_mu", "mu0", "s_l", "sigma_v0", "E"]
 LOG = [True, True, True, True, True, True, False]
-BOUNDS = [(1e-4, 0.1), (1e-4, 100.0), (1e-9, 1.0), (0.1, 2.0), (0.01, 3.0), (0.05, 10.0), (0.3, 0.99)]
+# 2026-11-09: q lower bound 1e-4 -> 1e-6 (the nll optimum sat on 1e-4 in all_real and in the noise pilot; a bound must not be
+# active).  h05 optima were never near it.  step_1f/1g/1h import these bounds: they were run with 1e-4.
+BOUNDS = [(1e-4, 0.1), (1e-6, 100.0), (1e-9, 1.0), (0.1, 2.0), (0.01, 3.0), (0.05, 10.0), (0.3, 0.99)]
 SIGMA_E = 0.13                                     # extra velocity variance at a hit, as ekf19b (not learned)
 EPS = {"nll": 1e-3, "h05": 2e-2}                   # finite-difference step in theta space (h05 is less smooth)
 DEADLINE = float(os.environ.get("RUN_DEADLINE", "0"))  # unix time; 0 = no budget.  Set by run_overnight.sh --hours H
@@ -54,7 +58,10 @@ EST_MIN = {"nll": 15.0, "h05": 22.0}               # minutes per condition befor
 # (step_1f; results of the 1e-3 rule kept as outputs/*_tol1e-3.*).  h05 passed the same test on noise_real (step_1g), unchanged.
 TOL = {"nll": 1e-4, "h05": 1e-5}
 PATIENCE = 10
-N_STARTS = 1          # 2026-11-08: one start (the two ended within 0.06 on nll/ideal); the 2nd stays defined in learn()
+N_STARTS = 1          # h05: one start (2026-11-08; step_1g found no gain from restarting h05 on noise_real)
+# nll (2026-11-09): with one start and no restart, noise stuck at -21.80748 while -21.87164 exists (step_1h pilot: the
+# low-process-noise start AND a restart were both needed).  Results of the earlier rules: outputs/*_tol1e-3.*, *_tol1e-4.*
+NLL_STARTS, NLL_MAXG, NLL_STALL_ROUNDS = 2, 80, 2
 _w = {}
 
 
@@ -100,49 +107,65 @@ class _EarlyStop(Exception):
     pass
 
 
-def learn(cond, crit, workers, ids, maxiter):
+def learn(cond, crit, workers, ids, maxiter, nll_maxg=NLL_MAXG):
     bnd = theta_bounds()
     lo, hi = np.array([b[0] for b in bnd]), np.array([b[1] for b in bnd])
     eps = EPS[crit]
     b = BASE[cond]
     starts = {"from ekf19b tuning": dict(sigma=b["sigma"], q=b["q"], q_mu=1e-3, mu0=0.85, s_l=0.5, sigma_v0=3.0, E=0.725),
               "low process noise": dict(sigma=b["sigma"], q=0.01, q_mu=1e-4, mu0=0.85, s_l=0.7, sigma_v0=3.0, E=0.725)}
-    starts = dict(list(starts.items())[:N_STARTS])
+    restart = crit == "nll"                           # h05: one round, exactly as before
+    starts = dict(list(starts.items())[:NLL_STARTS if restart else N_STARTS])
     results = {}
     with Pool(workers, initializer=_init, initargs=(cond, ids)) as pool:
         for sname, p0 in starts.items():
-            hist, t0 = [], time.time()
-            best_pt = {"f": np.inf, "th": None}
+            hist, rounds, small, t0 = [], [], 0, time.time()
+            best_pt = {"f": np.inf, "th": np.clip(to_theta(p0), lo, hi)}
+            while True:
+                n0, f0 = len(hist), best_pt["f"]
 
-            def fg(th):
-                pts = [th]
-                for i in range(len(th)):
-                    for s in (+1, -1):
-                        q = th.copy(); q[i] = np.clip(q[i] + s * eps, lo[i], hi[i]); pts.append(q)
-                vals = pool.map(_eval, [(list(q), crit) for q in pts])
-                g = np.array([(vals[1 + 2 * i] - vals[2 + 2 * i]) / max(pts[1 + 2 * i][i] - pts[2 + 2 * i][i], 1e-12)
-                              for i in range(len(th))])
-                hist.append(vals[0])
-                if vals[0] < best_pt["f"]:
-                    best_pt["f"], best_pt["th"] = vals[0], np.array(th, float)
-                print(f"    [{cond} | {crit} | {sname}] eval {len(hist):3d}: objective {vals[0]:.5f}  "
-                      + " ".join(f"{n}={v:.4g}" for n, v in to_params(th).items() if n != "sigma_E"), flush=True)
-                if len(hist) > PATIENCE and min(hist[:-PATIENCE]) - min(hist) < TOL[crit]:
-                    raise _EarlyStop()
-                return vals[0], g
+                def fg(th):
+                    pts = [th]
+                    for i in range(len(th)):
+                        for s in (+1, -1):
+                            q = th.copy(); q[i] = np.clip(q[i] + s * eps, lo[i], hi[i]); pts.append(q)
+                    vals = pool.map(_eval, [(list(q), crit) for q in pts])
+                    g = np.array([(vals[1 + 2 * i] - vals[2 + 2 * i]) / max(pts[1 + 2 * i][i] - pts[2 + 2 * i][i], 1e-12)
+                                  for i in range(len(th))])
+                    hist.append(vals[0])
+                    if vals[0] < best_pt["f"]:
+                        best_pt["f"], best_pt["th"] = vals[0], np.array(th, float)
+                    print(f"    [{cond} | {crit} | {sname}" + (f" | round {len(rounds) + 1}" if restart else "")
+                          + f"] eval {len(hist):3d}: objective {vals[0]:.5f}  "
+                          + " ".join(f"{n}={v:.4g}" for n, v in to_params(th).items() if n != "sigma_E"), flush=True)
+                    h = hist[n0:]                             # this round only (= whole history for h05)
+                    if (len(h) > PATIENCE and min(h[:-PATIENCE]) - min(h) < TOL[crit]) or (restart and len(hist) >= nll_maxg):
+                        raise _EarlyStop()
+                    return vals[0], g
 
-            th0 = np.clip(to_theta(p0), lo, hi)
-            try:
-                r = minimize(fg, th0, jac=True, method="L-BFGS-B", bounds=bnd, options=dict(maxiter=maxiter))
-                msg, nit, ok = str(r.message), int(r.nit), bool(r.success)
-            except _EarlyStop:
-                msg, nit, ok = (f"EARLY STOP: best improved < {TOL[crit]:g} over the last {PATIENCE} gradient "
-                                f"evaluations", -1, True)
+                try:
+                    r = minimize(fg, best_pt["th"].copy(), jac=True, method="L-BFGS-B", bounds=bnd, options=dict(maxiter=maxiter))
+                    msg, nit, ok = str(r.message), int(r.nit), bool(r.success)
+                except _EarlyStop:
+                    msg, nit, ok = (f"EARLY STOP: best improved < {TOL[crit]:g} over the last {PATIENCE} gradient "
+                                    f"evaluations", -1, True)
+                gain = f0 - best_pt["f"] if np.isfinite(f0) else float("inf")
+                rounds.append(dict(n_grad=len(hist) - n0, best=float(best_pt["f"]), gain=gain, message=msg))
+                if not restart:
+                    break
+                print(f"  -- {sname}: round {len(rounds)} ended after {len(hist) - n0} gradient evaluations, best "
+                      f"{best_pt['f']:.5f}, gain {gain:.5f}", flush=True)
+                small = small + 1 if gain < TOL[crit] else 0
+                if small >= NLL_STALL_ROUNDS or len(hist) >= nll_maxg:
+                    msg = (f"{len(rounds)} rounds; " + (f"stopped at the cap of {nll_maxg} gradient evaluations"
+                           if len(hist) >= nll_maxg else f"{NLL_STALL_ROUNDS} rounds in a row gained < {TOL[crit]:g}"))
+                    break
             x, fx = best_pt["th"], float(best_pt["f"])    # best point seen (= r.x unless a line search ended worse)
             p = to_params(x)
             at_bound = [n for n, v, a, z in zip(NAMES, x, lo, hi) if min(v - a, z - v) < 1e-6]
             results[sname] = dict(params=p, objective=fx, start=p0, success=ok, message=msg, n_iter=nit,
-                                  n_grad=len(hist), history=hist, at_bound=at_bound, minutes=(time.time() - t0) / 60)
+                                  n_grad=len(hist), history=hist, rounds=rounds, at_bound=at_bound,
+                                  minutes=(time.time() - t0) / 60)
             print(f"  -> {sname}: objective {fx:.5f} after {len(hist)} gradient evaluations "
                   f"({results[sname]['minutes']:.1f} min), {msg}" + (f"  AT BOUND: {at_bound}" if at_bound else ""),
                   flush=True)
@@ -175,7 +198,7 @@ def main():
                       f"(learned so far: {[c for c in conds if c in out]})", flush=True)
                 sys.exit(3)
         t0 = time.time()
-        best, results = learn(cond, crit, workers, ids, maxiter)
+        best, results = learn(cond, crit, workers, ids, maxiter, nll_maxg=8 if quick else NLL_MAXG)
         p = results[best]["params"]
         val = load(cond, SPLIT["val"][::5] if quick else SPLIT["val"])
         th = to_theta(p)
