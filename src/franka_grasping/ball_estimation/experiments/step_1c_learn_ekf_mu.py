@@ -49,8 +49,10 @@ EST_MIN = {"nll": 15.0, "h05": 22.0}               # minutes per condition befor
 # (change < 0.01 afterwards) and then spent 60-100 more in failing line searches (noisy central differences ->
 # ABNORMAL_TERMINATION_IN_LNSRCH): 71 min for one condition.  Rule: stop when the best objective improved by less than
 # TOL over the last PATIENCE gradient evaluations; the best point seen is returned.
-#   nll: TOL 1e-3 (mean NLL per update, values ~ -20 .. -27);  h05: TOL 1e-5 m (= 0.01 mm of launch-mean h0.5)
-TOL = {"nll": 1e-3, "h05": 1e-5}
+#   nll: TOL 1e-4 (mean NLL per update, values ~ -17 .. -27);  h05: TOL 1e-5 m (= 0.01 mm of launch-mean h0.5)
+# 2026-11-09: nll TOL tightened from 1e-3.  On noise_real the 1e-3 rule stopped with 0.104 of likelihood left and q wrong by > 400x
+# (step_1f; results of the 1e-3 rule kept as outputs/*_tol1e-3.*).  h05 passed the same test on noise_real (step_1g), unchanged.
+TOL = {"nll": 1e-4, "h05": 1e-5}
 PATIENCE = 10
 N_STARTS = 1          # 2026-11-08: one start (the two ended within 0.06 on nll/ideal); the 2nd stays defined in learn()
 _w = {}

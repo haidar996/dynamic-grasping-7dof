@@ -4,6 +4,56 @@ Each section: `bash experiments/run_section.sh <cond>` = learn nll → learn h05
 early stop, train launches) → evaluate (step_1e, val + test (dev), merged into outputs/ekf_mu_eval.json).
 Logs: outputs/ekf_mu_learned_nll.log, _h05.log, ekf_mu_eval.log. Numbers: per-launch RMS, launch-mean [95% CI] / median (mm).
 
+## NLL rerun with the safer stop rule (started 2026-11-09), READ THIS FIRST
+Sections 1–11 below were run with NLL TOL 1e-3; their NLL numbers are SUPERSEDED as each condition is rerun with TOL 1e-4 (same starts, PATIENCE 10). Old results:
+outputs/ekf_mu_learned_nll_tol1e-3.*, ekf_mu_eval_tol1e-3.*, .sections_done_tol1e-3. h05, grid, fixed-μ and oracle are unchanged (noise_real: per-launch h0.5 differs by
+exactly 0 mm from the archive).
+
+### noise_real, acceptance test (03:26 → 03:57): PASSED
+Train NLL from the ORIGINAL start: −17.17240 (target ≈ −17.17; old −17.06935; continuation tests −17.173, −17.174). 86 gradient evals, 28.7 min (old 19, 5.7 min). No bound.
+Parameters σ 8.0 mm, q 0.00030, μ0 0.59, s_l 0.38, σ_v0 2.08, E 0.74 (old q 0.093, μ0 0.85, E 0.83).
+
+| h0.5 | ekf19b_fit | ekfmu_grid | ekfmu_nll (new) | ekfmu_nll (old) | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 61 [55,67] | 40 [35,45] | 47 [42,52] | 55 | 38 [33,43] | 9 |
+| test (dev) | 68 [60,75] | 48 [41,56] | 51 [44,59] | 62 | 45 [39,53] | 18 |
+
+Paired vs ekf19b_fit (new nll): val −13.8 [−17.8,−9.7], test −16.6 [−22.2,−9.7] (p ≤ 2e-7, 78 % of launches). Old: −5.4, −5.8.
+Paired new − old nll: val −8.4 [−13.0,−3.8], test −10.8 [−16.2,−4.1]. h05 − new nll: val −9.0 [−12.2,−5.9], test −5.8 [−11.4,−1.3] (53 % of launches, p 0.03).
+New nll − grid: val +6.9 [+4.4,+9.4], test +3.3 [+0.9,+5.9]. Raw p, not corrected.
+μ error at 1 s (test): nll 0.041 (old 0.184), grid 0.039, h05 0.047.
+Consistency got WORSE in one respect: NIS 2.00 (test), 2.02 (val), but NEES test 131.7 (old 7.1), val 8.4 (old 3.3). Observation (not tested): very large test NEES appears with small q: all nll q 0.00018, NEES 396. Candidate
+explanation for the NEES TODO: small q makes the filter overconfident at a few events.
+Three fits now agree on NLL within 0.001 but have μ0 0.68 / 0.58 / 0.59 and val h0.5 44.7 / 47.7 / 46.9 mm: the likelihood ridge is real.
+
+### noise (04:09 → 04:19): the 1e-4 rule is ALSO not enough; rerun PAUSED after this
+Train NLL −21.80748 after 23 gradient evals: same point as the old fit (22 evals), parameters and h0.5 unchanged. The last evals repeat −21.80744 … −21.80748, so the line search is stuck.
+Check on the noise TRAIN launches (scratchpad, single evaluations; val only reported):
+| parameters | train NLL | val h0.5 (mm) |
+|---|---|---|
+| noise, learned | −21.80748 | 31.0 |
+| all, old fit | **−21.86183** | 35.9 |
+| noise, only q taken from all | −21.68192 | 30.8 |
+1. A better likelihood exists (0.054 better = 500 × TOL), so this is NOT the optimum. Tightening TOL does not fix a stuck optimiser. The noise_real acceptance test shows the rule worked there, not in general.
+2. The better likelihood forecasts WORSE on val (35.9 vs 31.0 mm). So stopping early may have been HELPING NLL here, acting like a regulariser. Published NLL numbers may be better than a true NLL optimum would give, and
+   "NLL ≈ h05 on noise" could be partly this accident. A true optimum is needed before comparing criteria.
+3. q alone does not explain it: taking only q from all makes the NLL worse (−21.68). Parameters interact, so the best point needs a joint search.
+
+### Pilot on noise (2026-11-09 04:32 → 05:18; train + val only, test (dev) NOT looked at): PASSED
+Script experiments/step_1h_nll_restart_pilot.py, results outputs/pilot_nll_noise.json/.log. Two starts + restart on stall, cap 80 gradient evals per start. Pass mark −21.86, fixed before running.
+| start | train NLL | val h0.5 (mm) | q | q_mu | μ0 | E | grads, rounds |
+|---|---|---|---|---|---|---|---|
+| published fit | −21.80748 | 31.0 | 0.0024 | 0.0010 | 0.77 | 0.72 | 23, 1 |
+| A original, with restarts | −21.80783 | 31.0 | 0.0024 | 0.0011 | 0.82 | 0.71 | 60, 4 |
+| B low process noise, with restarts | **−21.87164** | 32.8 | 0.0001 (AT BOUND) | 0.00011 | 0.65 | 0.70 | 80 (cap), 3 |
+Reading:
+1. Starts matter: A stays near −21.808 even with restarts, so it sits at a different optimum, not merely a stall.
+2. Restarts matter too: B stalled at −21.83210 in round 1 and gained 0.0395 in round 2. Correction of the interim note "the second start helps, not the restarts": BOTH were needed to pass.
+3. Forecast: the better likelihood is 1.8 mm WORSE on val than the published fit (unpaired means). That is the same direction as the all parameters (35.9), but small. Mild support for point 2 above, not proof.
+4. B has q at its lower bound 1e-4, so the bound is active. Hypothesis (untested): on matched physics the model is exact, so maximum likelihood correctly wants q → 0. If so, this behaviour is partly the inverse crime and could change on mismatch data.
+5. Cost: 46 min for this condition (old 7.6 min).
+Proposed rerun, NOT run: 2 starts + restart on stall for NLL only, cap 80 per start, q lower bound decided first (see RESUME); 9 fits + 11 evals, roughly 7.5 h.
+
 ## Section 1 — ideal (2026-11-08 06:31 → 06:59, 28 min)
 Learning: nll 9.3 min (31 grads, early stop), train −25.14079 (first run 2 starts / 71.5 min: −25.14093 → early stop lost
 nothing; val h0.5 31.1 both). h05 17.4 min (38 grads, early stop). No parameter at a bound.
@@ -129,7 +179,7 @@ Cost of realistic depth noise (all_real − all, launch means, not a paired test
 NIS (expected 2), test: grid 3.00, nll 2.01, h05 0.29. NEES (expected 4), test: grid 676, nll 396, h05 1.5; val: 40.8 / 25.3 / 4.8.
 TODO: find what drives NEES 396–676 on test while now_pos stays 3–4 mm (per-launch NEES is not in the errors file).
 
-## Section 9 — noise_real (22:18 → 22:47, 29 min) — NLL gain nearly vanishes
+## Section 9 — noise_real (22:18 → 22:47, 29 min) — weak NLL result is mostly an EARLY-STOP ARTEFACT (see "Continuation test" below)
 Learning: nll 5.7 min (19 grads, fewest so far), h05 20.8 min (46 grads), both early stop, no bound. nll σ 7.9 mm, q 0.093,
 μ0 0.85, s_l 0.48, E 0.83 | h05 σ 14 mm, q 0.0015, μ0 0.93, s_l 0.72, σ_v0 1.18, E 0.73.
 
@@ -152,7 +202,39 @@ NLL question (all_real, same depth noise, gained −18.5 on test with q 1e-4; he
 → The hypothesis "a clearly better likelihood exists at the all_real parameters" is NOT supported: learned is better by 0.055. But the
 NLL is nearly flat while forecast error changes by 11.5 mm: on this data NLL hardly distinguishes good from poor forecasting
 parameters. STILL OPEN whether the optimiser stopped early: gain over the last 10 evals was 0.00098 (TOL 0.001) with E still moving
-(0.73 → 0.83 in 3 evals). Test = continue from the learned point with a tighter TOL (not run yet).
+(0.73 → 0.83 in 3 evals).
+
+### Continuation test (2026-11-09, val only; test (dev) NOT looked at)
+Script experiments/step_1f_continue_nll_check.py, results outputs/continue_nll_noise_real.json/.log. Same procedure as step_1c on noise_real, but
+stop at gain < 1e-4 over 10 gradient evals (or 40 evals). No published result was overwritten.
+| | train NLL | val h0.5 (mm) | q | μ0 | s_l | E | grads |
+|---|---|---|---|---|---|---|---|
+| published fit (TOL 1e-3) | −17.06935 | 55.3 | 0.093 | 0.85 | 0.48 | 0.83 | 19 |
+| A, continued from published fit | −17.17328 | 44.7 | 0.00021 | 0.68 | 0.44 | 0.77 | 40 (limit) |
+| B, started from all_real parameters | −17.17365 | 47.7 | 0.00022 | 0.58 | 0.49 | 0.77 | 39 |
+| for comparison: grid / h05 / fixed μ (fit) | | 40.0 / 37.9 / 60.7 | | | | | |
+Findings:
+1. Early stop DID cut this fit short: 0.104 of likelihood was left (100 × TOL), and q was wrong by > 400 ×. The published noise_real NLL row is not a valid
+   picture of the NLL criterion. CORRECTION of the first reading above: "NLL gain nearly vanishes" was mostly this artefact.
+2. The stop rule is unsafe: the published fit stopped with last-10 gain 0.00098, close to TOL, while 100 × TOL remained. A small last-10 gain does not
+   prove convergence here. TOL 1e-3 was only validated on ideal (2 starts: −25.14079 vs −25.14093).
+3. The corrected NLL still forecasts worse than grid and h05 on val (44.7–47.7 vs 40.0 and 37.9 mm), so h05 ≥ nll may survive, with a smaller gap.
+4. A and B agree on NLL within 0.0004, yet differ by 3 mm in val h0.5, with μ0 0.68 vs 0.58: a flat ridge in the likelihood. The earlier "NLL is flat
+   compared with forecast error" point survives only in this smaller form.
+Other NLL fits may be affected (not tested). Same-noise pairs differ more than they should, given that delay adds no NLL information: noise q 0.0024 (22 grads,
+last-10 gain 0.00063) vs all q 0.00018; all_plane q 0.0020 (0.00064) vs plane q 0.00015. dropout_flagged (0.00060) is also near TOL.
+
+### h05 continuation test (2026-11-09, noise_real only, val only; test (dev) NOT looked at)
+Script experiments/step_1g_continue_h05_check.py, results outputs/continue_h05_noise_real.json/.log. Stop at gain < 1e-6 m over 10 gradient evals (published 1e-5).
+| | train h0.5 (mm) | val h0.5 (mm) | q | μ0 | σ_v0 | grads |
+|---|---|---|---|---|---|---|
+| published fit | 44.645 | 37.9 | 0.0015 | 0.93 | 1.18 | 46 |
+| A, continued from published fit | 44.643 | 37.9 | 0.0015 | 0.93 | 1.19 | 14 |
+| B, started from all_real h05 parameters | 44.686 | 37.8 | 0.00069 | 0.88 | 6.98 | 14 |
+Reading: unlike NLL, h05 did not move: gain 0.002 mm on train and none on val. No evidence that early stop hurt h05 on noise_real. A and B differ in q (2 ×) and σ_v0 (6 ×),
+yet their forecast error differs by only 0.04 mm on train and 0.1 mm on val, so h05 is flat in these two parameters.
+Limits: one condition only. Both restarts barely moved, and this objective is non-smooth, so a stuck optimiser cannot be told apart from a converged one; B staying at its
+different parameters fits either. The check shows that the h05 result is stable for forecasting, not that it found the global optimum.
 
 ## Section 10 — plane (nll 2026-11-08 22:58 → 23:13; h05 + eval 2026-11-09 00:15 → 00:35; first h05 attempt stopped by user)
 Learning: nll 14.3 min (48 grads), h05 17.5 min (39 grads), both early stop, no bound. nll σ 1.75 mm, q 0.00015, μ0 0.65, s_l 0.40,
@@ -176,7 +258,7 @@ Plane assumes the floor is flat and at a known height; tilt or height error is n
 
 Early-stop evidence (open question from Section 9): nll in plane, all_real and noise_real all START at q = 0.1. plane (48 grads, q 1.5e-4)
 and all_real (31 grads, q at the 1e-4 bound) travel far down; noise_real stops at q 0.093 after 19 grads. Same start, so noise_real looks like the outlier.
-Not proof: the all_real parameters did not beat the learned noise_real NLL (Section 9). Continuation test still not run.
+Confirmed by the continuation test (Section 9). The plane − noise_real NLL gains above use the too-early noise_real fit, so they are overstated.
 
 ## Section 11 — all_plane (2026-11-09 00:47 → 01:31, 44 min)
 Learning: nll 9.2 min (31 grads), h05 31.9 min (67 grads, longest), both early stop, no bound. nll σ 1.7 mm, q 0.002, μ0 0.77, s_l 0.39,
@@ -211,9 +293,10 @@ Paired h05 comparisons (bootstrap CI + Wilcoxon, raw p, NOT corrected for the 44
 1. ekf-μ beats the fixed-μ filter by about 20–29 mm for h05 and grid in 9 of 10 conditions. In dropout_silent_noisy it gains nothing.
 2. h05 vs grid: usually ≤ 3 mm. The two larger test gaps (ideal, delay) are means pulled by grid outliers (Wilcoxon not significant, val tied).
    Fair summary: tied on typical launches, h05 more robust on the test (dev) launches; h05 worse on val in dropout_silent_noisy.
-3. h05 vs nll: h05 is better or level everywhere; the size is uncertain for noise_real (open early-stop question).
+3. h05 vs nll: h05 is better or level everywhere in this table, but the whole NLL column is PROVISIONAL: the noise_real fit was stopped too early (Section 9,
+   continuation test) and other fits may be too. Do not quote NLL numbers or the h05 − nll gaps until NLL is re-learned with a safer stop.
 4. Consistency: nll has NIS near 2; h05 NIS 0.08–0.7 (too cautious), so h05 covariances are not honest uncertainties.
-Still required before any claim: ekf-μ on mismatch physics (A1), noise_real continuation test, NEES on all (grid 676, nll 396), grid outliers
+Still required before any claim: ekf-μ on mismatch physics (A1), NLL re-learning with a safer stop rule, NEES on all (grid 676, nll 396), grid outliers
 461/480, launch 235, final test set (A2, render only when methods are frozen).
 
 ## Summary (all 11 sections) (h0.5 test (dev), mm)
