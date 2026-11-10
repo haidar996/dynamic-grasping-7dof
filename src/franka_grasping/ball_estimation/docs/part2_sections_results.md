@@ -54,6 +54,24 @@ Reading:
 5. Cost: 46 min for this condition (old 7.6 min).
 Proposed rerun, NOT run: 2 starts + restart on stall for NLL only, cap 80 per start, q lower bound decided first (see RESUME); 9 fits + 11 evals, roughly 7.5 h.
 
+### noise with the final NLL rule (commit 29ce137: 2 starts + restart on stall, cap 80, q ≥ 1e-6), 2026-11-10 11:42 → 12:35, 53 min
+Start A (original) −21.80783 (60 grads, 4 rounds) = pilot exactly. Start B (low process noise) **−21.87180** (80 grads = cap, 3 rounds; round 3 gained 0), chosen.
+B: σ 2.46 mm, q 8.1e-5 (BELOW the old 1e-4 bound, so that bound was active in the pilot; no bound now), q_mu 1.1e-4, μ0 0.65, s_l 0.44, E 0.69.
+
+| h0.5 | ekf19b_fit | ekfmu_grid | ekfmu_nll (final) | ekfmu_nll (TOL 1e-3) | ekfmu_h05 | oracle |
+|---|---|---|---|---|---|---|
+| val | 52 | 31 | 33 [28,39] | 31 | 30 | 5 |
+| test (dev) | 59 | 36 | 36 [30,42] | 35 | 34 | 8 |
+
+Paired, new NLL − old NLL: val +2.2 [+0.7,+3.6] (p 0.006, new better in 34 %), test +0.7 [−0.7,+2.2] (n.s.). h05 − new NLL: val −3.2 [−5.4,−1.0], test −1.7 [−3.7,+0.3].
+NIS 2.00 (test), 1.98 (val); NEES test 662 (old 79), val 8.6 (old 4.4). μ error at 1 s (test) 0.016 (old 0.027).
+Reading:
+1. The better likelihood forecasts slightly WORSE on val (significant) and no better on test. Confirms on a paired basis what the pilot suggested.
+2. Large dev-test NEES grows as q falls, across the fits seen so far: q 0.093 → 7; 0.0048 (h05) → 22; 0.0024 → 79; 0.0003 → 132; 0.00018 → 396; 8e-5 → 662. Strong pattern (different fits and
+   conditions, not a controlled test). NIS stays ≈ 2, so innovations look calibrated while the state covariance is overconfident at a few events.
+3. Consistent with the inverse-crime hypothesis: on matched physics, maximum likelihood drives process noise towards 0, which is right between events but leaves no room for the rare
+   big model errors (bounces, corner hits) that dominate NEES and forecast error. Untested; the mismatch data will tell.
+
 ## Section 1 — ideal (2026-11-08 06:31 → 06:59, 28 min)
 Learning: nll 9.3 min (31 grads, early stop), train −25.14079 (first run 2 starts / 71.5 min: −25.14093 → early stop lost
 nothing; val h0.5 31.1 both). h05 17.4 min (38 grads, early stop). No parameter at a bound.
