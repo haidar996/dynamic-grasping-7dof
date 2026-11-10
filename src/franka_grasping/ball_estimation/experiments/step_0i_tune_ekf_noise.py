@@ -7,7 +7,11 @@ in Phase 0, see outputs/ekf_tuning_val_v2_phase0.json).  Each family is tuned on
   oracle : ekf19b_oracle-none+stale (true c/E); used by every *_oracle estimator, so the upper bound is tuned too
   cvkf   : constant-velocity KF, own grid (Phase 0 ran into the q edge in 5 of 8 conditions)
 Output: outputs/ekf_tuning_val.json (+ the printed grids in the log)
-Usage: python3 experiments/step_0i_tune_ekf_noise.py [workers=3]"""
+PHYSICS=mismatch (physics_cfg.py, A1 arm R, 2026-11-10): mismatch val launches, ekf_fit uses the mismatch train fit
+(outputs/fit_constants_train_mismatch.json); families ekf and ekf_fit only (oracle needs the true mu, E, which do not
+exist on mismatch data; cvkf is not reported by step_1e); conditions from argv (default: the arm-R subset).
+Output: outputs/ekf_tuning_val_mismatch.json
+Usage: [PHYSICS=mismatch] python3 experiments/step_0i_tune_ekf_noise.py [workers=3] [conds, comma-separated]"""
 import os
 for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(v, "1")
@@ -26,10 +30,11 @@ from estimators.filters import make
 from estimators.metrics import evaluate
 from estimators.stats import per_launch
 
-RAW = root / "outputs" / "raw_60hz_h3_f49_sq480_with_arm"
+import physics_cfg as phys
+RAW = phys.RAW
 SPLIT = json.loads((root / "split_500.json").read_text())
 GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).estimator_geometry()
-FIT = json.loads((root / "outputs" / "fit_constants_train.json").read_text())
+FIT = json.loads(phys.out_path("fit_constants_train.json").read_text())
 cam = Pinhole(3.0, 49.0, 480, 480)
 # grids widened 2026-11-02: the first run (outputs/ekf_tuning_val_narrowgrid.json) had optima on the grid edges
 # (ekf sigma 2 mm / q 0.03 lowest; oracle sigma 30 mm highest and q 0.03 lowest; cvkf q 1000 highest)
@@ -45,6 +50,9 @@ FAMILIES = {   # name, sigma grid, q grid, extra kw
     "oracle":  ("ekf19b_oracle-none+stale", SIG_OR, Q_OR, {}),
     "cvkf":    ("cvkf", SIG_CV, Q_CV, {}),
 }
+if phys.MISMATCH:
+    FAMILIES = {f: FAMILIES[f] for f in ("ekf", "ekf_fit")}
+R_SUBSET = ["ideal", "noise", "all_real", "dropout_silent_noisy"]
 KEY = "h0.5"
 
 
@@ -60,10 +68,14 @@ def work(args):
 
 
 def main():
-    workers = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    conds = list(CONDITIONS)
-    jobs = [(i, c) for c in conds for i in SPLIT["val"]]
-    print(f"tuning {list(FAMILIES)} on {len(SPLIT['val'])} val launches x {len(conds)} conditions, "
+    quick = "--quick" in sys.argv                        # smoke test: 5 val launches, *_quick output
+    argv = [a for a in sys.argv[1:] if not a.startswith("--")]
+    workers = int(argv[0]) if argv else 3
+    conds = (argv[1].split(",") if len(argv) > 1 else R_SUBSET if phys.MISMATCH else list(CONDITIONS))
+    val = SPLIT["val"][::15] if quick else SPLIT["val"]
+    assert all(c in CONDITIONS for c in conds), conds
+    jobs = [(i, c) for c in conds for i in val]
+    print(f"tuning {list(FAMILIES)} ({phys.PHYSICS} physics) on {len(val)} val launches x {len(conds)} conditions, "
           f"criterion launch-mean {KEY} RMS; ekf_fit uses c {FIT['c']}, E {FIT['E']}", flush=True)
     acc, t0 = {}, time.time()
     with Pool(workers) as p:
@@ -89,8 +101,9 @@ def main():
                 print(f"   {1000 * s:12.0f}     " + "  ".join(f"{grid[(s, q)]:7.1f}" + ("*" if (s, q) == sq else " ") for q in qs))
             print(f"   -> sigma {1000 * sq[0]:.0f} mm, q {sq[1]}: launch-mean h0.5 {grid[sq]:.1f} mm"
                   + ("   ON GRID EDGE" if edge else ""), flush=True)
-    out = root / "outputs" / "ekf_tuning_val.json"
-    out.write_text(json.dumps(dict(families={f: v[0] for f, v in FAMILIES.items()}, criterion=f"launch-mean {KEY} RMS on val",
+    out = phys.out_path("ekf_tuning_val.json", phys.SUFFIX + ("_quick" if quick else ""))
+    out.write_text(json.dumps(dict(physics=phys.PHYSICS, fit_c_E=[FIT["c"], FIT["E"]], conditions=conds,
+                                   families={f: v[0] for f, v in FAMILIES.items()}, criterion=f"launch-mean {KEY} RMS on val",
                                    grids={f: dict(sigma=v[1], q=v[2]) for f, v in FAMILIES.items()}, best=best), indent=1))
     print(f"\nsaved {out}  ({(time.time() - t0) / 60:.1f} min)")
 

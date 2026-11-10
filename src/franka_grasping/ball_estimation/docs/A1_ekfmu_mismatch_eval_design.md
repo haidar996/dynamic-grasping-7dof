@@ -127,3 +127,33 @@ Each run is started only on an explicit go, section by section, as before.
 3. **Baseline re-tune in R:** yes (fair), or skip it (cheaper, but a reviewer will object).
 4. **Order:** R-ideal pilot first, then the matched NLL reruns, or the reruns first.
 5. **Predictions 1–5 and their thresholds:** accept, or change them now, before any result exists.
+
+## Decisions (2026-11-10, user: "ok" to all recommendations)
+1. Arms T and R. 2. R subset ideal, noise, all_real, dropout_silent_noisy (extend rule as written). 3. Baselines re-tuned in R.
+4. Order: R-ideal pilot → matched NLL reruns → rest of R and T. 5. Predictions 1–5 accepted as written (frozen from here).
+
+## Implementation notes (2026-11-10, before any result; amendments to the plan above)
+- Switch: `physics_cfg.py` (PHYSICS env). step_0i, step_0k, step_1c, step_1d, step_1e read it; step_1e also reads
+  ARM=transfer|retrain. Runner: `experiments/run_section.sh` (header lists the mismatch commands).
+- **Amendment 1, cvkf:** cvkf is not re-tuned in arm R. step_1e does not report cvkf, and the cvkf mismatch numbers
+  already exist in Step A.
+- **Amendment 2, step_0k on mismatch:**
+  - noise σ, q = the current matched "ekf" val tuning, the best available before the re-tune;
+  - fitted on "ideal" only (the fit is taken from ideal in both physics);
+  - wider grid: c 0.2–1.6 in steps of 0.1, E 0.30–0.95 in steps of 0.05. Step A's per-launch best constants spread far
+    beyond the generator ranges.
+- **Amendment 3, hindsight row:** the oracle row is replaced by Step A's "best μ & E" bound, the same filter, per-launch
+  pair and matched "ekf" noise, in both arms, so it is a fixed reference.
+- **Smoke tests:**
+  1. Matched: step_1e on noise, 10 launches. All 300 per-launch error arrays are identical to the stored results.
+  2. Mismatch arm T: on ideal and noise, ekf19b, ekf19b_fit and hindsight are identical to Step A's
+     `mismatch_errors.pkl.gz`. That is 250 arrays, 0 different; hindsight is checked on ideal only, the only one of the
+     two conditions where Step A stored it.
+  3. Arm R chain on tiny subsets: baselines → grid → NLL → h05 → retrain eval. It runs end to end, and the
+     temporary files were removed.
+  4. run_section.sh refuses 7 wrong commands before starting anything.
+- **Amendment 4, q_mu grid on mismatch:** in step_1d, q_mu 1e-6…1e-2 → 1e-6…1.0 (adds 0.1 and 1.0).
+  - Reason: in smoke test 3, the grid optimum sat on the upper edge 1e-2 and the score was still falling (53.5 → 51.9 mm).
+    On mismatch data μ drifts within a launch (slide → roll).
+  - That smoke test used quick noise tuning from 5 launches, so its numbers are not results.
+  - The grid now takes about 10 instead of 6 min per condition. The matched grid is unchanged.

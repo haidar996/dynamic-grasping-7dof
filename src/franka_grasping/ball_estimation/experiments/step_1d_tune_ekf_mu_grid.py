@@ -6,7 +6,9 @@ Same tuning budget and criterion as the baselines (step_0i): grid on the VAL lau
 q is tuned too: with the baselines' q (0.1-5) the velocity noise explains the slowing and mu is hardly observable
 (step_1b diagnostic), so keeping it would make this ablation a strawman.
 Output: outputs/ekf_mu_grid_val.json
-Usage: python3 experiments/step_1d_tune_ekf_mu_grid.py [conds|all_conds]"""
+PHYSICS=mismatch (physics_cfg.py, A1 arm R): mismatch val launches, sigma / c / E from the mismatch re-tune and fit
+(ekf_tuning_val_mismatch.json, fit_constants_train_mismatch.json) -> outputs/ekf_mu_grid_val_mismatch.json
+Usage: [PHYSICS=mismatch] python3 experiments/step_1d_tune_ekf_mu_grid.py [conds|all_conds]"""
 import os
 for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(v, "1")
@@ -23,17 +25,20 @@ from dataset import CONDITIONS, apply_condition
 from estimators import ekf_mu_batch as eb
 from estimators.stats import per_launch
 
-RAW = root / "outputs" / "raw_60hz_h3_f49_sq480_with_arm"
+import physics_cfg as phys
+RAW = phys.RAW
 SPLIT = json.loads((root / "split_500.json").read_text())
 GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).estimator_geometry()
-TUNED = json.loads((root / "outputs" / "ekf_tuning_val.json").read_text())["best"]["ekf_fit"]
-FIT = json.loads((root / "outputs" / "fit_constants_train.json").read_text())
+TUNED = json.loads(phys.out_path("ekf_tuning_val.json").read_text())["best"]["ekf_fit"]
+FIT = json.loads(phys.out_path("fit_constants_train.json").read_text())
 cam = Pinhole(3.0, 49.0, 480, 480)
 # 2026-11-07: widened after the first run had every optimum on an edge (q at 0.003, s_l at 0.2 / 1.0; old results in
 # outputs/ekf_mu_grid_val_narrowgrid.json).  q = 2.0 dropped (worst everywhere: 42-116 mm).
 Q = [1e-4, 3e-4, 0.001, 0.003, 0.01, 0.03, 0.1, 0.5]
 Q_MU = [1e-6, 1e-4, 1e-2]
 S_L = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 3.0]
+if phys.MISMATCH:   # 2026-11-10, before any real result: the arm-R smoke test (quick noise tuning) hit the q_mu edge 1e-2 and was
+    Q_MU = Q_MU + [0.1, 1.0]   # still falling; on mismatch mu really drifts (slide -> roll).  1.0 = step_1c's upper bound.
 
 
 def main():
@@ -62,7 +67,7 @@ def main():
               + (f"  ON GRID EDGE {edge_axes}" if edge else "") + f"  ({time.time() - t0:.0f} s)", flush=True)
         for n, vals in axes:
             print(f"      profile {n:5s}: " + "  ".join(f"{x:g}:{v:.1f}" for x, v in zip(vals, prof[n])), flush=True)
-    path = root / "outputs" / "ekf_mu_grid_val.json"
+    path = phys.out_path("ekf_mu_grid_val.json")
     old = json.loads(path.read_text()) if path.exists() else {}
     path.write_text(json.dumps({**old, **out}, indent=1))
     print(f"saved {path}")

@@ -33,12 +33,13 @@ from dataset import CONDITIONS, apply_condition
 from estimators import ekf_mu_batch as eb
 from estimators.stats import per_launch
 
-RAW = root / "outputs" / "raw_60hz_h3_f49_sq480_with_arm"
+import physics_cfg as phys    # PHYSICS=mismatch (A1 arm R, 2026-11-10): mismatch train/val launches, start noise from the
+RAW = phys.RAW                # mismatch re-tune, output ekf_mu_learned_<crit>_mismatch.json.  Default = matched, unchanged.
 SPLIT = json.loads((root / "split_500.json").read_text())
 GEO = Arena(mujoco.MjModel.from_xml_path(str(root / "scenes" / "arena.xml"))).estimator_geometry()
 # start values = current val tuning (2026-11-07 fix: was ekf_tuning_val_v2_phase0.json = pre-audit, no plane/all_plane/
 # dropout_silent_noisy -> KeyError on those conditions, outdated sigma/q on the others)
-BASE = json.loads((root / "outputs" / "ekf_tuning_val.json").read_text())["best"]["ekf"]
+BASE = json.loads(phys.out_path("ekf_tuning_val.json").read_text())["best"]["ekf"]
 cam = Pinhole(3.0, 49.0, 480, 480)
 NAMES = ["sigma", "q", "q_mu", "mu0", "s_l", "sigma_v0", "E"]
 LOG = [True, True, True, True, True, True, False]
@@ -182,9 +183,9 @@ def main():
     quick = "--quick" in sys.argv
     ids = SPLIT["train"][::10] if quick else SPLIT["train"]
     maxiter = 3 if quick else 100
-    out_path = root / "outputs" / f"ekf_mu_learned_{crit}{'_quick' if quick else ''}.json"
+    out_path = phys.out_path(f"ekf_mu_learned_{crit}.json", phys.SUFFIX + ("_quick" if quick else ""))
     out = json.loads(out_path.read_text()) if out_path.exists() else {}
-    print(f"learning ekf-mu ({crit}) on {len(ids)} train launches, conditions {conds}, {workers} workers", flush=True)
+    print(f"learning ekf-mu ({crit}, {phys.PHYSICS} physics) on {len(ids)} train launches, conditions {conds}, {workers} workers", flush=True)
     for cond in conds:
         if cond in out and "--redo" not in sys.argv:                # resume after a crash / shutdown
             print(f"{cond}: already learned (use --redo to learn again)", flush=True)
