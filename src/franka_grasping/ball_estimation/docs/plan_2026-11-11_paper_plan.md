@@ -130,3 +130,9 @@ NLL needs the final matched parameters; P7 before P8 because the final set is re
    (C3), 6.4 learned comparison (C5), 6.5 sensor ablation (C4), 6.6 final test set.
 7. Limitations (audit C1–C8: μ is a deceleration; sensor idealisations; static arm; sim-only; dropout_silent = flagged by
    construction; dev test inspected).  8. Conclusion.
+
+## Decisions (2026-11-12, user: "go" to all five recommendations)
+1. Core set = ideal, noise, all_real, all_plane, dropout_silent_noisy; other five matched-only appendix without NLL.
+2. Learned comparison = KalmanNet-style learned gain on the ekf19b model (paper 04); PyTorch (CPU) may be installed when P7 starts.
+3. Calibration step P3 added.  4. Order P0 → P10 as listed.  5. Deadline not given; appendix conditions are the first cut if needed.
+Arm-R subset becomes the core set (adds all_plane to the four of the A1 design; mismatch noise re-tune must cover it, see RESUME).
