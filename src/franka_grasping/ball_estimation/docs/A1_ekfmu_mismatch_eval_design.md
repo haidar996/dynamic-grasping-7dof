@@ -180,3 +180,8 @@ within a launch, so it can in principle follow the slide → roll change and bea
   is evidence that adaptive μ captures slide → roll, and the hindsight row is then a reference, not a ceiling.
 - Prediction 5c (new, arm R): the retrained h05 q_μ is larger than the matched one (matched h05 q_μ = 1e-3 in all five core conditions); this is
   why the mismatch q_μ grid was widened to 1.0 (amendment 4).
+
+## Arm R baselines, run 2 (2026-11-12 00:11 → 01:18, 68 min, widened grid)
+Changes vs run 1: ekf_fit all_real σ 30 → 80 mm (70.2 → 69.3 mm), ekf_fit dsn σ 30 → 120 mm (82.3 → 81.8 mm, still the top edge).
+All other 6 optima unchanged and interior. The dsn one is accepted as saturation: 4× more σ bought 0.5 mm (flat surface; the
+widen-once fallback was applied). Final mismatch baselines: `outputs/ekf_tuning_val_mismatch.json` (run 1 kept as *_edge.json).
