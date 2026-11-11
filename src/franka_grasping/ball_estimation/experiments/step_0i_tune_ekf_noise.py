@@ -51,7 +51,13 @@ FAMILIES = {   # name, sigma grid, q grid, extra kw
     "cvkf":    ("cvkf", SIG_CV, Q_CV, {}),
 }
 if phys.MISMATCH:
-    FAMILIES = {f: FAMILIES[f] for f in ("ekf", "ekf_fit")}
+    # 2026-11-11 (amendment 5): the first mismatch re-tune (kept as outputs/ekf_tuning_val_mismatch_edge.json) had 4/8 optima on the
+    # top edges (ekf ideal q 20; ekf_fit sigma 30 mm in noise, all_real, dsn): with the wrong model, the filter wants much more
+    # noise than the sensor has.  Grid-edge rule -> widen upwards: sigma to 120 mm, q to 100.  Matched grids untouched.
+    SIG = SIG + [0.05, 0.08, 0.12]
+    Q = Q + [100.0]
+    FAMILIES = {"ekf": ("ekf19b-none+stale", SIG, Q, {}),
+                "ekf_fit": ("ekf19b_fit-none+stale", SIG, Q, dict(c=FIT["c"], E=FIT["E"]))}
 R_SUBSET = ["ideal", "noise", "all_real", "dropout_silent_noisy"]
 KEY = "h0.5"
 

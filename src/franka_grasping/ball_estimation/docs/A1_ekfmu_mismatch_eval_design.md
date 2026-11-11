@@ -157,3 +157,16 @@ Each run is started only on an explicit go, section by section, as before.
     On mismatch data μ drifts within a launch (slide → roll).
   - That smoke test used quick noise tuning from 5 launches, so its numbers are not results.
   - The grid now takes about 10 instead of 6 min per condition. The matched grid is unchanged.
+
+## Arm R baselines, run 1 (2026-11-10) and amendment 5
+- step_0k on mismatch train (36 min): best constants c 0.5, E 0.5, train h0.5 51.5 mm, interior of the grid
+  (`outputs/fit_constants_train_mismatch.json`).
+- step_0i on mismatch val (46 min): 4 of 8 optima on the TOP grid edge: ekf ideal q = 20; ekf_fit σ = 30 mm in noise,
+  all_real and dropout_silent_noisy. With the wrong model the filter asks for far more measurement noise than the sensor
+  has (true: a few mm), to discount a model it cannot trust. Kept as `outputs/ekf_tuning_val_mismatch_edge.json`.
+- **Amendment 5 (before any ekf-μ result on mismatch):** grid widened upwards for mismatch only, σ to 120 mm (adds 50, 80,
+  120) and q to 100 (adds 100); rerun of step_0i. Reason: a baseline whose best setting is outside the grid is tuned too
+  weakly, which would flatter ekf-μ. The matched grids and files are unchanged.
+- val h0.5 (mm) in run 1, mismatch (matched): ekf ideal 64.9 (45.3), noise 71.7 (50.2), all_real 89.9 (67.6),
+  dsn 100.0 (92.9); ekf_fit 51.6 (46.9), 57.1 (51.9), 70.2 (70.8), 82.3 (94.5). Run-1 numbers are superseded by run 2
+  wherever run 2 differs.
