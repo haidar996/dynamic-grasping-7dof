@@ -170,3 +170,13 @@ Each run is started only on an explicit go, section by section, as before.
 - val h0.5 (mm) in run 1, mismatch (matched): ekf ideal 64.9 (45.3), noise 71.7 (50.2), all_real 89.9 (67.6),
   dsn 100.0 (92.9); ekf_fit 51.6 (46.9), 57.1 (51.9), 70.2 (70.8), 82.3 (94.5). Run-1 numbers are superseded by run 2
   wherever run 2 differs.
+
+## Amendment 6 (2026-11-11, rethink, before any ekf-μ result on mismatch): prediction 5 was mis-reasoned
+Prediction 5 said ekf-μ's gain on mismatch "must be smaller than about 28 mm" because the hindsight best CONSTANT pair
+reaches only 35.5 mm (val ideal). That bound holds for constant-parameter filters. ekf-μ is not one: q_μ lets μ drift
+within a launch, so it can in principle follow the slide → roll change and beat the constant bound. Corrected:
+- Prediction 5 (kept): ekf-μ − ekf19b_fit is negative and significant (paired, Holm) in ideal, noise, all_real, both arms.
+- Prediction 5b (new): "gap closed" = (fit − X)/(fit − hindsight) may EXCEED 1 for the retrained variants; if it does, it
+  is evidence that adaptive μ captures slide → roll, and the hindsight row is then a reference, not a ceiling.
+- Prediction 5c (new, arm R): the retrained h05 q_μ is larger than the matched one (matched h05 q_μ = 1e-3 in all five core conditions); this is
+  why the mismatch q_μ grid was widened to 1.0 (amendment 4).
