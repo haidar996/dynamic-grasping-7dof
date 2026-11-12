@@ -339,3 +339,7 @@ Test h0.5 nll 38 [31,46] (= Section 1), paired vs fit −16.3; val 31.0. The TOL
 ### all_real with the final NLL rule (2026-11-12 19:22 → 20:09, 47 min)
 Start B (low process noise) wins: −17.18408 (old −17.069 at q 1e-4 bound; start A −17.18281). q 1e-5 (interior now), σ 8.0 mm, μ0 0.64, s_l 0.48, E 0.74.
 Test h0.5: fit 76, grid 55, nll 57 [48,69] (old 58), h05 51. Paired vs fit nll −18.7 (p 1e-8). NIS 2.02, NEES 27 (old at q 1e-4 was higher in val/test tables).
+
+### all_plane with the final NLL rule (2026-11-12 20:10 → 23:49, incl. ~3 h laptop sleep; ~45 min compute)
+Start A −23.16329 (80 grads = cap, 2 rounds; old −23.1 region, q 0.002 → 0.0019, σ 1.7 mm, μ0 0.67, s_l 0.44, E 0.72); start B worse.
+Test h0.5 nll 39 [33,47] (old 40), paired vs fit −26.1 (p 2e-10, 81 %); val 36. NIS 1.98, NEES 9.7. Old all_plane result essentially confirmed.
