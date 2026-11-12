@@ -28,3 +28,9 @@ Gap closed (fit → hindsight): test h05 +0.17, grid −0.01, nll −0.03; val a
 3. The ML criterion on mismatch behaves as predicted: q rises 3 orders of magnitude above the matched noise fit and NIS is 2.07; NEES 20 instead of 662.
    Supports the inverse-crime reading of F5.
 4. Transfer arm (T) and the other 4 core conditions are still needed before rewriting C1/C3.
+
+### Grid rerun on ideal (16:40 → 16:55, wider grid q ≤ 5, q_μ ≤ 10)
+Optimum q 5, q_μ 10, s_l 1.0 → val 48.6 mm (run 1: 52.3). Still on both top edges but flattening (q 2 → 5: 49.4 → 48.6; q_μ 1 → 10: 50.0 → 48.6);
+widened twice already → accepted as saturation. Re-eval: ekfmu_grid test 49 mm, paired vs fit **−2.9 [−4.2, −1.7] (p 1e-5, 73 %)**, gap closed +0.18 —
+the same ≈ 3 mm as h05. Reading unchanged: on mismatch ideal every ekf-μ variant ends 3 mm (test) / 0 mm (val) better than the fixed-μ filter, with
+q and q_μ pushed to values where μ is effectively a free nuisance state, not a friction estimate.
