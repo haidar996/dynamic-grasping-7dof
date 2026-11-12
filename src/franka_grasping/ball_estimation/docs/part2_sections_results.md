@@ -331,3 +331,7 @@ Still required before any claim: ekf-μ on mismatch physics (A1), NLL re-learnin
 | noise_real | 68 | 48 | 62 | 45 |
 | plane | 58 | 33 | 37 | 33 |
 | all_plane | 65 | 38 | 40 | 37 |
+
+### ideal with the final NLL rule (2026-11-12 18:34 → 19:22, 48 min) — old result CONFIRMED
+Start A −25.14106 (78 grads, 5 rounds) vs old −25.14079: same point (σ 0.71 mm, q 0.0157, μ0 0.80, s_l 0.30, E 0.72). Start B −25.05303 (worse).
+Test h0.5 nll 38 [31,46] (= Section 1), paired vs fit −16.3; val 31.0. The TOL 1e-3 ideal result was a true optimum; only noise-type conditions were affected.

@@ -490,3 +490,6 @@
 - 18:05 P2 ideal nll STOPPED at 38 % (drain 1.5 %/min, would hit 25 % before the next check; nothing saved: step_1c saves per condition at the end). Resume when charging with the same command (RESUME 16:56 entry). Note: start A reached -25.14080 in round 2 (= old value), so ideal's NLL optimum may already be the old one; start B pending.
 - 18:19 user: go; CHARGING 51 % → P2 ideal nll rerun RESTARTED (~50 min) + eval. Then all_real, all_plane, dsn (same commands with the condition name).
 - 18:34 charger OFF at 42 % → P2 ideal nll STOPPED again per rule (nothing saved; 14 min lost). Resume with the same command when charging.
+- 18:34 user: ignore charger, run NLL down to 25 % → NEW RULE for P2: stop only if battery < 25 % and not charging. P2 ideal nll RESTARTED.
+- 18:36 user: do not stop until 15 % and not charging → stop rule now battery < 15 % while not charging.
+- 19:22 P2 ideal DONE: NLL −25.14106 = old point (confirmed), test 38 mm. Starting P2 all_real.
