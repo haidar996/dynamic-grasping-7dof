@@ -493,3 +493,4 @@
 - 18:34 user: ignore charger, run NLL down to 25 % → NEW RULE for P2: stop only if battery < 25 % and not charging. P2 ideal nll RESTARTED.
 - 18:36 user: do not stop until 15 % and not charging → stop rule now battery < 15 % while not charging.
 - 19:22 P2 ideal DONE: NLL −25.14106 = old point (confirmed), test 38 mm. Starting P2 all_real.
+- 20:09 P2 all_real DONE: NLL −17.18408 (start B, q 1e-5), test 57 mm (old 58). Starting P2 all_plane (83 % discharging; rule: stop < 15 %). Then dsn. USAGE LIMIT reached in this chat at 20:10: a new chat must re-create the 15-min cron (see feedback-autonomous-run-mode memory).
