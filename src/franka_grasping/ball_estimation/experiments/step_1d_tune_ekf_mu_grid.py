@@ -39,6 +39,9 @@ Q_MU = [1e-6, 1e-4, 1e-2]
 S_L = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 3.0]
 if phys.MISMATCH:   # 2026-11-10, before any real result: the arm-R smoke test (quick noise tuning) hit the q_mu edge 1e-2 and was
     Q_MU = Q_MU + [0.1, 1.0]   # still falling; on mismatch mu really drifts (slide -> roll).  1.0 = step_1c's upper bound.
+    # 2026-11-12 (P1 ideal, run 1): optimum at q 0.5 (top) and q_mu 1.0 (top), both still falling; h05 learned q 4.5 -> widen once more.
+    Q = Q + [2.0, 5.0]
+    Q_MU = Q_MU + [10.0]
 
 
 def main():
