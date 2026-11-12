@@ -343,3 +343,13 @@ Test h0.5: fit 76, grid 55, nll 57 [48,69] (old 58), h05 51. Paired vs fit nll �
 ### all_plane with the final NLL rule (2026-11-12 20:10 → 23:49, incl. ~3 h laptop sleep; ~45 min compute)
 Start A −23.16329 (80 grads = cap, 2 rounds; old −23.1 region, q 0.002 → 0.0019, σ 1.7 mm, μ0 0.67, s_l 0.44, E 0.72); start B worse.
 Test h0.5 nll 39 [33,47] (old 40), paired vs fit −26.1 (p 2e-10, 81 %); val 36. NIS 1.98, NEES 9.7. Old all_plane result essentially confirmed.
+
+### dropout_silent_noisy with the final NLL rule (2026-11-12 23:49 → 00:19, 30 min)
+Start B wins: −16.80716 (start A −16.12105 = the old collapsed region). Parameters σ 8.3 mm, q 0.45, q_μ 1e-4, μ0 0.31, s_l 0.01 (AT LOWER BOUND = μ frozen at μ0),
+E 0.86. Test h0.5 nll 138 [116,165] (old 312), paired vs fit +41.9 (p 8e-7); h05 99 (+2.7, n.s.); fit 96. Reading: the better optimiser finds a less degenerate
+point (no σ 0.1 mm / q 78), but ML still prefers to explain stale frames by motion (q 0.45, μ0 0.31) and forecasts 40 mm worse than the fixed-μ filter.
+Conclusion of Section 4 stands: NLL learning is unsafe under undetected stale frames; no ekf-μ variant gains.
+
+## P2 complete (2026-11-13 00:19): NLL under the final rule for the core set
+noise −21.872 (changed, q 8e-5), ideal −25.141 (= old), all_real −17.184 (changed, q 1e-5), all_plane −23.163 (≈ old), dsn −16.807 (less degenerate, still fails).
+Test h0.5 nll: noise 36, ideal 38, all_real 57, all_plane 39, dsn 138 (old 35 / 38 / 58 / 40 / 312). The h05 ≥ nll ordering holds in every core condition.

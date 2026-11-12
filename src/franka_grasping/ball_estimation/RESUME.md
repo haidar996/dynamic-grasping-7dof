@@ -497,3 +497,4 @@
 - 23:22 laptop SLEPT ~20:30 → 23:18 (journal); all_plane nll resumed by itself (45 grads so far, log alive). Battery 61 % discharging, rule < 15 %. Chain continues: all_plane → dsn.
 - 23:55 user: do not stop it even at 15 % → NO battery stop any more for this chain (all_plane eval → dsn). Monitoring only.
 - 2026-11-13 00:05 P2 all_plane DONE: NLL −23.163 (cap 80), test 39 mm (old 40) → confirmed. dsn nll running (start A −16.121 AT BOUND, start B running). Battery 13 % CHARGING.
+- 2026-11-13 00:22 P2 COMPLETE: dsn NLL −16.807 (start B, s_l at bound), test 138 mm (old 312), still +42 vs fit. Core-set NLL column now final. NEXT P3: write experiments/step_1i_calibrate.py (post-hoc covariance inflation α for ekf-μ: α from val NEES, report test NEES/NIS before/after; core set, matched now, mismatch when available), then P4 (arm R noise/all_real/all_plane/dsn; all_plane needs step_0i mismatch tuning first).
