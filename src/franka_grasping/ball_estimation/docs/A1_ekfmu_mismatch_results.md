@@ -58,3 +58,15 @@ Grid q 2, q_μ 10, s_l 0.05 (65.3 mm val). nll σ 8.1 mm, q 0.037, μ0 0.64, E 0
 Paired vs fit (test): grid −2.5 [−4.4, −0.5] (p 0.04), h05 −2.2 (n.s.), nll +9.0 [+4.3, +14.1] (p 8e-4). Gap closed: grid +0.13, h05 +0.11, nll −0.46.
 Third core condition with the same picture: adaptive μ buys ≤ 3 mm of an 18–20 mm hindsight gap; ML-trained worse than fixed μ; h05 inflates σ (55 mm) to
 discount a model it cannot trust (the same mechanism as ekf19b_fit's σ 80 mm on mismatch, F10).
+
+## P4 — arm R on all_plane, 2026-11-13 06:03 → 07:21 (78 min)
+Grid q 5, q_μ 10, s_l 0.5 (60.0 mm val). nll σ 1.7 mm, q 0.028, μ0 0.53, s_l 0.04, E 0.64. h05 σ 1.0 mm, q 0.013, μ0 0.52, s_l 0.10, E 0.50 (NIS 5.4: under-estimated R this time).
+
+| h0.5 (mm) | ekf19b_fit | hindsight | ekfmu_grid | ekfmu_nll | ekfmu_h05 |
+|---|---|---|---|---|---|
+| test (dev) | 62 [55,69] | 43 | 59 | 66 | 62 |
+
+Paired vs fit (test): grid −2.5 [−3.6, −1.3] (p 3e-4), h05 −0.2 (n.s.), nll +4.3 [+0.2, +8.4] (p 0.008). Gap closed: grid +0.13, nll −0.23, h05 ≈ 0.
+Fourth core condition, same result. Across ideal / noise / all_real / all_plane: grid −2.9 / −1.8 / −2.5 / −2.5 (all p < 0.05), h05 −3.1 / −1.1 / −2.2 / −0.2
+(only ideal significant), nll +0.6 / +25 / +9 / +4. Hindsight −18 / −15 / −20 / −19. Prediction 5 (C1 on mismatch) is REFUTED for h05 and nll; grid passes
+with a ≈ 2–3 mm effect (gap closed 0.12–0.18).
