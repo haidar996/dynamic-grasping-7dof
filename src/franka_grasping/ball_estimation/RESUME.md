@@ -516,3 +516,12 @@
 - 15:18 P7 knet ideal (matched) DONE: 60 epochs (no early stop, still creeping), best val h0.5 46.7 mm at ep 58 (≈ ekf19b_fit 47; ekf-μ h05 27). Weights outputs/knet_ideal.pt. Battery 17 % DISCHARGING → nothing started. NEXT when charging: step_1e eval ideal (adds knet row, ~3 min), then mismatch transfer eval ideal (ARM=transfer, needs knet weights for PSFX='' → yes), then train noise, all_real.
 - 18:43 user: run ONLY the knet ideal evals (matched + mismatch transfer); do NOT start knet noise training until the user says so. Chain shell killed before training; evals running. HOLD after evals (no new heavy runs without user go).
 - 19:08 knet ideal evals DONE: matched test 56 (= fit 55, n.s.), transfer 64 (= fit 65). L1, L2 refuted; knet = fixed-μ filter. Written to docs/P7_learned_gain_design.md. HOLD: no new runs until the user says.
+
+## >>> START HERE (2026-11-13 19:35, chat closed by user) <<<
+State: P0–P6 DONE, P7 partly done (knet trained + evaluated on ideal only). NOTHING running. All results committed + pushed to `backup`.
+Key results (docs): matched ekf-μ −16…−25 mm vs fixed μ (docs/part2_sections_results.md); mismatch retrain ≤ 3 mm, transfer +30…58 mm WORSE
+(docs/A1_ekfmu_mismatch_results.md); scalar covariance calibration fails (P3, part2 doc); knet = fixed-μ filter on matched and transfer (docs/P7_learned_gain_design.md).
+Rules now: HOLD — start NO heavy run until the user names it. Battery rule when a run is allowed: stop only < 10 % while not charging. Push only to `backup`.
+The 15-min cron is session-only: re-create it in a new chat only if the user restarts autonomous mode.
+Open choices for the user: (1) knet training on noise + all_real (~2.5 h each) [+ mismatch retrain, L3]; (2) skip it, freeze methods → P8 (render final test
+set, both physics, ~3 h) → P9 final evaluation once → P10 paper; (3) rewrite the paper claims C1/C3 in docs/plan_2026-11-11_paper_plan.md from the new results.
