@@ -47,3 +47,14 @@ Paired vs fit (test): grid −1.8 [−3.0, −0.6] (p 0.007), h05 −1.1 (n.s.),
 NIS/NEES test: nll 1.93 / 6.9 (calibrated), h05 0.05 / 0.2, grid 0.02 / 0.1. μ̂ vs a0 at 2 s r 0.5–0.85.
 Reading: as in ideal, adaptive μ ≈ fixed μ (≤ 2 mm). New: on mismatch + camera noise the ML-trained filter is 25 mm WORSE than the fixed-μ baseline while being
 the only calibrated one (NIS 1.9, NEES 7): likelihood and forecast accuracy diverge strongly under model error. H-q holds (q 0.043 ≫ 8e-5 matched).
+
+## P4 — arm R on all_real, 2026-11-13 04:21 → 05:31 (70 min)
+Grid q 2, q_μ 10, s_l 0.05 (65.3 mm val). nll σ 8.1 mm, q 0.037, μ0 0.64, E 0.65. h05 σ 55 mm (!), q 1.45, σ_v0 7.7, E 0.47.
+
+| h0.5 (mm) | ekf19b_fit | hindsight | ekfmu_grid | ekfmu_nll | ekfmu_h05 |
+|---|---|---|---|---|---|
+| test (dev) | 70 [62,78] | 50 | 67 | 79 | 68 |
+
+Paired vs fit (test): grid −2.5 [−4.4, −0.5] (p 0.04), h05 −2.2 (n.s.), nll +9.0 [+4.3, +14.1] (p 8e-4). Gap closed: grid +0.13, h05 +0.11, nll −0.46.
+Third core condition with the same picture: adaptive μ buys ≤ 3 mm of an 18–20 mm hindsight gap; ML-trained worse than fixed μ; h05 inflates σ (55 mm) to
+discount a model it cannot trust (the same mechanism as ekf19b_fit's σ 80 mm on mismatch, F10).

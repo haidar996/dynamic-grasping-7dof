@@ -502,3 +502,4 @@
 - 00:51 user: stop if battery < 30 % while not charging (new rule; replaces 'no stop').
 - 2026-11-13 04:22 (gap: usage limit 02:00 → 04:20; chain had finished 02:02). P4 noise DONE: grid −1.8, h05 −1.1 (n.s.), nll +25 mm vs fit; nll calibrated (NIS 1.9). Battery 100 % Full (AC). Starting P4 all_real. P3 calibration write-up still pending (outputs/ekf_mu_calibration*.json).
 - 04:30 P3 written up in docs/part2_sections_results.md (negative result: scalar α cannot calibrate; C2 fix withdrawn). P4 all_real RUNNING since 04:22 (~100 min). Then all_plane, dsn, then P5 arm T.
+- 05:33 P4 all_real DONE: grid −2.5, h05 −2.2 (n.s.), nll +9 vs fit. Battery 47 % DISCHARGING → starting all_plane anyway (rule: stop < 30 %; stages save separately: grid json → nll json → h05 json → eval).
