@@ -139,6 +139,9 @@ def make(name, rec=None, **kw):
     if name.startswith("ekfmu"):                           # Phase 1.2: mu in the state (estimators/ekf_mu.py); the
         from .ekf_mu import EKFMu                          # variant name (ekfmu_grid / _nll / _h05) only selects params
         return EKFMu(**kw)
+    if name == "knet":                                     # P7: learned gain on the ekf19b model (estimators/knet.py)
+        from .knet import KNet                             # kw: weights, c, E (+ L, obs); StaleGuard logic is inline
+        return KNet(**kw)
     if name == "cvkf":                                     # no model: ignores walls and arm
         kw = {k: v for k, v in kw.items() if k not in ("L", "obs")}
         return EKF19(L=1e9, c=0.0, E=0.0, policy="none", **kw)

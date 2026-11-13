@@ -84,6 +84,10 @@ def estimators(cond):
     for lab, d in MU_PARAMS.items():
         if cond in d:
             out[lab] = (lab + "+stale", dict(d[cond]["params"]))
+    w = OUT / f"knet_{cond}{PSFX}.pt"                       # P7 learned gain: only when trained for this physics / arm
+    if w.exists():
+        t = TUNED["ekf_fit"][cond]
+        out["knet"] = ("knet", dict(weights=str(w), c=t["c"], E=t["E"]))
     return out
 
 
@@ -108,6 +112,8 @@ def diagnostics(est, rec, every=6, warmup=0.1, v_min=0.05):
                 if T not in mu_hat and rec["t_capture"][k] - first >= T and moving:
                     mu_hat[T] = est.mu
         if k % every or rec["t_capture"][k] - first < warmup or not moving:
+            continue
+        if getattr(est, "P", None) is None:               # knet has no covariance: no NEES
             continue
         truth = np.array([np.interp(tt, tp, pp[:, 0]), np.interp(tt, tp, pp[:, 1]), *tv])
         e = est.s[:4] - truth
