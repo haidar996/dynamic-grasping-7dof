@@ -34,3 +34,16 @@ Optimum q 5, q_μ 10, s_l 1.0 → val 48.6 mm (run 1: 52.3). Still on both top e
 widened twice already → accepted as saturation. Re-eval: ekfmu_grid test 49 mm, paired vs fit **−2.9 [−4.2, −1.7] (p 1e-5, 73 %)**, gap closed +0.18 —
 the same ≈ 3 mm as h05. Reading unchanged: on mismatch ideal every ekf-μ variant ends 3 mm (test) / 0 mm (val) better than the fixed-μ filter, with
 q and q_μ pushed to values where μ is effectively a free nuisance state, not a friction estimate.
+
+## P4 — arm R on noise, 2026-11-13 00:50 → 02:02 (72 min)
+Grid q 5, q_μ 10, s_l 1 (top edges again, accepted). nll σ 2.5 mm, q 0.043, q_μ 1e-4, μ0 0.85, s_l 0.47, E 0.65. h05 σ 16.5 mm, q 1.57, μ0 0.48, s_l 1.49, E 0.50.
+
+| h0.5 (mm) | ekf19b_fit | hindsight | ekfmu_grid | ekfmu_nll | ekfmu_h05 |
+|---|---|---|---|---|---|
+| test (dev) | 56 [50,63] | 42 | 55 | **82** | 55 |
+| val | 57 | 45 | 55 | 79 | 56 |
+
+Paired vs fit (test): grid −1.8 [−3.0, −0.6] (p 0.007), h05 −1.1 (n.s.), **nll +25.2 [+17.8, +33.1] (p 2e-9)**. Gap closed: grid +0.12, h05 +0.07, nll −1.72.
+NIS/NEES test: nll 1.93 / 6.9 (calibrated), h05 0.05 / 0.2, grid 0.02 / 0.1. μ̂ vs a0 at 2 s r 0.5–0.85.
+Reading: as in ideal, adaptive μ ≈ fixed μ (≤ 2 mm). New: on mismatch + camera noise the ML-trained filter is 25 mm WORSE than the fixed-μ baseline while being
+the only calibrated one (NIS 1.9, NEES 7): likelihood and forecast accuracy diverge strongly under model error. H-q holds (q 0.043 ≫ 8e-5 matched).
