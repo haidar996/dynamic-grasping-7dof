@@ -92,3 +92,32 @@ Paired vs fit (test): grid −0.4 (n.s.), h05 +3.4 (n.s.), nll +69.5 [+58, +81] 
 Verdict on the frozen predictions: H-q supported (nll q 0.03–0.07 in ideal/noise/all_real; the 1e-3 threshold cleared by > 10×). NEES < 20: nll 20 / 7 / — /
 — / 7 → mostly yes. NLL–h05 gap narrower: NO — it widened (nll is now worse than fixed μ). Prediction 5: refuted for h05 and nll; grid ≈ 2–3 mm. 5b (gap > 1): no.
 5c (q_μ up): grid yes (1–10), learned no.
+
+## P5 — arm T (transfer: every parameter as learned / tuned on MATCHED data), 2026-11-13 08:42 → 08:58
+Test (dev) h0.5 launch-mean (mm); fit = ekf19b_fit with matched tuning; in brackets the paired difference vs that fit; "/R" = the retrained value from arm R.
+
+| cond | fit | hindsight | grid T (/R) | h05 T (/R) | nll T (/R) |
+|---|---|---|---|---|---|
+| ideal | 65 | 35 | 105 (+40) / 51 | 114 (+50) / 51 | 84 (+19) / 54 |
+| noise | 70 | 42 | 123 (+53) / 55 | 116 (+46) / 55 | 118 (+48) / 82 |
+| all_real | 87 | 50 | 131 (+44) / 67 | 122 (+35) / 68 | 129 (+42) / 79 |
+| all_plane | 76 | 43 | 124 (+48) / 59 | 125 (+49) / 62 | 114 (+37) / 66 |
+| dsn | 97 | 58 | 104 (+7) / 76 | 119 (+22) / 80 | 128 (+31) / 146 |
+| dropout_flagged | 65 | 36 | 97 (+32) | 115 (+51) | – |
+| delay | 72 | 38 | 114 (+42) | 127 (+55) | – |
+| noise_real | 79 | 48 | 137 (+58) | 110 (+31) | – |
+| plane | 69 | 40 | 116 (+46) | 115 (+46) | – |
+
+Findings (all paired CIs far from 0):
+1. **Transfer is catastrophic for ekf-μ.** Every matched-learned variant is 30–58 mm WORSE than the matched-tuned fixed-μ filter on mismatch data, in every
+   condition, and ~2× worse than its own retrained version. The matched fits use tiny process noise (q 1e-5…0.02) and a tight prior on μ, i.e. they trust a
+   model that is now wrong; the fixed-μ filter with its larger tuned q degrades gracefully (45 → 65 mm, Step A).
+2. **Prediction 4 (NLL degrades more than h05) is REFUTED:** nll transfers *less badly* than h05 in ideal, all_plane, all_real (84 vs 114, 114 vs 125, 129 vs 122)
+   and about equally in noise. The h05 fits are more specialised to matched physics (their σ, s_l are tuned to exploit the exact model), not less.
+3. **Retraining recovers only to the fixed-μ level** (arm R: ≤ 3 mm gain). So on this mismatch data the adaptive-μ structure is useful only if its noise
+   parameters are learned on the deployment physics, and even then it adds almost nothing over a well-tuned fixed model.
+4. The hindsight gap (15–20 mm) is untouched by either arm: the remaining error is model structure (slide → roll, speed-dependent restitution), not parameters.
+
+## Status after P0–P5 (2026-11-13 09:00): the mismatch evaluation of ekf-μ is complete for the core set (arm R) and all 9 distinct conditions (arm T).
+Claims to rewrite: C1 holds on matched physics only; C3 becomes "adaptive μ does not survive model mismatch: transfer −40 mm, retrain ≈ 0"; the paper's
+positive message is the diagnosis (why: q → 0 under exact physics; hindsight bound shows the information is there; model structure is the bottleneck).

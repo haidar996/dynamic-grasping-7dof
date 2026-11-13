@@ -508,3 +508,4 @@
 - 07:23 P4 all_plane DONE (grid −2.5, h05 −0.2 n.s., nll +4.3). Starting P4 dsn (last arm-R section). Then P5 arm T (eval only, 10 conds × ~2 min).
 - 07:25 P5 chain prepared: scratchpad chain_p5.sh (10 transfer evals, ~25 min total); start it after dsn arm R finishes.
 - 08:42 P4 dsn DONE → ARM R COMPLETE (5/5). Summary table in docs/A1_ekfmu_mismatch_results.md. Starting P5 (arm T, 10 transfer evals, ~25 min; scratchpad chain_p5.sh). Battery 50 % discharging (rule < 30 %).
+- 09:02 P5 DONE (16 min) → P0–P5 COMPLETE. Transfer catastrophic: matched-learned ekf-μ 30–58 mm worse than matched-tuned fixed μ on mismatch, every condition; nll transfers less badly than h05 (prediction 4 refuted). Written in docs/A1_ekfmu_mismatch_results.md. Battery 27 % DISCHARGING → nothing started. NEXT (light, no heavy compute): P6 launch-235 look + notes; then rewrite plan claims (C1/C3), then P7 learned comparison (needs torch install + code; heavy training only when charging).
