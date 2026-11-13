@@ -506,3 +506,5 @@
 - 05:35 user: stop now, rerun at 06:05 when charging → all_plane STOPPED (grid step, nothing saved). One-shot cron at 06:05: `PHYSICS=mismatch bash experiments/run_section.sh all_plane` (start only if charging; else wait for charger).
 - 06:03 charging (39 %) → all_plane arm R RESTARTED (~100 min). The 06:05 one-shot will find it running (run_section.sh refuses a second run).
 - 07:23 P4 all_plane DONE (grid −2.5, h05 −0.2 n.s., nll +4.3). Starting P4 dsn (last arm-R section). Then P5 arm T (eval only, 10 conds × ~2 min).
+- 07:25 P5 chain prepared: scratchpad chain_p5.sh (10 transfer evals, ~25 min total); start it after dsn arm R finishes.
+- 08:42 P4 dsn DONE → ARM R COMPLETE (5/5). Summary table in docs/A1_ekfmu_mismatch_results.md. Starting P5 (arm T, 10 transfer evals, ~25 min; scratchpad chain_p5.sh). Battery 50 % discharging (rule < 30 %).

@@ -70,3 +70,25 @@ Paired vs fit (test): grid −2.5 [−3.6, −1.3] (p 3e-4), h05 −0.2 (n.s.), 
 Fourth core condition, same result. Across ideal / noise / all_real / all_plane: grid −2.9 / −1.8 / −2.5 / −2.5 (all p < 0.05), h05 −3.1 / −1.1 / −2.2 / −0.2
 (only ideal significant), nll +0.6 / +25 / +9 / +4. Hindsight −18 / −15 / −20 / −19. Prediction 5 (C1 on mismatch) is REFUTED for h05 and nll; grid passes
 with a ≈ 2–3 mm effect (gap closed 0.12–0.18).
+
+## P4 — arm R on dropout_silent_noisy, 2026-11-13 07:21 → 08:40 (79 min) — arm R COMPLETE (5/5 core)
+Grid q 0.5, q_μ 1, s_l 0.05 (83.1 mm val). nll degenerate again: q 4.5, μ0 1.99 (upper bound), s_l 0.018. h05 σ 3 mm, q 0.012, μ0 0.47, E 0.48.
+
+| h0.5 (mm) | ekf19b_fit | hindsight | ekfmu_grid | ekfmu_nll | ekfmu_h05 |
+|---|---|---|---|---|---|
+| test (dev) | 77 [66,88] | 58 | 76 | **146** | 80 |
+
+Paired vs fit (test): grid −0.4 (n.s.), h05 +3.4 (n.s.), nll +69.5 [+58, +81] (p 4e-13). Same failure mode as matched: ML explains stale frames by motion.
+
+### Arm R summary (test dev, paired h0.5 vs ekf19b_fit re-tuned on mismatch; mm)
+| cond | fit | hindsight | grid | h05 | nll |
+|---|---|---|---|---|---|
+| ideal | 54 | 35 (−18) | −2.9* | −3.1* | +0.6 |
+| noise | 56 | 42 (−15) | −1.8* | −1.1 | +25* |
+| all_real | 70 | 50 (−20) | −2.5* | −2.2 | +9* |
+| all_plane | 62 | 43 (−19) | −2.5* | −0.2 | +4* |
+| dsn | 77 | 58 (−19) | −0.4 | +3.4 | +70* |
+(* p < 0.05 raw; Holm over the 5-condition family: grid stays significant in ideal, all_real, all_plane; h05 only in ideal.)
+Verdict on the frozen predictions: H-q supported (nll q 0.03–0.07 in ideal/noise/all_real; the 1e-3 threshold cleared by > 10×). NEES < 20: nll 20 / 7 / — /
+— / 7 → mostly yes. NLL–h05 gap narrower: NO — it widened (nll is now worse than fixed μ). Prediction 5: refuted for h05 and nll; grid ≈ 2–3 mm. 5b (gap > 1): no.
+5c (q_μ up): grid yes (1–10), learned no.
