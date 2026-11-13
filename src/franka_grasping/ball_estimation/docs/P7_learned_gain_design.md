@@ -48,3 +48,15 @@ No NIS/NEES (the network has no covariance; stated as a limitation and as the re
 
 ## Decisions taken by me (reversible, no result exists)
 Features/hidden size as above; loss = h05 + 0.1 now_pos; 60 epochs / patience 10; 3 seeds on ideal only; core set, both physics.
+
+## Result 1 — knet on ideal (trained matched train, 60 epochs, 145 min; evaluated 2026-11-13 19:05)
+| h0.5 (mm), paired vs ekf19b_fit | matched test | matched val | mismatch-T test | mismatch-T val |
+|---|---|---|---|---|
+| ekf19b_fit | 55 | 47 | 65 | 63 |
+| ekfmu_h05 | 30 (−24.8) | 27 (−20.2) | 114 (+49.5) | 102 (+38.7) |
+| ekfmu_nll | 38 (−16.3) | 31 (−15.9) | 84 (+18.9) | 82 (+19.0) |
+| **knet** | 56 (+1.1, n.s.) | 47 (−0.3) | 64 (−0.4, n.s.) | 64 (+0.4, n.s.) |
+- **L1 refuted:** the learned gain does not beat the fixed-μ filter on matched data (it learns ≈ the fixed filter's gain: same model, no μ state).
+- **L2 refuted:** it does not degrade more than ekf19b_fit under transfer — it degrades exactly like it (+9 mm), and far LESS than ekf-μ (+49 / +19).
+- Reading: with the physics prediction fixed, a learned gain cannot recover the per-launch friction; ekf-μ can (matched) but pays for it under
+  model mismatch. The learned gain inherits the robustness of the fixed model, not the adaptivity. Noise / all_real training waits for the user.
