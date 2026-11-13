@@ -366,3 +366,12 @@ Result: **a scalar inflation does not calibrate ekf-μ.**
 Consequence for the paper: C2's "one-parameter fix" is withdrawn; report instead that forecast-trained ekf-μ is accurate but its covariance is not usable, that ML
 gives honest innovations but overconfident states on matched data (q → 0) and calibrated states on mismatch, and that a usable covariance needs either the
 ML criterion with the measurement noise fixed to its physical value, or a heteroscedastic / event-aware inflation (bounce, arm hit), not a global scalar.
+
+## P6 — small diagnostics closed (2026-11-13)
+- **Launch 235** (2.4 m/s, μ 0.94, E 0.75): an exact corner hit at (1.0, −1.0) at t = 0.34 s (one bounce record on both walls at once). Every filter is bad
+  there (ideal now_pos: fit 58, grid 54, nll 62, h05 36, even the oracle 16 mm; h0.5 25–92 mm): the two-wall mirror sequence inside one step is ambiguous.
+  Reported as a corner-event limitation, together with launch 303 (arm corner); not fixed.
+- **Grid outliers 461 / 480** (Section "Diverging test launches"): fast (4.7–4.9 m/s), high-μ arm-hit launches where the val-grid setting σ = 2 mm, s_l = 3
+  diverges; the learned variants do not. Reported as fragility of grid tuning on the dev-test tail.
+- **NEES blow-ups on matched data** are explained by F5 (q → 0 under exact physics; NEES rises monotonically as q falls) and confirmed by arm R, where the
+  retrained nll (q 0.03–0.07) has NEES 7–20 instead of 10²–10³.
