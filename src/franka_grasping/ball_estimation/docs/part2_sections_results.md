@@ -353,3 +353,16 @@ Conclusion of Section 4 stands: NLL learning is unsafe under undetected stale fr
 ## P2 complete (2026-11-13 00:19): NLL under the final rule for the core set
 noise −21.872 (changed, q 8e-5), ideal −25.141 (= old), all_real −17.184 (changed, q 1e-5), all_plane −23.163 (≈ old), dsn −16.807 (less degenerate, still fails).
 Test h0.5 nll: noise 36, ideal 38, all_real 57, all_plane 39, dsn 138 (old 35 / 38 / 58 / 40 / 312). The h05 ≥ nll ordering holds in every core condition.
+
+## P3 — post-hoc covariance calibration (experiments/step_1i_calibrate.py, 2026-11-13; outputs/ekf_mu_calibration*.json)
+Method: P' = αP, α chosen on VAL (α_nis: mean NIS = 2, needs no truth; α_nees: mean NEES = 4), applied on TEST (dev). Before-values equal step_1e's to the digit.
+Result: **a scalar inflation does not calibrate ekf-μ.**
+1. h05 and grid: NIS is dominated by R (their learned/tuned σ is 2–7× the true sensor noise), so NIS barely moves with α; α_nis runs to its lower bound (3e-4) in
+   8 of 10 h05/grid cases (test NIS 0.09–0.68 → 0.3–1.2) and then blows up NEES (10³–10⁵). Their low NIS is a measurement-noise over-estimate, not a P problem.
+2. α_nees fitted on val does not transfer to test: val NEES 0.6–9 vs test 20–660 (noise grid 331, nll 662; all_real nll 277). The test NEES is made by a few
+   launches (corner / arm hits), so no val-fitted scalar can predict it (noise nll: 662 → 309 with α_nees, → 813 with α_nis).
+3. NLL-trained filters are the only ones near NIS 2 already (α_nis 0.3–2.9); on mismatch (retrain ideal) nll is calibrated by construction (NIS 2.07, NEES 20).
+4. dsn: everything is off-scale (h05 NIS 17, NEES 4375) — the covariance is meaningless when the measurement model is wrong.
+Consequence for the paper: C2's "one-parameter fix" is withdrawn; report instead that forecast-trained ekf-μ is accurate but its covariance is not usable, that ML
+gives honest innovations but overconfident states on matched data (q → 0) and calibrated states on mismatch, and that a usable covariance needs either the
+ML criterion with the measurement noise fixed to its physical value, or a heteroscedastic / event-aware inflation (bounce, arm hit), not a global scalar.
