@@ -525,3 +525,20 @@ Rules now: HOLD — start NO heavy run until the user names it. Battery rule whe
 The 15-min cron is session-only: re-create it in a new chat only if the user restarts autonomous mode.
 Open choices for the user: (1) knet training on noise + all_real (~2.5 h each) [+ mismatch retrain, L3]; (2) skip it, freeze methods → P8 (render final test
 set, both physics, ~3 h) → P9 final evaluation once → P10 paper; (3) rewrite the paper claims C1/C3 in docs/plan_2026-11-11_paper_plan.md from the new results.
+
+2026-11-14: new chat opened, START HERE read, presented choices (1)/(2)/(3); waiting for user choice. Nothing run.
+- 2026-11-14 00:28 user chose (1): knet chain noise -> all_real running (scratchpad chain.sh, log outputs/knet_train.log). 15-min battery cron (session-only); NEW RULE: stop if not charging AND < 30 %. Evals after training need user go.
+- 00:35 user: do NOT auto-start all_real after noise (even if charging). Chain wrapper killed; only noise training runs (PID 5830). Cron updated.
+- 00:48 check: battery 94% Charging; noise epoch 8 val 52.5 mm.
+- 00:49 check: battery 94% Charging; noise running; epoch  8: train loss 57.9 mm  val h0.5 52.5 mm  now 2.6  (151 s)  *
+- 01:04 check: battery 98% Charging; noise running; epoch 15: train loss 57.6 mm  val h0.5 52.6 mm  now 2.7  (138 s)
+- 01:19 check: battery 101% Charging; noise running; epoch 21: train loss 57.5 mm  val h0.5 52.5 mm  now 2.6  (141 s)
+- 01:34 check: battery 100% Full; noise running; == noise: best epoch 12, val h0.5 52.5 mm, 52.2 min, saved knet_noise.pt
+- 01:34 noise knet DONE: best ep 12, val h0.5 52.5 mm (K0 baseline 59.1), 52 min, outputs/knet_noise.pt. all_real NOT started (user rule). Cron deleted. HOLD for user.
+- 06:44 user chose 3: chain2 (scratchpad) = step_1e noise eval (log ekf_mu_eval.log) then knet all_real training. Battery cron re-created (stop <30% not charging).
+- 06:47 check: battery 93% Charging; noise eval running (all_real not yet started).
+- 07:02 check: battery 97% Charging. knet NOISE eval DONE (matched): test h05 knet 60 vs ekf19b_fit 59, diff +0.6 [-1.3,+2.8] p 0.27 n.s. (val +0.6 n.s.) -> knet = fixed-mu filter on noise too (same as ideal). all_real training running, epoch 4 val 82.0 mm.
+- 07:17 check: battery 100% Charging; all_real: epoch 10: train loss 82.7 mm  val h0.5 79.6 mm  now 11.5  (153 s)  *
+- 07:32 check: battery 100% Full; all_real: epoch 16: train loss 80.9 mm  val h0.5 77.7 mm  now 11.1  (144 s)  *
+- 07:47 check: battery 100% Full; all_real: epoch 22: train loss 79.7 mm  val h0.5 76.5 mm  now 10.8  (144 s)  *
+- 08:02 USER: stop everything. Killed knet all_real training at epoch ~22 (best val h05 76.5 mm); no weights saved (knet_all_real.pt absent, trainer saves only at end). Cron deleted. NOTHING running. HOLD.

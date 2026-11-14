@@ -60,3 +60,9 @@ Features/hidden size as above; loss = h05 + 0.1 now_pos; 60 epochs / patience 10
 - **L2 refuted:** it does not degrade more than ekf19b_fit under transfer — it degrades exactly like it (+9 mm), and far LESS than ekf-μ (+49 / +19).
 - Reading: with the physics prediction fixed, a learned gain cannot recover the per-launch friction; ekf-μ can (matched) but pays for it under
   model mismatch. The learned gain inherits the robustness of the fixed model, not the adaptivity. Noise / all_real training waits for the user.
+
+## Result 2 (2026-11-14): knet on noise (matched)
+Training: early stop at epoch 22, best epoch 12, val h0.5 52.5 mm (K0 start 59.1), 52 min. Weights outputs/knet_noise.pt.
+Eval (step_1e, 75 test launches), h0.5 vs ekf19b_fit: knet 60 vs 59 mm, paired +0.6 [-1.3, +2.8] mm, Wilcoxon p 0.27 (val +0.6, p 0.73).
+knet ms/update 4.9 vs 0.3. Conclusion: same as ideal: knet = fixed-mu filter on noise.
+all_real training stopped by the user at ~epoch 22 (val 76.5 mm, still improving); no weights saved — not evaluated.
