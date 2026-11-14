@@ -542,3 +542,10 @@ set, both physics, ~3 h) → P9 final evaluation once → P10 paper; (3) rewrite
 - 07:32 check: battery 100% Full; all_real: epoch 16: train loss 80.9 mm  val h0.5 77.7 mm  now 11.1  (144 s)  *
 - 07:47 check: battery 100% Full; all_real: epoch 22: train loss 79.7 mm  val h0.5 76.5 mm  now 10.8  (144 s)  *
 - 08:02 USER: stop everything. Killed knet all_real training at epoch ~22 (best val h05 76.5 mm); no weights saved (knet_all_real.pt absent, trainer saves only at end). Cron deleted. NOTHING running. HOLD.
+
+## >>> START HERE (2026-11-14 08:00, chat closed by user) <<<
+State: P0–P6 DONE. P7: knet trained + evaluated on ideal AND noise → both = fixed-μ filter (ekf19b_fit), n.s. (docs/P7_learned_gain_design.md, Results 1–2).
+knet all_real: stopped by user at ~epoch 22 (val 76.5 mm, still improving), NO weights saved → would restart from scratch (~1.5–2.5 h).
+NOTHING running. No cron. Committed + pushed to `backup` (outputs/ is gitignored: knet_ideal.pt, knet_noise.pt local only).
+Rules: HOLD — run nothing until the user names it. Battery rule when a run is allowed: 15-min check, stop if NOT charging AND < 30 %. Do NOT chain to a next run unless the user says so. Push only to `backup`. Git identity: use -c user.name/email from previous commits (no global config).
+Open choices: (1) retrain knet all_real (from scratch) [+ eval]; (2) stop P7 here (knet = fixed-μ on ideal+noise is enough) → freeze methods → P8 render final test set (~3 h) → P9 final eval once → P10 paper; (3) rewrite paper claims C1/C3 in docs/plan_2026-11-11_paper_plan.md with the new results (no compute).
