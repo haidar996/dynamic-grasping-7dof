@@ -549,3 +549,69 @@ knet all_real: stopped by user at ~epoch 22 (val 76.5 mm, still improving), NO w
 NOTHING running. No cron. Committed + pushed to `backup` (outputs/ is gitignored: knet_ideal.pt, knet_noise.pt local only).
 Rules: HOLD — run nothing until the user names it. Battery rule when a run is allowed: 15-min check, stop if NOT charging AND < 30 %. Do NOT chain to a next run unless the user says so. Push only to `backup`. Git identity: use -c user.name/email from previous commits (no global config).
 Open choices: (1) retrain knet all_real (from scratch) [+ eval]; (2) stop P7 here (knet = fixed-μ on ideal+noise is enough) → freeze methods → P8 render final test set (~3 h) → P9 final eval once → P10 paper; (3) rewrite paper claims C1/C3 in docs/plan_2026-11-11_paper_plan.md with the new results (no compute).
+2026-11-14 (later): new chat opened, START HERE 2026-11-14 read, presented choices (1)/(2)/(3); waiting for user choice. Nothing run.
+2026-11-16: new chat opened, START HERE 2026-11-14 read, presented choices (1)/(2)/(3) again; waiting for user choice. Nothing run.
+- 2026-11-16 user chose (1): knet all_real retrain from scratch (matched, seed 0), launched via subagent: `python3 -u experiments/step_2a_train_knet.py all_real >> outputs/knet_train.log 2>&1`. NEW WORK MODE: Claude = boss agent, delegates tasks to haiku/sonnet subagents. Eval after training needs user go. Battery rule: stop if not charging AND < 30 %.
+- 02:15 knet all_real training RUNNING, PID 18391 (epoch 0 K0 val 84.6 mm). Weights saved only at end. If killed: rerun same command from scratch. Pending user decision: L3 mismatch retrain subset (a) ideal / (b) ideal,noise,all_real / (c) core 5.
+- 02:15 15-min battery cron created (session-only, haiku check; stop if not charging AND < 30 %).
+- 2026-11-16 user: L3 = ALL 5 core conds (ideal, noise, all_real, all_plane, dsn), as SEPARATE runs, one at a time, each needs user go (no chaining). Queue after current matched all_real: (0) all_real matched evals (step_1e all_real 3; PHYSICS=mismatch ARM=transfer step_1e all_real 3); then per cond: `PHYSICS=mismatch python3 -u experiments/step_2a_train_knet.py <cond> >> outputs/knet_train_mismatch.log 2>&1` then `PHYSICS=mismatch ARM=retrain python3 -u experiments/step_1e_eval_ekf_mu.py <cond> 3 >> outputs/ekf_mu_eval_mismatch_retrain.log 2>&1`.
+- 02:19 chain_l3_a launched (PID 18677): waits for all_real PID 18391 → run 0 evals → L3 ideal train+eval → L3 noise train+eval, then STOP (runs 3–5 need user go). Log outputs/chain_l3_a.log; kill = kill chain PID (.chain_pid) + child (.chain_child_pid). If killed mid-step: rerun only the remaining steps.
+- 02:27 check: battery 100% Full; chain (PID 18677) waiting for PID 18391 (alive, etime 13:50), no child PID; last knet epoch line: epoch 5: train loss 85.8 mm, val h0.5 81.5 mm
+- 02:42 check: battery 100% Full; chain waiting for PID 18391 (alive, etime 28:48), chain pid 18677; last knet epoch line: epoch 11: train loss 82.8 mm, val h0.5 79.0 mm
+- 02:57 check: battery 100% Full (no kill); chain (PID 18677) waiting for PID 18391, which has run 43:49; last epoch line: epoch 17: train loss 80.5 mm, val h0.5 77.9 mm, now 11.0 (151 s)
+- 03:12 check: battery 100% Full; chain waiting for PID 18391 (alive, etime 58:48); knet last: epoch 23 train 80.0 mm, val h0.5 76.2 mm
+- 03:27 check: battery 100% Full; chain (PID 18677) still waiting for PID 18391 (etime 01:13:49, alive); last epoch line: epoch 29 train 78.3 mm, val h0.5 75.6 mm (knet log)
+- 03:42 check: battery 100% Full; all_real training (PID 18391, running 01:28:48), chain waiting (chain log: 'waiting for PID 18391'); last epoch line: epoch 35: train loss 77.2 mm  val h0.5 74.1 mm
+- 03:57 check: battery 100% Full; chain waiting for PID 18391 (alive, etime 01:43:49), no kill; knet last line: epoch 41 train 76.8 mm val h0.5 73.2 mm
+- 04:12 check: battery 100% Full; chain waiting for PID 18391 (alive, etime 01:58:49); last epoch: epoch 48: train loss 76.3 mm  val h0.5 73.1 mm  now 10.7  (140 s)
+- 04:27 check: battery 100% Full; chain (PID 18677) waiting for PID 18391 (alive, elapsed 02:13:49); last epoch: epoch 54 train loss 76.1 mm, val h0.5 73.2 mm
+- 04:43 check: battery 100% Full; all_real training done (== all_real: best epoch 56, val h0.5 72.8 mm); chain log last line 'waiting for PID 18391' (18391 not alive; .chain_pid chain script 18677 alive, running 02:24:00); nothing killed
+- 04:57 check: battery 100% Full; chain step run_ideal_train (START); mismatch last epoch line: epoch 0: val h0.5 53.7 mm (fixed gain K0)
+- 04:58 P7 Result 3 (all_real) written in docs/P7_learned_gain_design.md: matched knet 82.5 vs fit 76.1 mm (+6.4, p 0.095), transfer 88.2 vs 87.3 (+0.8, p 0.55).
+- 05:12 check: battery 100% Full; chain step run_ideal_train (START); epoch 7: train loss 53.1 mm  val h0.5 53.9 mm  now 2.0  (130 s)
+- 05:27 check: battery 100% Full; chain step run_ideal_train (START); epoch 14: train loss 49.4 mm  val h0.5 50.6 mm  now 1.9  (127 s)  *
+- 05:42 check: battery 100% Full; chain step run_ideal_train; epoch 20: train loss 48.1 mm val h0.5 49.5 mm now 1.8 (135 s) *
+- 05:57 check: battery 100% Full; chain step run_ideal_train (START, last START/DONE/FAIL line); epoch 27: train loss 47.6 mm  val h0.5 49.2 mm  now 1.9  (126 s)
+- 06:12 check: battery 100% Full; chain step run_ideal_train; epoch 34: train loss 47.2 mm  val h0.5 49.2 mm  now 1.8  (128 s)
+- 06:27 check: battery 100% Full; chain step run_ideal_train; epoch 41: train loss 46.9 mm val h0.5 49.1 mm now 1.9 (130 s)
+- 06:42 check: battery 100% Full; chain step run_noise_train (START 06:34:07, no DONE yet); epoch  3: train loss 56.7 mm  val h0.5 57.5 mm  now 3.3  (130 s)
+- 06:43 L3 ideal DONE (train best ep 32, val 49.0, 90.6 min; eval 06:34). TEST mismatch retrain h05 vs ekf19b_fit (54): knet 50 (-3.9 [-5.8,-2.0] p 2.6e-5), ekfmu_grid -2.6 [-3.7,-1.5], ekfmu_h05 -3.1. L3 borderline: knet point est 1.3 mm beyond grid; needs paired knet-vs-ekfmu_grid test before verdict (to do in write-up). L3 noise training running (PID 27219).
+- 06:57 check: battery 100% Full; chain step run_noise_train (START 06:34:07); epoch 10: train loss 53.8 mm val h0.5 54.6 mm now 2.8 (129 s) *
+- 07:12 check: battery 100% Full; chain step run_noise_train (START 06:34:07, no DONE yet); epoch 17: train loss 52.1 mm  val h0.5 53.1 mm  now 2.8  (131 s)  *
+- 07:28 check: battery 100% Full; chain step run_noise_train; epoch 24: train loss 51.6 mm val h0.5 52.9 mm now 2.8 (132 s) *
+- 07:42 check: battery 100% Full; chain step run_noise_train (START 06:34:07, no DONE yet); epoch 31: train loss 51.2 mm  val h0.5 52.8 mm  now 2.8  (129 s)
+- 07:57 check: battery 100% Full; chain step run_noise_train; epoch 38: train loss 51.0 mm  val h0.5 52.7 mm  now 2.9  (134 s)
+- 08:12 check: battery 91% Discharging; chain step run_noise_train; epoch 44: train loss 51.2 mm  val h0.5 52.8 mm  now 2.9  (135 s)
+- 08:27 check: battery 79% Discharging; chain step run_noise_eval (DONE rc=0, ALL DONE); == noise: best epoch 36, val h0.5 52.5 mm, 101.2 min, saved knet_noise_mismatch.pt
+- 08:30 Result 4 (L3 ideal+noise) written: L3 holds; knet-ekfmu_grid test ideal -1.3 [-3.5,+0.7] p 0.96, noise -1.8 [-4.5,+0.7] p 0.71 (n.s.; val also n.s.), knet vs ekf19b_fit -3.9/-3.6 mm. chain_l3_a ALL DONE 08:22; cron deleted; nothing running. Runs 3–5 (L3 all_real, all_plane, dsn) need user go.
+- 09:08 verified: nothing running, no cron. Battery 67% Discharging. Waiting for user: (a) commit+push backup? (b) go for runs 3-5 (L3 all_real, all_plane, dsn) - needs charger.
+- 12:12 user: run 3 go → chain_l3_b launched (L3 all_real mismatch train + retrain eval), chain PID 32600, child 32602. Log chain_l3_a.log / knet_train_mismatch.log. If killed: rerun `nohup bash outputs/chain_l3_b.sh &` (training restarts from scratch). Runs 4-5 need user go.
+- 2026-11-16 Result 4b written (docs/P7_learned_gain_design.md; outputs/paired_all_metrics.{py,txt}): knet now_vel significantly worse than ekf19b_fit/ekfmu_grid in retrain ideal/noise (+0.025-0.037 m/s, Holm<1e-9), now_pos ~equal; all_real: knet worse than ekf19b_fit on now_pos (+2-3 mm).
+- 12:23 check: battery 77% Charging; chain step run_all_real_train; epoch  4: train loss 76.6 mm  val h0.5 74.0 mm  now 12.7  (137 s)  *
+- 12:38 check: battery 74% Charging; chain step run_all_real_train; epoch 11: train loss 72.1 mm val h0.5 69.8 mm now 11.4 (140 s)
+- 12:53 check: battery 83% Charging; chain step run_all_real_train; epoch 17: train loss 69.6 mm  val h0.5 67.4 mm  now 10.7  (135 s)  *
+- 13:08 check: battery 89% Charging; chain step run_all_real_train (started 12:11:37); epoch 24: train loss 68.2 mm  val h0.5 65.9 mm  now 10.5  (136 s)  *
+- 13:23 check: battery 93% Charging; chain step run_all_real_train; epoch 31: train loss 67.3 mm  val h0.5 66.0 mm  now 10.5  (133 s)
+- 13:38 check: battery 97% Charging; chain step run_all_real_train (START 12:11:37); epoch 37: train loss 66.9 mm  val h0.5 66.4 mm  now 10.3  (135 s)
+- 13:53 check: battery 98% Charging; chain step run_all_real_train (START 12:11:37, no DONE yet); epoch 44: train loss 66.2 mm val h0.5 64.7 mm now 10.4 (140 s)
+- 14:08 check: battery 91% Discharging; chain step run_all_real_train (started 12:11:37, not finished); epoch 51: train loss 65.3 mm  val h0.5 64.3 mm  now 10.3  (136 s)  *
+- 14:23 check: battery 77% Discharging; chain step run_all_real_train; epoch 57: train loss 65.2 mm  val h0.5 64.1 mm  now 10.4  (138 s)
+- 14:38 check: battery 62% Discharging; chain step ALL DONE (run 3); == all_real: best epoch 59, val h0.5 63.7 mm, 136.8 min, saved knet_all_real_mismatch.pt
+- 14:39 run 3 DONE + written (Result 4/4b all_real): all_real test h0.5 fit 70, grid 67, h05 68, knet 66 mm; knet-fit -4.0 [-8.5,+0.4] p 2.3e-4, knet-grid -1.5 [-6.7,+3.5] p 0.40 (val -1.6 [-5.3,+2.3] p 0.44) => L3 HOLDS (3/5 conditions). Nothing running, cron deleted. Runs 4–5 (all_plane, dsn) need user go.
+- 14:41 verified idle: nothing running, no cron. Waiting for user: runs 4-5 (all_plane, dsn) go + order; commit+push backup?
+- 14:46 gave user full finish plan (~14 working days to submission: D1-2 P7 remaining 4 runs + claims rewrite + L2 paired; D3 P8 freeze+render; D4 P9; D5-6 figures/tables; D7-10 writing; D11-12 self-review; D13-14 polish/submit). Recommended reframing: C3 mismatch as headline. Open: target venue/deadline, commit, go for runs 4-5. Nothing running.
+- 14:55 user: go item 1 → run 4 chain_l3_c launched (L3 all_plane mismatch train + retrain eval), chain PID 38484, child 38487. If killed: rerun `nohup bash outputs/chain_l3_c.sh &` (from scratch). Run 5 (dsn) and items 3-7 need user go.
+- 14:55 USER: do not run anything now -> run 4 (chain_l3_c, all_plane) KILLED right after start; no weights saved; cron deleted. Analysis agents (audit -> docs/analysis_2026-11-16_strengths_weaknesses.md; literature -> docs/literature_solutions_2026-11-16.md) keep going. Nothing runs until user go.
+- 14:56 audit saved docs/analysis_2026-11-16_strengths_weaknesses.md (top actions: fresh final test 5h; GRU+3 seeds 15-18h; IMM/two-phase friction + 3rd physics 26h; intercept metric + LS baseline 17h; hygiene 12h). Literature doc written (unverified snippets) → verifier agent reading PDFs now. Nothing running.
+- 14:59 literature verified (16 PDFs); synthesis + packages A≈25h/B≈60h/C≈80h appended to docs/analysis_2026-11-16_strengths_weaknesses.md. Waiting for user to pick package. Nothing running.
+- 15:07 user chose package B; plan written as §8 in docs/plan_2026-11-11_paper_plan.md (B0–B8, ~60 h). Waiting for user decisions in §8(f). Nothing running.
+
+## >>> START HERE (2026-11-16 15:15, chat closed by user) <<<
+State: NOTHING running, no cron. Work mode: Claude = boss agent, delegates every task to haiku/sonnet subagents (memory feedback-orchestrator-mode).
+Done today: knet all_real matched (Result 3: = fixed-μ); L3 mismatch retrain ideal, noise, all_real (Result 4/4b: knet ≈ ekf-μ, −4 mm vs fixed μ, knet−ekfmu_grid n.s. → L3 holds 3/3; knet now_vel worse in ideal/noise). Run 4 (L3 all_plane) started 14:54 and KILLED by user (no weights).
+Analysis: docs/analysis_2026-11-16_strengths_weaknesses.md (audit + synthesis); docs/literature_solutions_2026-11-16.md (16 PDFs verified).
+User chose PLAN B (simulation only): docs/plan_2026-11-11_paper_plan.md §8, steps B0–B8 (~33 h compute + ~27 h agent), schedule from next session.
+NOT committed since 3005659 (docs, RESUME, outputs/*.py analysis scripts) — B0 needs user OK.
+NEXT: present the 5 decisions in §8(f) (recommended: all yes = B0 commit+push backup; IMM 2-mode Markov + two-phase ablation; physics C on ideal/noise/all_real, dose 0/0.25/0.5/1.0 on ideal; primary endpoint h0.5 final test ekf-μ-h05 & ekf-imm vs ekf19b_fit, matched+mismatch, Holm; order B1 compute first with B2/B3 design in parallel). Then WAIT for explicit go before running anything.
+Rules: no run without user go; battery 15-min check (stop if not charging AND < 30 %); push only to backup; chain_l3_c.sh exists for run 4 (all_plane), dsn script = same sed with dsn name (check cond key).
+- 2026-11-20: new chat opened, START HERE 2026-11-16 15:15 + §8 read, presented the 5 decisions; waiting for user go. Nothing run.

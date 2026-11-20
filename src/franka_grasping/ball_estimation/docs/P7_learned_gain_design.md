@@ -66,3 +66,76 @@ Training: early stop at epoch 22, best epoch 12, val h0.5 52.5 mm (K0 start 59.1
 Eval (step_1e, 75 test launches), h0.5 vs ekf19b_fit: knet 60 vs 59 mm, paired +0.6 [-1.3, +2.8] mm, Wilcoxon p 0.27 (val +0.6, p 0.73).
 knet ms/update 4.9 vs 0.3. Conclusion: same as ideal: knet = fixed-mu filter on noise.
 all_real training stopped by the user at ~epoch 22 (val 76.5 mm, still improving); no weights saved — not evaluated.
+
+## Result 3 (2026-11-16): knet on all_real (matched training)
+Training (outputs/knet_train.log): retrained from scratch, seed 0, 350 train / 75 val launches; best epoch 56, val h0.5 72.8 mm (epoch 0 = fixed gain K0: 84.6 mm), 148.5 min. Weights outputs/knet_all_real.pt. (The earlier run stopped at epoch 22 was discarded.) Epochs run: 60 (cap; no early stop; epoch 60 val 73.0 mm, so the curve had flattened).
+Eval (step_1e, outputs/ekf_mu_eval.json, run 04:43-04:50), h0.5 mm, launch mean [bootstrap 95% CI], paired vs ekf19b_fit:
+| matched | test (73 launches) | val (72 launches) |
+|---|---|---|
+| ekf19b_fit | 76.1 [67.5, 85.1] | 70.8 [63.0, 78.0] |
+| ekfmu_h05 | 51.4 (-24.6, p 9e-10) | 45.0 (-25.8, p 2e-11) |
+| ekfmu_grid | 54.7 (-21.4) | 47.7 (-23.1) |
+| ekfmu_nll | 57.4 (-18.7) | 52.6 (-18.2) |
+| **knet** | 82.5 [70.6, 94.5], +6.4 [-1.3, +16.2], Wilcoxon p 0.095 | 72.8 [63.0, 82.8], +1.9 [-3.1, +9.3], Wilcoxon p 0.041 |
+now_pos (mm, test): ekf19b_fit 8.6, ekfmu_h05 6.4, knet 11.5 (val: 8.7 / 6.8 / 10.7). knet ms/update 4.7 vs 0.3.
+Mismatch transfer (matched-trained knet on mismatch physics, outputs/ekf_mu_eval_mismatch_transfer.json, run 04:50-04:57), h0.5 mm:
+| mismatch-T | test (74 launches) | val (73 launches) |
+|---|---|---|
+| ekf19b_fit | 87.3 [77.0, 98.1] | 87.0 [76.5, 97.6] |
+| ekfmu_h05 | 122.1 (+34.7, p 4e-7) | 123.0 (+35.9, p 6e-7) |
+| **knet** | 88.2 [77.3, 99.3], +0.8 [-1.7, +4.0], p 0.55 | 91.3 [79.8, 104.1], +4.3 [-0.2, +10.6], p 0.59 |
+now_pos (mm, test): ekf19b_fit 9.6, knet 12.0.
+- **L1 refuted again:** knet does not beat ekf19b_fit on matched all_real; the sign is the opposite (test +6.4 mm worse, CI includes 0, p 0.095). On val the mean diff is +1.9 mm with CI including 0 but Wilcoxon p 0.041 (the two tests disagree; with the median-style test favouring fit slightly). So knet is not better and is, if anything, slightly worse; it is 21-31 mm behind ekf-mu-h05.
+- **L2 refuted:** under transfer knet is indistinguishable from ekf19b_fit (+0.8 mm test, +4.3 val, n.s.) and far better than ekf-mu (+35 mm). Unpaired change in launch-mean h0.5 matched -> mismatch (different launch sets, so not a paired delta): knet +5.7 mm (82.5 -> 88.2), ekf19b_fit +11.2 mm (76.1 -> 87.3); I did not run the paired matched -> mismatch test.
+- Verdict: knet ~ fixed-mu filter again (no significant difference on test), with a small non-significant worse tendency on all_real (training val 72.8 vs K0 84.6 improved over its own start, but still not below the fixed-mu filter on val 70.8). Same conclusion as Results 1-2 (ideal, noise), now with the most realistic condition: a learned gain on the fixed model does not recover per-launch friction; only ekf-mu does, and it fails on transfer.
+
+## Result 4 (L3: retrain on mismatch, ideal + noise + all_real)
+
+Setup: knet retrained from scratch on MISMATCH train data (350 train / 75 val launches), compared on the same launches with the mismatch-re-tuned baselines (ARM=retrain, outputs/ekf_mu_eval_mismatch_retrain.json / .pkl.gz). Paired numbers recomputed by outputs/l3_paired.py (reuses estimators.stats.paired: 2000-resample bootstrap, seed 0, Wilcoxon); it reproduces the step_1e knet vs ekf19b_fit numbers exactly.
+- Training (outputs/knet_train_mismatch.log): ideal: K0 (epoch 0) val h0.5 53.7 mm -> best epoch 32, 49.0 mm (early stop at epoch 42, 90.6 min). noise: K0 val 57.7 mm -> best epoch 36, 52.5 mm (early stop at epoch 46, 101.2 min). all_real: K0 val 74.5 mm -> best epoch 59, 63.7 mm (ran to epoch 60, no early stop triggered, 136.8 min).
+
+Launch-mean h0.5 (mm; test n=74, val n=73) and paired diff vs ekf19b_fit [95% CI] (negative = better):
+
+| cond / split | ekf19b_fit | ekfmu_grid | ekfmu_h05 | knet |
+|---|---|---|---|---|
+| ideal test | 53.8 | 51.2 (-2.6 [-3.7,-1.5]) | 50.7 (-3.1 [-4.6,-1.7]) | 49.9 (-3.9 [-5.8,-2.0], p 2.6e-5) |
+| ideal val | 51.6 | 48.6 (-2.9 [-4.2,-1.7]) | 53.5 (+1.9 [-3.8,+11.7]) | 49.0 (-2.6 [-6.2,+3.1], p 5.8e-8) |
+| noise test | 56.4 | 54.6 (-1.8 [-3.0,-0.6]) | 55.3 (-1.1 [-2.4,+0.2], n.s.) | 52.8 (-3.6 [-6.0,-1.6], p 4.7e-4) |
+| noise val | 57.1 | 54.7 (-2.4 [-3.8,-1.2]) | 56.3 (-0.8 [-2.0,+0.4], n.s.) | 52.5 (-4.6 [-6.2,-3.0], p 1.6e-7) |
+| all_real test | 70 | 67 (-2.5 [-4.4,-0.5], p 0.039) | 68 (-2.2 [-5.3,+0.4], n.s.) | 66 (-4.0 [-8.5,+0.4], p 2.3e-4) |
+| all_real val | 69 | 65 (-4.0 [-6.7,-1.6]) | 68 (-1.5 [-3.5,+0.6], n.s.) | 64 (-5.6 [-8.4,-2.8], p 1.4e-5) |
+
+Direct paired knet - ekfmu_grid (the L3 test), h0.5 mm [95% CI], Wilcoxon p, knet better in:
+- ideal test: -1.3 [-3.5,+0.7], p 0.96, 47%. ideal val: +0.3 [-3.7,+6.2], p 0.15, 52%.
+- noise test: -1.8 [-4.5,+0.7], p 0.71, 51%. noise val: -2.1 [-4.3,+0.1], p 0.13, 59%.
+- all_real test: -1.5 [-6.7,+3.5], p 0.40, 53%. all_real val: -1.6 [-5.3,+2.3], p 0.44, 52%.
+- vs ekfmu_h05 (test): ideal -0.8 [-2.9,+1.2], p 0.85; noise -2.6 [-5.3,-0.2], p 0.18. (noise val: -3.8 [-5.9,-1.6], p 3.0e-3.) all_real test -1.8 [-6.7,+3.7], p 0.053; all_real val -4.1 [-7.2,-1.0], p 0.032 (knet better than ekfmu_h05 on val only, not on test).
+
+Verdict L3: HOLDS in ideal, noise and all_real (3 of 5 conditions). knet's advantage over ekf19b_fit (3.6-4.0 mm on test; in all_real the test bootstrap CI [-8.5,+0.4] includes 0 although Wilcoxon p 2.3e-4 and val is clear at -5.6 [-8.4,-2.8]) is real, but its advantage over ekfmu_grid is not significant on test or val (CIs include 0; the Wilcoxon p values are also non-significant). Caveat: in several cells the bootstrap CI and the Wilcoxon p disagree (e.g. ideal val), which points to a few heavy-tailed launches; mean differences of 1-2 mm vs ekfmu_grid cannot be resolved with n=74.
+Reading: on matched physics knet = fixed-mu (Results 1-3), but under mismatch retraining it gains about 4 mm over ekf19b_fit, the same order as ekf-mu's retrain gain (about 2-3 mm). It does not clearly exceed ekf-mu-grid, so there is no evidence that it captures slide -> roll beyond what ekf-mu does.
+Scope: ideal, noise, all_real. all_plane and dsn are pending (runs 3-5, need user go).
+
+### Result 4b: paired tests for now_pos, now_vel, h0.2, h1.0
+knet - baseline on test launches, mean difference [95% CI] (mm; now_vel in m/s; negative = knet better); Holm p over the 6 now_pos/now_vel tests per set. Full output incl. val and all comparisons (also vs ekfmu_h05): outputs/paired_all_metrics.txt (script outputs/paired_all_metrics.py; h0.5 reproduces Result 4 logs).
+
+| set | metric | vs ekf19b_fit | vs ekfmu_grid |
+|---|---|---|---|
+| retrain ideal | now_pos | +0.14 [-0.09,+0.47] (Holm 0.53) | +0.03 [-0.16,+0.29] (0.49) |
+| | now_vel | +0.026 [+0.019,+0.033] (7e-11) | +0.025 [+0.019,+0.031] (4e-11) |
+| | h0.2 / h1.0 | +0.10 [-0.62,+0.89] / -6.97 [-12.3,-1.6] | +0.43 [-0.30,+1.19] / +0.79 [-5.5,+7.0] |
+| retrain noise | now_pos | +0.00 [-0.17,+0.25] (0.056) | -0.12 [-0.32,+0.12] (1.6e-3) |
+| | now_vel | +0.037 [+0.021,+0.063] (2e-10) | +0.036 [+0.019,+0.063] (4e-10) |
+| | h0.2 / h1.0 | +0.14 [-0.69,+0.97] / -8.09 [-13.1,-3.7] | +0.17 [-0.74,+1.09] / -1.80 [-8.4,+4.5] |
+| retrain all_real | now_pos | +0.79 [-0.02,+1.71] (Holm 1.0) | +0.44 [-0.48,+1.43] (1.0) |
+| | now_vel | +0.012 [-0.025,+0.049] (1.0) | +0.007 [-0.030,+0.044] (1.0) |
+| | h0.2 / h1.0 | -0.55 [-2.95,+1.91] / -6.92 [-15.4,+1.6] | -0.18 [-2.89,+2.30] / -1.43 [-12.2,+8.7] |
+| matched all_real | now_pos | +2.86 [+0.62,+6.31] (2.9e-3) | +4.89 [+2.62,+8.50] (1.5e-10) |
+| | now_vel | +0.031 [+0.011,+0.056] (0.062) | +0.053 [+0.032,+0.079] (2.7e-9) |
+| | h0.2 / h1.0 | +4.94 [+0.55,+10.4] / +4.34 [-11.1,+19.8] | +12.9 [+8.3,+18.6] / +65.7 [+41.8,+87.1] |
+| transfer all_real | now_pos | +2.35 [+0.99,+4.63] (2e-5) | -6.87 [-11.5,-3.05] (4.7e-4) |
+| | now_vel | +0.008 [-0.036,+0.049] (0.080) | -0.053 [-0.101,-0.006] (4e-3) |
+| | h0.2 / h1.0 | +1.97 [+0.22,+4.30] / -1.10 [-4.9,+3.5] | -18.2 [-26.0,-11.0] / -77.1 [-109.6,-48.0] |
+
+Retrain all_real: on test knet is statistically indistinguishable from the EKFs on now_pos and now_vel (all Holm p = 1.0; point estimates slightly worse). On val, now_vel vs ekfmu_grid is +0.015 m/s with Holm 0.041 (knet worse, CI [-0.003,+0.040] includes 0; single cell, not replicated on test). Unlike ideal/noise there is no significant now_vel deficit here.
+
+Reading: in mismatch retrain (ideal, noise), knet's now_pos matches the EKFs to within a fraction of a mm, but its now_vel is significantly worse (+0.025 to +0.037 m/s, in about 85-90% of launches), so its gain over ekf19b_fit lives in the long horizons (h1.0 about -7 to -8 mm), not in the current-state estimate. On all_real, knet is not better than ekf19b_fit anywhere (now_pos worse by 2-3 mm, h0.5/h1.0 differences include 0); the large "wins" over ekfmu_grid in transfer all_real reflect ekfmu_grid failing there, not knet being good. Bootstrap CI and Wilcoxon p sometimes disagree (heavy tails, e.g. ekf19b_fit h0.2 matched all_real), so treat single borderline cells cautiously.
