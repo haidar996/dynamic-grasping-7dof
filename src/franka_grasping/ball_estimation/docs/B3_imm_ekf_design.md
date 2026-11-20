@@ -70,8 +70,7 @@ Bounce coupling (optional, NOT in the frozen model): a bounce could raise b; omi
 
 ## 6. Per-mode process noise q
 Same continuous white-noise-acceleration block as `EKFMu.Q` (q h^3/3, q h^2/2, q h) per axis, with a mode-specific level q_s, q_r (no q_mu, since there is no mu state). Rationale: sliding
-and rolling have different unmodelled acceleration (the slip phase with speed-dependent restitution and tilt is rougher). Ranges: q in [0.05, 20] m^2/s^3 (log grid, around the existing tuned
-q in `ekf_tuning_val.json`).
+and rolling have different unmodelled acceleration (the slip phase with speed-dependent restitution and tilt is rougher). Ranges (widened 2026-11-20 after the range audit; see step_3a BOUNDS comment): q in [0.001, 100] m^2/s^3 (log; chosen q spanned 0.003 to 20).
 
 ## 7. Parameters to tune and on what
 Fixed from existing files, not re-tuned: sigma (sensor level, "ekf_fit" entry per condition, `ekf_tuning_val.json`), E (fit_constants_train), sigma_E = 0.13, sigma_v0, L, obs.
@@ -80,7 +79,7 @@ Initialisation: mu_s and mu_r start from the train fit of c (fit_constants_train
 decides).
 Criterion: launch-mean h0.5 RMS on moving frames (every 6th frame, warm-up 0.1 s), the same criterion as step_1d / step_1c h05, computed on the VAL split only (never on test).
 Scope: conditions ideal, noise, all_real; both physics (matched; mismatch retrain re-tunes on mismatch val, as every `*_mismatch.json` arm). The mismatch-transfer arm applies the matched
-parameters unchanged. Constraint mu_r < mu_s enforced by parameterising mu_r = r mu_s, r in (0.1, 1].
+parameters unchanged. Constraint mu_r < mu_s enforced by parameterising mu_r = r mu_s, r in [0.02, 1] (linear). Search ranges (2026-11-20 audit): mu_s [0.2, 5] log, r [0.02, 1], q_s,q_r [0.001, 100] log, a [0.5, 300] log, b [0.005, 1] log, p_s0 [0.5, 0.99].
 Search: gradient-free (the filter has switches and bounces; docs/literature note [20] warns about unreliable gradients through bounces). Stage 1: random Latin hypercube, 120 points; stage 2:
 coordinate refinement around the best 5 for 40 evaluations; pick best by val h0.5. One seedless deterministic procedure with the random generator seed 0 recorded. 7 parameters ->
 120 + 40 = 160 evaluations per (condition, physics) = 6 tuning runs.
@@ -143,5 +142,5 @@ Smoke test: 5 val + 5 test launches, `--quick`, both physics.
    later, labelled exploratory variant, not H-IMM): modes with a small mu random walk (q_mu per mode), which blurs the line to variant (iii).
 2. Operational readings in section 0: "ekf-μ" = ekfmu_grid; one-sided Holm tests; H-IMM2 judged by the CI upper end <= 3 mm. OK?
 3. Forecast rule: primary F-mix (m-weighted deceleration). OK, or prefer F-avg (more accurate in principle, 2x forecast cost)?
-4. Tuning budget 160 evaluations x 6 sets and a 7-parameter model versus the few parameters of the ekf-μ grid: accept, or cut to a smaller model (q_s = q_r, 5 parameters)? Recommend: accept 7, report q-shared as ablation.
+4. Tuning budget 160 evaluations x 6 sets and a 7-parameter model versus the few parameters of the ekf-μ grid: accept, or cut to a smaller model (q_s = q_r, 6 parameters: mu_s, r, q, a, b, p_s0)? Recommend: accept 7, report q-shared as ablation.
 5. Does the mismatch raw data store the true slide->roll time per launch? Needed for the switch-time diagnostic; to be checked at coding time, no decision needed unless it is missing.
