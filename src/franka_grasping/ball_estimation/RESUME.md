@@ -624,3 +624,58 @@ Rules: no run without user go; battery 15-min check (stop if not charging AND < 
 - 2026-11-20: step_3a BOUNDS widened per audit (mu_s [0.2,5], r [0.02,1], q [0.001,100] log, a [0.5,300] log; b,p_s0 same), line-5 comment fixed, --shared-q help added, doc sec 6/7 ranges updated. py_compile + --dry-run only; no compute, no commit.
 - 2026-11-20 USER RULE: no long runs; split compute into chunks of ≤2 h and ask before running anything. chain_l3_d.sh (8-10 h, 4 trainings chained) is running (PID 7805) and conflicts with this; asked user how to handle. B3 coding + tuning script done (ranges updated), uncommitted.
 - 17:56 USER chose option 1: killed chain parent bash (PID 7805) only; all_plane mismatch training (PID 7808) left running alone, no chaining. After it ends: eval and every later step need a separate user go (≤2 h each). If PID 7808 is killed, training restarts from scratch.
+- 18:06 check: battery 46% discharging; PID 7808 alive (31:10 elapsed); last epoch 12: train loss 61.1 mm, val h0.5 59.0 mm (139 s); no "== all_plane" summary yet
+- 18:09 USER: do not stop all_plane training (PID 7808) until battery reaches 10 % (overrides the 30 % rule for this run). Cron re-created with 10 % kill threshold.
+- 18:18 check: battery 35% discharging; PID 7808 alive (42:24 elapsed); last epoch 16: train loss 60.3 mm, val h0.5 57.6 mm (147 s); no "== all_plane" summary yet
+- 18:29 LOW-BATTERY check: battery 22% discharging; PID 7808 alive (53:24 elapsed); last epoch 21: train loss 59.7 mm, val h0.5 57.1 mm (137 s); no "== all_plane" summary yet
+- 18:32 check: battery 22% Charging; PID 7808 alive (56:56 elapsed); last epoch 23: train loss 59.5 mm, val h0.5 57.0 mm (144 s); no "== all_plane" summary yet
+- 18:47 check: battery 35% charging; PID 7808 alive (1:11:45 elapsed); last epoch 29: train loss 59.2 mm, val h0.5 57.7 mm (142 s); no "== all_plane" summary yet
+- 19:02 check: battery 49% Charging; PID 7808 alive (1:27:09 elapsed); last epoch 35: train loss 59.3 mm, val h0.5 56.8 mm (142 s); no "== all_plane" summary yet
+- 19:17 check: battery 63% Charging; PID 7808 alive (1:42:15 elapsed); last epoch 42: train loss 58.8 mm, val h0.5 57.4 mm (139 s); no "== all_plane" summary yet
+- 19:34 check: battery 76% Charging; PID 7808 alive (elapsed 01:58:25, step_2a_train_knet.py all_plane); last epoch: epoch 48: train loss 58.6 mm val h0.5 57.4 mm (148 s); no '== all_plane' summary line yet
+- 19:50 check: battery 85% Charging; PID 7808 alive (elapsed 02:13:50); last epoch: epoch 55: train loss 58.6 mm val h0.5 57.6 mm now 6.4 (152 s); no '== all_plane' line yet
+- 20:02 check: battery 87% Discharging; PID 7808 dead (no longer in ps; process ended); last epoch: no per-epoch line in log; early stop after 10 epochs without val gain (log line 239); DONE: == all_plane: best epoch 47, val h0.5 56.8 mm, 138.4 min, saved knet_all_plane_mismatch.pt
+- 20:08 USER go: all_plane retrain eval launched (PHYSICS=mismatch ARM=retrain step_1e all_plane 3), log outputs/ekf_mu_eval_mismatch_retrain.log, no chaining. If killed: rerun same command.
+- 20:19 check: battery 75% Discharging; eval DEAD (pid 16920 not found); log ends with 'saved all_plane -> ekf_mu_eval_mismatch_retrain.json, ekf_mu_eval_errors_mismatch_retrain.pkl.gz' (586 lines, all 5 conditions; report finished)
+- 2026-11-20: all_plane mismatch-retrain extracted: test h0.5 ekf19b_fit 62, grid 59, h05 62, knet 59; val 63/60/63/57; L3 verdict in report (knet-vs-grid CI check).
+- 00:55 USER 'go run': L3 dsn (dropout_silent_noisy) mismatch training launched alone (PHYSICS=mismatch step_2a dropout_silent_noisy), log outputs/knet_train_mismatch.log, ~2 h, no chaining; eval needs separate go. If killed: rerun same command (from scratch).
+- 2026-11-21: Result 4/4b (all_plane) added to docs/P7_learned_gain_design.md; n=74 = launch 17 has empty h0.5 errors (val 2,7 too); CI-vs-Wilcoxon = mean vs median, heavy tails.
+- 01:05 check: battery 52% Charging; dsn training alive (pid 27120); last epoch: epoch  3: train loss 83.1 mm  val h0.5 83.6 mm  now 14.9  (147 s)
+- 01:20 check: battery 65% Charging; dsn training alive (pid 27120); last epoch: epoch 10: train loss 79.6 mm  val h0.5 75.3 mm  now 15.0  (146 s)
+- 01:35 check: battery 76% Charging; dsn training alive (pid 27120); last epoch: epoch 16: train loss 77.6 mm  val h0.5 74.0 mm  now 14.7  (152 s)
+- 01:50 check: battery 84% Charging; dsn training alive (pid 27120); last epoch: epoch 22: train loss 76.7 mm  val h0.5 73.8 mm  now 14.4  (152 s)
+- 02:05 check: battery 91% Charging; dsn training alive (pid 27120); last epoch: epoch 28: train loss 74.6 mm  val h0.5 73.4 mm  now 14.2  (144 s)
+- 02:14 USER: launch dsn retrain eval automatically when dsn training (PID 27120) ends. Waiter outputs/eval_dsn_after_train.sh (PID 31812), log outputs/eval_dsn_after_train.log, runs ONE eval then stops. If killed: rerun eval manually: PHYSICS=mismatch ARM=retrain python3 -u experiments/step_1e_eval_ekf_mu.py dropout_silent_noisy 3 >> outputs/ekf_mu_eval_mismatch_retrain.log
+- 02:16 check: battery 94% Charging; train alive (pid 27120, last epoch 32 train 73.9 mm, val h0.5 72.6 mm); eval alive (eval_dsn_after_train.sh pid 31814 waiting), eval python not started; eval_dsn_after_train.log does not exist yet; no '== dropout_silent_noisy' line in knet_train_mismatch.log yet
+- 02:31 check: battery 98% Charging; train alive (pid 27120, step_2a_train_knet.py dropout_silent_noisy); eval not started (wrapper outputs/eval_dsn_after_train.sh alive, pid 31814, waiting; eval_dsn_after_train.log not existing); last log: epoch 38 train 72.0 mm val h0.5 71.9 mm (line 284), no '== dropout_silent_noisy' line yet
+- 02:46 check: battery 98% Charging; train alive (pid 27120, step_2a_train_knet.py dropout_silent_noisy, 1h50m elapsed, last epoch 44: train 69.9 mm val h0.5 70.2 mm); eval not started (wrapper outputs/eval_dsn_after_train.sh alive pid 31814 waiting; eval_dsn_after_train.log does not exist yet; no '== dropout_silent_noisy' line in knet_train_mismatch.log yet)
+- 03:01 check: battery 100% Discharging; train alive (pid 27120, last epoch 50: train 67.9 mm, val h0.5 68.0 mm); eval not started (no eval_dsn_after_train.log, no eval process); no '== dropout_silent_noisy' line yet in knet_train_mismatch.log; no kill (battery > 10%)
+- 03:16 check: battery 89% Discharging; train alive (pid 27120, last epoch 55 train 67.1 mm val h0.5 67.8 mm); eval wrapper alive (pid 31814, python eval not started); eval_dsn_after_train.log not yet created (no END/NOT STARTED)
+- 03:24 USER: after dsn training ends the waiter runs the dsn retrain eval; after that STOP working (no result extraction, no new runs, no commits) until the user says so. Pending for next session: extract dsn retrain results + write Result 4/4b (dsn) in docs/P7_learned_gain_design.md; commit+push backup (all_plane Result 4 doc + dsn); B3 tuning needs user go.
+- 03:46 check: battery 69% Discharging; dsn eval finished (no step_1e_eval_ekf_mu.py process; eval_dsn_after_train.log END rc=0 at 03:37:31, started 03:27:55); no kill (battery > 10%); results not extracted (per USER 03:24 stop rule)
+- 11:39 USER go: matched knet all_plane training launched alone (python3 -u experiments/step_2a_train_knet.py all_plane >> outputs/knet_train.log), ~2 h, no chaining; matched eval + transfer eval + dsn matched each need separate go. If killed: rerun (from scratch).
+- 11:47 check: battery 88% Discharging; matched all_plane training alive (pid 38713, etime 07:55); last epoch: epoch  2: train loss 74.6 mm  val h0.5 69.8 mm  now 6.4  (159 s)  *; no "== all_plane" line yet; no kill (battery > 10%)
+- 12:02 check: battery 72% Discharging; matched all_plane training alive (pid 38713, etime 22:57); last epoch: epoch  8: train loss 69.4 mm  val h0.5 66.5 mm  now 6.3  (167 s)  *; no "== all_plane" line yet; no kill (battery > 10%)
+- 12:17 check: battery 57% Discharging; matched all_plane training alive (pid 38713, etime 37:57); last epoch: epoch 14: train loss 68.2 mm  val h0.5 65.9 mm  now 6.2  (153 s)  *; no "== all_plane" line yet; no kill (battery > 10%)
+- 12:32 check: battery 41% Discharging; matched all_plane training alive (pid 38713, etime 53:07); last epoch: epoch 20: train loss 67.7 mm  val h0.5 64.9 mm  now 6.0  (158 s)  *; no "== all_plane" line yet; no kill (battery > 10%)
+- 12:47 check: battery 53% Charging; matched all_plane training alive (pid 38713, etime 01:08:09); last epoch: epoch 25: train loss 66.9 mm  val h0.5 63.9 mm  now 5.9  (152 s)  *; no "== all_plane" line yet; no kill (charging, battery > 10%)
+- 13:02 check: battery 66% Charging; matched all_plane training alive (pid 38713, etime 01:22:56); last epoch: epoch 31: train loss 66.3 mm  val h0.5 63.2 mm  now 5.8  (150 s)  *; no "== all_plane" line yet; no kill (charging, battery > 10%)
+- 13:17 check: battery 77% Charging; matched all_plane training alive (pid 38713, etime 01:38:13); last epoch: epoch 37: train loss 66.3 mm, val h0.5 62.9 mm, now 5.7 (154 s); no '== all_plane' line yet
+- 13:32 check: battery 86% Charging; matched all_plane training alive (pid 38713, etime 01:53:19); last epoch: epoch 43: train loss 66.3 mm  val h0.5 62.5 mm  now 5.6  (155 s)  *; no '== all_plane' line yet; no kill (charging, battery > 10%)
+- 13:47 check: battery 92% Charging; matched all_plane training alive (pid 38713, elapsed 02:08:14); last epoch: epoch 49: train loss 66.3 mm  val h0.5 62.3 mm  now 5.6  (157 s)
+- 14:47 check: battery 66% Discharging; matched all_plane training dead (no matching process; '== all_plane' line present); last epoch: epoch 60: train loss 65.8 mm  val h0.5 62.4 mm  now 5.7  (168 s); DONE: == all_plane: best epoch 55, val h0.5 62.1 mm, 157.5 min, saved knet_all_plane.pt
+
+## >>> START HERE (2026-11-22, resumed) <<<
+State: NOTHING running, no cron. Completed since last handoff:
+- dsn mismatch training + eval DONE (03:46 2026-11-21): knet 68.7 mm test vs fit 76.9 mm (-8.2 mm, p 1.2e-4). FIRST condition where knet wins clearly. Result 4/4b written in docs/P7_learned_gain_design.md.
+- matched all_plane training DONE (14:47 2026-11-21): best ep 55, val 62.1 mm, knet_all_plane.pt saved.
+- L3 final verdict: 5/5 conditions HOLD. knet beats fit by 3-8 mm on mismatch retrain; wins significantly vs ekfmu_grid only in dsn.
+
+Pending (each needs user go, ≤2 h each):
+1. Matched all_plane eval: `python3 -u experiments/step_1e_eval_ekf_mu.py all_plane 3 >> outputs/ekf_mu_eval.log 2>&1` (~3 min)
+   Then transfer eval: `PHYSICS=mismatch ARM=transfer python3 -u experiments/step_1e_eval_ekf_mu.py all_plane 3 >> outputs/ekf_mu_eval_mismatch_transfer.log 2>&1` (~3 min)
+2. Matched dsn training: `python3 -u experiments/step_2a_train_knet.py dropout_silent_noisy >> outputs/knet_train.log 2>&1` (~2 h), then matched + transfer evals (each ~3 min, needs go)
+3. Commit + push backup (docs/P7_learned_gain_design.md + RESUME.md)
+4. B3 IMM tuning: needs user go (see plan §8 B3; tuning script step_3a done + widened ranges)
+
+Rules: no run without user go; battery rule if run allowed: stop < 10 % not charging; push only to `backup`.

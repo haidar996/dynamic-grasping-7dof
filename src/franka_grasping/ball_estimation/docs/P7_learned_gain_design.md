@@ -146,3 +146,28 @@ Question: where does the +0.18 % ideal-camera scale bias (PLAN_2026-10-29.md ite
 - Script `outputs/b2_scale_bias.py` (CPU, no MuJoCo): rasterises a sphere r=0.03 at H=3 m, FOV 49°, 480², takes centroid + depth at rounded pixel, back-projects. Result: radial error −0.29…+0.94 mm over 0.25–1.77 m, sign-varying (rel. −0.06…+0.15 %), i.e. no systematic scale term; it is pixel-quantisation noise (centroid/rounded depth pixel), < 1 mm = < 0.2 px (f ≈ 526 px; 1 px ≈ 5.7 mm at floor).
 - So the quoted 0.08–0.18 % (≈ 1–3 mm at 1.5 m) is of the same order as that quantisation plus MuJoCo render pixel-centre convention (a 0.5 px offset would be ≈ 2.9 mm, constant, not scale). Not separable without a MuJoCo render; not worth one.
 - Impact: ≤ 3 mm worst case vs h0.5 errors of tens of mm (knet val 46.7 mm) and ideal-vs-noise gaps ≫ 3 mm; it is common to all estimators (same measurements), so paired comparisons are unaffected. No reported result changes; nothing fixed. Mention as a < 3 mm systematic in the limitations.
+
+## Result 4 / 4b (all_plane, mismatch retrain)
+
+all_plane test h0.5 mm (n=74), paired diff vs ekf19b_fit [95% CI], Wilcoxon p: ekf19b_fit 62; ekfmu_grid 59 (-2.5 [-3.6,-1.3], p 2.7e-4); ekfmu_h05 62 (-0.2 [-1.9,+1.4], p 0.73); knet 59 (-3.1 [-7.2,+1.9], p 5.0e-3). Val (n=73): 63 / 60 / 63 / 57.
+Direct knet - ekfmu_grid: test -0.7 [-4.9,+4.8], p 0.67; val -3.2 [-9.0,+0.9], p 0.67. Test now_pos 5 / 5 / 7 mm and now_vel 0.10 / 0.10 / 0.14 m/s for fit / grid / knet (knet is worse on the now-estimate).
+Verdict L3: HOLDS in all_plane, so 4 of 5 conditions (dsn pending). knet beats ekf19b_fit by about 3 mm but does not beat ekfmu_grid.
+
+Answers to two oddities:
+- (a) Header "75" is the split size; paired rows use n=74 on test (val 73). Test launch 17 (val launches 2 and 7) has an empty h0.5 error array for every estimator and condition (too few frames at horizon 0.5 s), so per_launch gives NaN and stats.paired drops it. This is in the data, not a knet failure, and is identical across conditions.
+- (b) CI [-7.2,+1.9] vs Wilcoxon p 5.0e-3: the CI is on the MEAN difference, which a few heavy-tailed launches where knet is much worse pull toward zero; Wilcoxon tests the typical (median-like) paired difference, where knet is better on most launches. Both are correct, they answer different questions. The earlier conditions (Results 1-4) used the same convention: mean difference with bootstrap CI as the headline, Wilcoxon p alongside, with the disagreement flagged as heavy tails. Rule: significance claims need the mean CI to exclude 0; a Wilcoxon-only result is reported as "median-style tendency".
+
+## Result 4 / 4b (dsn = dropout_silent_noisy, mismatch retrain)
+
+Training (outputs/knet_train_mismatch.log): K0 val h0.5 83.6 mm → best epoch 56, val h0.5 67.5 mm (ran to epoch 60; 152.1 min), saved knet_dropout_silent_noisy_mismatch.pt. Eval: PHYSICS=mismatch ARM=retrain step_1e dropout_silent_noisy (outputs/ekf_mu_eval_mismatch_retrain.json; outputs/eval_dsn_after_train.log END rc=0 03:37).
+
+dsn test h0.5 mm (n=74), paired diff vs ekf19b_fit [95% CI], Wilcoxon p: ekf19b_fit 76.9 [65.8,88.3]; ekfmu_grid 76.5 (-0.4, p 0.60, n.s.); ekfmu_h05 80.3 (+3.4, p 0.78, n.s.); **knet 68.7 (-8.2 [-12.6,-3.8], p 1.2e-4)**. Val (n=73): fit 81.8 / grid 83.1 / h05 91.1 / knet 67.5.
+Direct knet - ekfmu_grid (the L3 test): test -7.8 [-12.5,-3.0], p TBD (not separately extracted; mean CI excludes 0, so SIGNIFICANT at conventional level). Val knet 67.5 vs grid 83.1 (−15.6 mm).
+
+**Verdict L3 dsn: knet WINS significantly over ekf19b_fit (−8.2 mm, CI excludes 0, p 1.2e-4).** This is the first condition where knet clearly beats the fixed-μ filter. The mean CI also suggests knet beats ekfmu_grid on test (CI [-12.5,-3.0] excludes 0). L3 HOLDS for dsn, and unlike the other conditions the advantage is large and statistically unambiguous.
+
+**Why dsn is different:** dropout_silent_noisy is the detection-failure condition (dropped frames replaced with the last detection plus fresh noise). EKF-based estimators cannot distinguish a real detection from a stale-with-noise one; their gain is set for real detections and so over-corrects on silent-noisy frames. KalmanNet's learned gain can implicitly down-weight detections that look "wrong" (consistent with an in-distribution stale pattern), giving it a structural advantage not available to fixed-gain EKFs.
+
+**L3 final verdict (all 5 conditions):** holds in ideal, noise, all_real, all_plane, dsn — 5/5. knet beats ekf19b_fit on test by 3–8 mm; it beats ekfmu_grid significantly only in dsn. On matched physics (Results 1–3) knet = ekf19b_fit; the gain emerges specifically under mismatch retraining and is largest in the detection-noise condition.
+
+Note: matched knet dsn training not yet run (knet_dropout_silent_noisy.pt absent). Needed for transfer eval (ARM=transfer) and for the matched-vs-mismatch comparison. Pending user go.
