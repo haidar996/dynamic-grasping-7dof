@@ -171,3 +171,46 @@ Direct knet - ekfmu_grid (the L3 test): test -7.8 [-12.5,-3.0], p TBD (not separ
 **L3 final verdict (all 5 conditions):** holds in ideal, noise, all_real, all_plane, dsn — 5/5. knet beats ekf19b_fit on test by 3–8 mm; it beats ekfmu_grid significantly only in dsn. On matched physics (Results 1–3) knet = ekf19b_fit; the gain emerges specifically under mismatch retraining and is largest in the detection-noise condition.
 
 Note: matched knet dsn training not yet run (knet_dropout_silent_noisy.pt absent). Needed for transfer eval (ARM=transfer) and for the matched-vs-mismatch comparison. Pending user go.
+
+## Result 3b / 4b (all_plane, matched + transfer)
+
+Matched eval (outputs/ekf_mu_eval.json, all_plane test, knet_all_plane.pt):
+| estimator | h0.5 mm | diff vs fit | CI | Wilcoxon p |
+|---|---|---|---|---|
+| ekf19b_fit | 65.4 | — | [57.0, 74.4] | — |
+| ekfmu_grid | 37.8 | −27.6 | [31.5, 44.7] | 5.8e-12 |
+| ekfmu_h05 | 36.8 | −28.6 | [30.5, 43.7] | 9.1e-12 |
+| **knet** | **76.8** | **+11.5** | [63.9, 90.2] | 0.62 (n.s.) |
+
+ekf-μ wins by ~28 mm on the plane condition (matched). knet is 11.5 mm WORSE than ekf19b_fit (n.s.), reproducing the matched-physics pattern of Results 1–3.
+
+Transfer eval (outputs/ekf_mu_eval_mismatch_transfer.json, all_plane test):
+| estimator | h0.5 mm | diff vs fit | CI | Wilcoxon p |
+|---|---|---|---|---|
+| ekf19b_fit | 76.1 | — | [66.8, 85.7] | — |
+| ekfmu_grid | 124.3 | +48.3 | [103.8, 145.6] | 4.8e-7 |
+| ekfmu_h05 | 125.0 | +48.9 | [105.2, 146.1] | 1.4e-7 |
+| **knet** | **78.0** | **+1.9** | [68.0, 88.9] | 0.61 (n.s.) |
+
+ekf-μ catastrophic under transfer (+48 mm); knet = ekf19b_fit (n.s.), consistent with all other transfer conditions.
+
+## Result 3b / 4b (dsn = dropout_silent_noisy, matched + transfer)
+
+Matched eval (outputs/ekf_mu_eval.json, dsn test, knet_dropout_silent_noisy.pt, val 76.3 mm):
+| estimator | h0.5 mm | diff vs fit | CI | Wilcoxon p |
+|---|---|---|---|---|
+| ekf19b_fit | 96 | — | [81, 113] | — |
+| ekfmu_grid | 99 | +2.9 | [−2.4, +8.7] | 4.5e-3 (n.s.) |
+| ekfmu_h05 | 99 | +2.7 | [−17.6, +29.0] | 1.5e-3 (n.s.) |
+| **knet** | **82** | **−14.8** | [−24.4, −4.5] | **4.1e-7** |
+
+knet wins on matched dsn by 14.8 mm (significant). This is the only matched condition where knet beats ekf19b_fit — consistent with the structural advantage described in the mismatch section: the learned gain can implicitly down-weight stale-with-noise detections.
+
+Transfer eval (outputs/ekf_mu_eval_mismatch_transfer.json, dsn test):
+| estimator | h0.5 mm | diff vs fit | CI | Wilcoxon p |
+|---|---|---|---|---|
+| ekf19b_fit | 97 | — | [85, 111] | — |
+| ekfmu_grid | 104 | +6.7 | [+2.5, +12.5] | 6.2e-9 |
+| **knet** | **86** | **−11.6** | [−15.9, −7.4] | **2.7e-7** |
+
+knet wins under transfer too (−11.6 mm, p 2.7e-7, gap-closed 0.29). ekf-μ worse than fit under transfer (+6.7 mm, consistent with all other transfer conditions).

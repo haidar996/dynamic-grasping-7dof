@@ -679,3 +679,10 @@ Pending (each needs user go, ≤2 h each):
 4. B3 IMM tuning: needs user go (see plan §8 B3; tuning script step_3a done + widened ranges)
 
 Rules: no run without user go; battery rule if run allowed: stop < 10 % not charging; push only to `backup`.
+
+## 2026-11-22 session log
+
+- Matched all_plane eval DONE (rc=0): ekf19b_fit 65.4, ekfmu_grid 37.8 (−27.6, p 5.8e-12), ekfmu_h05 36.8 (−28.6), knet 76.8 (+11.5, n.s.). ekf-μ wins big; knet worse than fit on matched.
+- Transfer all_plane eval DONE (rc=0): fit 76.1, ekfmu_grid 124.3 (+48.3, catastrophic), knet 78.0 (+1.9, n.s.). knet = fit under transfer.
+- Matched dsn knet training RUNNING (PID 11047, ~2 h, log outputs/knet_train.log). Battery 98% Charging. Rule: stop < 10 % not charging.
+- After training: matched dsn eval + transfer dsn eval each need user go.
