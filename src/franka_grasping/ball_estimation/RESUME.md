@@ -684,5 +684,16 @@ Rules: no run without user go; battery rule if run allowed: stop < 10 % not char
 
 - Matched all_plane eval DONE (rc=0): ekf19b_fit 65.4, ekfmu_grid 37.8 (−27.6, p 5.8e-12), ekfmu_h05 36.8 (−28.6), knet 76.8 (+11.5, n.s.). ekf-μ wins big; knet worse than fit on matched.
 - Transfer all_plane eval DONE (rc=0): fit 76.1, ekfmu_grid 124.3 (+48.3, catastrophic), knet 78.0 (+1.9, n.s.). knet = fit under transfer.
-- Matched dsn knet training RUNNING (PID 11047, ~2 h, log outputs/knet_train.log). Battery 98% Charging. Rule: stop < 10 % not charging.
-- After training: matched dsn eval + transfer dsn eval each need user go.
+- Matched dsn training DONE (best ep 60, val 76.3 mm, knet_dropout_silent_noisy.pt).
+- Matched dsn eval DONE (rc=0): ekf19b_fit 96, ekfmu_grid 99 (+2.9, n.s.), knet 82 (−14.8 [−24.4,−4.5], p 4.1e-7). knet wins on matched dsn — unique among all matched conditions.
+- Transfer dsn eval DONE (rc=0): ekf19b_fit 97, ekfmu_grid 104 (+6.7, p 6.2e-9), knet 86 (−11.6 [−15.9,−7.4], p 2.7e-7). knet wins transfer too; gap-closed 0.29.
+- Result 4/4b (dsn) written in docs/P7_learned_gain_design.md. B1 COMPLETE (all 5 conditions done).
+- B0 DONE: committed 06e10c7 + pushed to backup.
+- B3 IMM tuning (matched) ALL DONE: ideal 41.38 mm, noise 50.31 mm, all_real 56.32 mm, all_plane 45.85 mm, dsn 86.59 mm. BUG FIXED: step_3a final_file() was missing .json for matched case → saved extensionless files; fixed + copied to .json.
+- B3 IMM tuning (mismatch) ALL DONE: ideal 51.69 mm (flat), noise 57.29 mm (flat), all_real 68.74 mm (flat), all_plane 62.92 mm (flat), dsn 83.68 mm (flat).
+- B3 eval PARTIAL (user stopped): ideal done in ekf_imm_eval.json (ekf19b_fit/ekfmu_grid/ekfmu_h05 only — ekfimm/ekf2ph NOT included, eval started before .json fix landed). Resume: `python3 -u experiments/step_3b_eval_ekf_imm.py all_conds 3 >> outputs/ekf_imm_eval.log 2>&1` (skips ideal, runs remaining). NOTE: ideal needs re-run too to include ekfimm/ekf2ph — delete outputs/ekf_imm_eval.json first or run ideal separately.
+- **2026-11-24: B3 eval (matched) COMPLETE** — all 11 conditions saved in outputs/ekf_imm_eval.json. BUG FIXED: step_3b crashed on noise condition (mu_s==mu_r ZeroDivisionError in m_roll); fixed with abs(denom)<1e-9 guard. Results written in docs/B3_imm_results.md. Key: ideal −8.1 mm p=0.0025 (**); dsn −10.7 mm p=0.012 (*); noise degenerate (flat landscape, mu_s=mu_r, +0.5 mm n.s.); all_real/all_plane n.s. with heavy-tail win% paradox. H-IMM1 SUPPORTED (ideal+dsn), H-IMM2 SUPPORTED (worst upper CI +1.3 mm excl. degenerate noise). ekfimm consistently weaker than ekfmu_h05 (−8/−10 vs −25 mm).
+- **2026-11-24: B3 mismatch eval COMPLETE** — 5 core conditions in outputs/ekf_imm_eval_mismatch_retrain.json. All flat. IMM neutral/harmful on mismatch: ideal/noise/all_real/all_plane n.s.; dsn +4.7 mm worse (p=0.02, CI upper +8.3 mm → H-IMM2 fails on mismatch dsn). Mode confusion: m_roll@0.5s=0.88–0.99. Full write-up in docs/B3_imm_results.md. B3 COMPLETE.
+- **2026-11-24: B5 COMPLETE** — split conformal + ACI coverage. Script: experiments/step_4a_conformal.py. Output: outputs/conformal_coverage.json + docs/B5_conformal_results.md. Key: ekfmu_h05 best calibrated (97.3% at h0.5/95% across all conds); knet undercovering at h1.0/all_real+all_plane (79%); h0.2 systematically below 90% for all estimators; ACI tracks split conformal within ±2 pp.
+- Revised plan order: B6 freeze → B7 final eval → B8 paper. (B4 physics C is optional and deferred.)
+- NEXT (each needs user go): (1) Commit + push backup; (2) B6 freeze protocol — commit primary endpoint + render final test sets (~4.5 h); (3) B7 final eval (once, ~3 h).

@@ -62,7 +62,7 @@ def tune_file(cond):
 
 
 def final_file(cond):
-    return OUT / (f"ekf_imm_sharedq_{cond}" if ARGS.shared_q else f"ekf_imm_{cond}") if not phys.MISMATCH else \
+    return OUT / (f"ekf_imm_sharedq_{cond}.json" if ARGS.shared_q else f"ekf_imm_{cond}.json") if not phys.MISMATCH else \
         OUT / (f"ekf_imm_sharedq_{cond}_mismatch.json" if ARGS.shared_q else f"ekf_imm_{cond}_mismatch.json")
 
 

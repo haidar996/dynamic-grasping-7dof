@@ -101,11 +101,16 @@ def main():
             for lab in ("ekfimm",):                      # mode diagnostic: m_roll = (mu_s - c_eff) / (mu_s - mu_r) at fixed times
                 if lab in labs:
                     p = estimators(cond)[lab][1]
-                    mr = {str(T): float(np.mean([(p["mu_s"] - res[i][lab]["diag"]["mu_hat"][T]) / (p["mu_s"] - p["mu_r"])
-                                                 for i in ids if T in res[i][lab]["diag"]["mu_hat"]] or [np.nan]))
-                          for T in S.MU_TIMES}
-                    tab["mean_m_roll"] = mr
-                    print("  mean m_roll at time since first frame:", mr)
+                    denom = p["mu_s"] - p["mu_r"]
+                    if abs(denom) < 1e-9:                  # degenerate tuning: mu_s == mu_r, m_roll undefined
+                        tab["mean_m_roll"] = {str(T): float("nan") for T in S.MU_TIMES}
+                        print("  mean m_roll: undefined (mu_s == mu_r in tuned params)")
+                    else:
+                        mr = {str(T): float(np.mean([(p["mu_s"] - res[i][lab]["diag"]["mu_hat"][T]) / denom
+                                                     for i in ids if T in res[i][lab]["diag"]["mu_hat"]] or [np.nan]))
+                              for T in S.MU_TIMES}
+                        tab["mean_m_roll"] = mr
+                        print("  mean m_roll at time since first frame:", mr)
             print("  true slide->roll time per launch is NOT stored in the raw files (only phys_slip0): switch-time correlation skipped")
             summ[cond] = tab
             errors[cond] = {i: {lab: {k: res[i][lab][k] for k in S.KEYS} for lab in labs} for i in ids}
